@@ -23,7 +23,8 @@ public class BackendApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(BackendApplication.class, args);
 	}
-    private MovieRepository movieRepository;
+
+    public MovieRepository movieRepository;
 
 	@Bean
     public CommandLineRunner seed(MovieService service) {

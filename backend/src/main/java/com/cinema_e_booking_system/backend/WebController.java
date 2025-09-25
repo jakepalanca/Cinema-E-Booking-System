@@ -15,10 +15,6 @@ import java.util.List;
 @RestController
 public class WebController {
 
-    @Autowired
-    private MovieRepository movieRepository;
-    private MovieService movieService;
-
 	@GetMapping("/health")
 	public int getHealth() {
 		return 200;
@@ -26,6 +22,6 @@ public class WebController {
 
     @GetMapping("/filter")
     public Page<Movie> filterByGenre(@RequestParam(name = "genre", required = true) Movie.MovieCategory genre) {
-        return movieRepository.findByMovieCategory(genre, Pageable.ofSize(1));
+        return findByMovieCategory(genre, Pageable.ofSize(1));
     }
 }

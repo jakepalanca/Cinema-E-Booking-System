@@ -25,7 +25,7 @@ public class WebController {
 	}
 
     @GetMapping("/filter")
-    public String filterByGenre(@RequestParam(name = "genre", required = true) Movie.MovieCategory genre) {
-        return movieRepository.findByMovieCategory(genre, Pageable.unpaged()).toString();
+    public Page<Movie> filterByGenre(@RequestParam(name = "genre", required = true) Movie.MovieCategory genre) {
+        return movieRepository.findByMovieCategory(genre, Pageable.ofSize(1));
     }
 }

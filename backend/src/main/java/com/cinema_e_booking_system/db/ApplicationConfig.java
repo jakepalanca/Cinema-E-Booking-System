@@ -13,8 +13,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import jakarta.persistence.EntityManagerFactory;
 
-
-
 @Configuration
 @EnableTransactionManagement
 class ApplicationConfig {

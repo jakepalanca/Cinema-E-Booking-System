@@ -33,8 +33,8 @@ public class Movie {
     private MovieCategory movieCategory;
     @ElementCollection
     private List<String> cast; // TODO: confirm just need name of cast members. If not, change from String to a Cast object
-    private String director; // TODO: confirm singular. if not do same as above
-    private String producer; // TODO: confirm singular. if not do same as above
+    private String director;
+    private String producer; // TODO: confirm singular
     private String synopsis;
     private String trailerLink;
     private MPAA_rating mpaaRating;

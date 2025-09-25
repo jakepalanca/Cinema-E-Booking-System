@@ -19,6 +19,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
   boolean existsByTitle(String title);
   long countByMpaaRating(Movie.MPAA_rating mpaaRating);
 
+  // Example of sql query 
   @Query("""
          select m
          from Movie m

@@ -1,9 +1,15 @@
 package com.cinema_e_booking_system.backend;
 
-import com.cinema_e_booking_system.db.*;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.cinema_e_booking_system.db.Movie;
+import com.cinema_e_booking_system.db.MovieRepository;
+import com.cinema_e_booking_system.db.Review;
+import com.cinema_e_booking_system.db.ReviewRepository;
 
 @Service
 public class MovieService {

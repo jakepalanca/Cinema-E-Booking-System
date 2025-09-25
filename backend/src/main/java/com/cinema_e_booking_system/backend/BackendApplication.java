@@ -25,9 +25,9 @@ public class BackendApplication {
 	}
 
 	@Bean
-	CommandLineRunner seed(MovieService service) {
+    public CommandLineRunner seed(MovieService service) {
 		List<String> cast_a = new ArrayList<>(Arrays.asList("hello", "hi"));
-		Movie a = new Movie("Interstellar", MovieCategory.SCI_FI, cast_a, "Michael Rosenburg", "Michael Rosenburg", "Jake writes some code", "https://www.google.com", MPAA_rating.G);
+		Movie a = new Movie("Interstellar", MovieCategory.ROMANCE, cast_a, "Michael Rosenburg", "Michael Rosenburg", "Jake writes some code", "https://www.google.com", MPAA_rating.G);
 
 		return args -> {
 			service.create(a);

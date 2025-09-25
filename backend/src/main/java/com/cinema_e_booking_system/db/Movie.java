@@ -2,11 +2,7 @@ package com.cinema_e_booking_system.db;
 
 import java.util.List;
 
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 @Entity
 public class Movie {
@@ -30,13 +26,18 @@ public class Movie {
     private Long id;
 
     private String title;
+
+    @Enumerated(EnumType.STRING)
     private MovieCategory movieCategory;
+
     @ElementCollection
     private List<String> cast; // TODO: confirm just need name of cast members. If not, change from String to a Cast object
     private String director;
     private String producer; // TODO: confirm singular
     private String synopsis;
     private String trailerLink;
+
+    @Enumerated(EnumType.STRING)
     private MPAA_rating mpaaRating;
 
         public Movie() {

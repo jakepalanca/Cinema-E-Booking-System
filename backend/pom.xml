@@ -52,6 +52,11 @@
 			<artifactId>sqlite-jdbc</artifactId>
 			<version>3.46.0.1</version>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-web</artifactId>
+			<version>6.2.10</version>
+		</dependency>
 	</dependencies>
 
 	<build>

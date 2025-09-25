@@ -61,6 +61,14 @@ public class Movie {
         this.trailerLink = trailerLink;
         this.mpaaRating = mpaaRating;
     }
+
+    public String getTitle() {
+          return title;
+    }
+
+    public String setTitle(String newTitle) {
+          return title = newTitle;
+    }
 }
    
 

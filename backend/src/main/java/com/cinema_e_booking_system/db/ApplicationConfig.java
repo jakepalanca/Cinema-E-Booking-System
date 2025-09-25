@@ -1,10 +1,10 @@
+package com.cinema_e_booking_system.db;
+
 import javax.sql.DataSource;
 
-import org.springframework.boot.SpringApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
@@ -21,9 +21,10 @@ class ApplicationConfig {
 
   @Bean
   public DataSource dataSource() {
-
-    EmbeddedDatabaseBuilder builder = new EmbeddedDatabaseBuilder();
-    return builder.setType(EmbeddedDatabaseType.HSQL).build();
+    DriverManagerDataSource dataSource = new DriverManagerDataSource();
+    dataSource.setDriverClassName("org.sqlite.JDBC");
+    dataSource.setUrl("jdbc:sqlite:cinema.db");
+    return dataSource;
   }
 
   @Bean
@@ -31,10 +32,11 @@ class ApplicationConfig {
 
     HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
     vendorAdapter.setGenerateDdl(true);
+    vendorAdapter.setDatabasePlatform("org.hibernate.community.dialect.SQLiteDialect");
 
     LocalContainerEntityManagerFactoryBean factory = new LocalContainerEntityManagerFactoryBean();
     factory.setJpaVendorAdapter(vendorAdapter);
-    factory.setPackagesToScan("com.cinema_e_booking_system.backend"); // TODO: Might have to change to .db or add both
+    factory.setPackagesToScan("com.cinema_e_booking_system");
     factory.setDataSource(dataSource());
     return factory;
   }

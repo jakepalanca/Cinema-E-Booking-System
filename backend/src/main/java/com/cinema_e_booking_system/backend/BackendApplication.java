@@ -1,9 +1,19 @@
 package com.cinema_e_booking_system.backend;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+
+import com.cinema_e_booking_system.db.*;
+import com.cinema_e_booking_system.db.Movie.MovieCategory;
+import com.cinema_e_booking_system.db.Movie.MPAA_rating;
 
 @SpringBootApplication(scanBasePackages = "com.cinema_e_booking_system")
 @EnableJpaRepositories(basePackages = "com.cinema_e_booking_system")
@@ -14,4 +24,13 @@ public class BackendApplication {
 		SpringApplication.run(BackendApplication.class, args);
 	}
 
+	@Bean
+	CommandLineRunner seed(MovieService service) {
+		List<String> cast_a = new ArrayList<>(Arrays.asList("hello", "hi"));
+		Movie a = new Movie("Interstellar", MovieCategory.SCI_FI, cast_a, "Michael Rosenburg", "Michael Rosenburg", "Jake writes some code", "https://www.google.com", MPAA_rating.G);
+
+		return args -> {
+			service.create(a);
+		};
+	}
 }

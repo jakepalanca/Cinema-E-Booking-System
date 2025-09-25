@@ -1,7 +1,8 @@
 package com.cinema_e_booking_system.db;
 
-import java.util.ArrayList;
+import java.util.List;
 
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -30,32 +31,36 @@ public class Movie {
 
     private String title;
     private MovieCategory movieCategory;
-    private ArrayList<String> cast; // TODO: confirm just need name of cast members. If not, change from String to a Cast object 
+    @ElementCollection
+    private List<String> cast; // TODO: confirm just need name of cast members. If not, change from String to a Cast object
     private String director; // TODO: confirm singular. if not do same as above
     private String producer; // TODO: confirm singular. if not do same as above
     private String synopsis;
     private String trailerLink;
     private MPAA_rating mpaaRating;
-    private ArrayList<Review> reviews;
+
+        public Movie() {
+    }
 
     public Movie(
-        String title, 
-        MovieCategory movieCategory, 
-        ArrayList<String> cast, 
+        String title,
+        MovieCategory movieCategory,
+        List<String> cast,
         String director,
-        String producer, 
+        String producer,
         String synopsis,
         String trailerLink,
-        MPAA_rating mpaaRating,
-        ArrayList<Review> reviews) {
-            this.title = title;
-            this.movieCategory = movieCategory;
-            this.cast = cast;
-            this.director = director;
-            this.producer = producer;
-            this.synopsis = synopsis;
-            this.trailerLink = trailerLink;
-            this.mpaaRating = mpaaRating;
-            this.reviews = reviews;
+        MPAA_rating mpaaRating
+    ) {
+        this.title = title;
+        this.movieCategory = movieCategory;
+        this.cast = cast;
+        this.director = director;
+        this.producer = producer;
+        this.synopsis = synopsis;
+        this.trailerLink = trailerLink;
+        this.mpaaRating = mpaaRating;
     }
 }
+   
+

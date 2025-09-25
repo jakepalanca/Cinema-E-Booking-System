@@ -23,23 +23,22 @@ public class Movie {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    Long id;
 
-    private String title;
+    String title;
 
     @Enumerated(EnumType.STRING)
-    private MovieCategory movieCategory;
+    MovieCategory movieCategory;
 
     @ElementCollection
-    private List<String> cast; // TODO: confirm just need name of cast members. If not, change from String to a Cast object
-    private String director;
-    private String producer; // TODO: confirm singular
-    private String synopsis;
-    private String trailerLink;
+    List<String> cast; // TODO: confirm just need name of cast members. If not, change from String to a Cast object
+    String director;
+    String producer; // TODO: confirm singular
+    String synopsis;
+    String trailerLink;
 
     @Enumerated(EnumType.STRING)
-    private MPAA_rating mpaaRating;
-
+    MPAA_rating mpaaRating;
         public Movie() {
     }
 

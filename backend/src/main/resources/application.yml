@@ -3,7 +3,7 @@ spring:
     name: backend
 
   datasource:
-    url: jdbc:sqlite:../db/data/app.db
+    url: jdbc:sqlite:./backend/cinema.db
     driver-class-name: org.sqlite.JDBC
 
   jpa:

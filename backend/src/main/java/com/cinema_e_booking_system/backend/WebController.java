@@ -15,13 +15,21 @@ import java.util.List;
 @RestController
 public class WebController {
 
+    @Autowired
+    MovieRepository movieRepository;
+    @Autowired
+    MovieService movieService;
+
 	@GetMapping("/health")
 	public int getHealth() {
 		return 200;
 	}
 
     @GetMapping("/filter")
-    public Page<Movie> filterByGenre(@RequestParam(name = "genre", required = true) Movie.MovieCategory genre) {
-        return findByMovieCategory(genre, Pageable.ofSize(1));
+    public List<Movie> filterByGenre(@RequestParam(name = "genre", required = true) Movie.MovieCategory genre) {
+
+        List<Movie> results = movieService.listSorted();
+
+        return results;
     }
 }

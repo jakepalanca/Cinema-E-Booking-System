@@ -26,9 +26,9 @@ public class WebController {
 	}
 
     @GetMapping("/filter")
-    public List<Movie> filterByGenre(@RequestParam(name = "genre", required = true) Movie.MovieCategory genre) {
+    public Page<Movie> filterByGenre(@RequestParam(name = "genre", required = true) Movie.MovieCategory genre) {
 
-        List<Movie> results = movieService.listSorted();
+        Page<Movie> results = movieRepository.findByMovieCategory(Movie.MovieCategory.valueOf(genre.toString()), Pageable.unpaged());
 
         return results;
     }

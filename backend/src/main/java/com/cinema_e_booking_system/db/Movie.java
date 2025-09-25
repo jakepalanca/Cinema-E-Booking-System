@@ -69,6 +69,14 @@ public class Movie {
     public String setTitle(String newTitle) {
           return title = newTitle;
     }
+
+    public MovieCategory getMovieCategory() {
+            return movieCategory;
+    }
+
+    public String setMovieCategory(MovieCategory newMovieCategory) {
+            return newMovieCategory.toString();
+    }
 }
    
 

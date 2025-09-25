@@ -42,5 +42,5 @@ lsof -ti:3000 | xargs kill -9
 
 ### Configuration
 - **Database**: SQLite
-- **Location**: `db/data/app.db`
+- **Location**: `backend/cinema.db`
 - **Schema**: Auto-managed by Hibernate

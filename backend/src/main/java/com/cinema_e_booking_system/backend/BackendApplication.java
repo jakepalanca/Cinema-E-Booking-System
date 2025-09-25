@@ -2,8 +2,12 @@ package com.cinema_e_booking_system.backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.cinema_e_booking_system")
+@EnableJpaRepositories(basePackages = "com.cinema_e_booking_system")
+@EntityScan(basePackages = "com.cinema_e_booking_system")
 public class BackendApplication {
 
 	public static void main(String[] args) {

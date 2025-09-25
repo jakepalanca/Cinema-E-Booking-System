@@ -1,4 +1,4 @@
-package com.cinema_e_Movieing_system.backend;
+package com.cinema_e_booking_system.backend;
 
 import com.cinema_e_booking_system.db.*;
 import org.springframework.data.domain.*;

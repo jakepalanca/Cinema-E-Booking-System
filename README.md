@@ -14,6 +14,17 @@
 1. **Backend**: `cd backend && mvn spring-boot:run`
 2. **Frontend**: `cd frontend/cinema-e-booking-site && npm install && npm start`
 
+
+> Make sure port 8080 and 3000 are free.
+
+```bash
+lsof -ti:8080 | xargs kill -9
+```
+
+```bash
+lsof -ti:3000 | xargs kill -9
+```
+
 ## Technology Stack
 
 ### Frontend

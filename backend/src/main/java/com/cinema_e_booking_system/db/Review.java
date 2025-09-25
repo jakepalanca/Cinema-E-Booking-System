@@ -1,5 +1,7 @@
 package com.cinema_e_booking_system.db;
 
+import jakarta.persistence.Entity;
+
 public class Review {
     
     public enum Rating {

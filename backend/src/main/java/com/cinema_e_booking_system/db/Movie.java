@@ -1,12 +1,8 @@
 package com.cinema_e_booking_system.db;
 
-import java.util.ArrayList;
+import java.util.List;
 
-import org.springframework.data.annotation.Id;
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
+import jakarta.persistence.*;
 
 @Entity
 public class Movie {
@@ -17,30 +13,55 @@ public class Movie {
         ACTION
     }
 
-    @Id @GeneratedValue(strategy = GenerationType.AUTO)
+    public enum MPAA_rating {
+        G,
+        PG,
+        PG_13,
+        R,
+        NC_17
+    }
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+
     private String title;
+
+    @Enumerated(EnumType.STRING)
     private MovieCategory movieCategory;
-    private ArrayList<String> cast; // TODO: confirm just need name of cast members. If not, change from String to a Cast object 
-    private String director; // TODO: confirm singular. if not do same as above
-    private String producer; // TODO: confirm singular. if not do same as above
+
+    @ElementCollection
+    private List<String> cast; // TODO: confirm just need name of cast members. If not, change from String to a Cast object
+    private String director;
+    private String producer; // TODO: confirm singular
     private String synopsis;
-    private ArrayList<Review> reviews;
+    private String trailerLink;
+
+    @Enumerated(EnumType.STRING)
+    private MPAA_rating mpaaRating;
+
+        public Movie() {
+    }
 
     public Movie(
-        String title, 
-        MovieCategory movieCategory, 
-        ArrayList<String> cast, 
+        String title,
+        MovieCategory movieCategory,
+        List<String> cast,
         String director,
-        String producer, 
-        String synopsis, 
-        ArrayList<Review> reviews) {
-            this.title = title;
-            this.movieCategory = movieCategory;
-            this.cast = cast;
-            this.director = director;
-            this.producer = producer;
-            this.synopsis = synopsis;
-            this.reviews = reviews;
+        String producer,
+        String synopsis,
+        String trailerLink,
+        MPAA_rating mpaaRating
+    ) {
+        this.title = title;
+        this.movieCategory = movieCategory;
+        this.cast = cast;
+        this.director = director;
+        this.producer = producer;
+        this.synopsis = synopsis;
+        this.trailerLink = trailerLink;
+        this.mpaaRating = mpaaRating;
     }
 }
+   
+

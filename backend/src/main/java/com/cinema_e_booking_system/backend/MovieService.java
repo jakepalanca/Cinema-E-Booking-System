@@ -1,14 +1,19 @@
-package com.cinema_e_Movieing_system.backend;
+package com.cinema_e_booking_system.backend;
 
-import com.cinema_e_booking_system.db.*;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.cinema_e_booking_system.db.Movie;
+import com.cinema_e_booking_system.db.MovieRepository;
+import com.cinema_e_booking_system.db.Review;
+import com.cinema_e_booking_system.db.ReviewRepository;
 
 @Service
 public class MovieService {
   private final MovieRepository repo;
-  public MovieService(MovieRepository repo) { this.repo = repo; }
 
   @Transactional
   public Movie create(Movie b) { return repo.save(b); }        // C/U
@@ -24,5 +29,21 @@ public class MovieService {
 
   public Page<Movie> page(int page, int size) {
     return repo.findAll(PageRequest.of(page, size, Sort.by("title"))); // paging
+  }
+
+  private final ReviewRepository reviewRepo;
+  public MovieService(MovieRepository repo, ReviewRepository reviewRepo) {
+    this.repo = repo;
+    this.reviewRepo = reviewRepo;
+  }
+
+  @Transactional
+  public Review addReview(long movieId, int rating, String comment) {
+    Movie m = repo.findById(movieId).orElseThrow();
+    Review r = new Review();
+    r.setMovie(m);
+    r.setRating(rating);
+    r.setComment(comment);
+    return reviewRepo.save(r);
   }
 }

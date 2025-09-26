@@ -1,3 +1,6 @@
+// src/App.js
+import { Routes, Route } from "react-router-dom";
+import BookingPage from "./Pages/BookingPage";
 import logo from './logo.svg';
 import './App.css';
 
@@ -18,6 +21,10 @@ function App() {
           Learn React
         </a>
       </header>
+
+      <Routes>
+        <Route path="/booking/:movieId" element={<BookingPage />} />
+      </Routes>
     </div>
   );
 }

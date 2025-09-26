@@ -29,7 +29,7 @@ public class WebController {
     public Page<Movie> filterByGenre(@RequestParam(name = "genre", required = true) Movie.MovieCategory genre) {
 
         Page<Movie> results = movieRepository.findByMovieCategory(Movie.MovieCategory.valueOf(genre.toString()), Pageable.unpaged());
-
+        //Page<Movie> results = movieService.listSorted() return results
         return results;
     }
 }

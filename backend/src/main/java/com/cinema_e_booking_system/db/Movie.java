@@ -1,42 +1,28 @@
 package com.cinema_e_booking_system.db;
 
-import java.util.List;
-
 import jakarta.persistence.*;
+
+import java.util.List;
 
 @Entity
 public class Movie {
-    // TODO: Add remaining categories
-    public enum MovieCategory {
-        SCI_FI,
-        ROMANCE,
-        ACTION
-    }
-
-    public enum MPAA_rating {
-        G,
-        PG,
-        PG_13,
-        R,
-        NC_17
-    }
-
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     Long id;
-
     String title;
-
     @Enumerated(EnumType.STRING)
     MovieCategory movieCategory;
-
     @ElementCollection
     List<String> cast; // TODO: confirm just need name of cast members. If not, change from String to a Cast object
     String director;
     String producer; // TODO: confirm singular
     String synopsis;
     String trailerLink;
-
+    String posterLink;
+    @OneToMany(cascade = CascadeType.ALL)
+    List<Review> reviews;
+    @OneToMany(cascade = CascadeType.ALL)
+    List<Showtime> showtimes;
     @Enumerated(EnumType.STRING)
     MPAA_rating mpaaRating;
 
@@ -51,6 +37,9 @@ public class Movie {
             String producer,
             String synopsis,
             String trailerLink,
+            String posterLink,
+            List<Showtime> showtimes,
+            List<Review> reviews,
             MPAA_rating mpaaRating
     ) {
         this.title = title;
@@ -61,6 +50,9 @@ public class Movie {
         this.synopsis = synopsis;
         this.trailerLink = trailerLink;
         this.mpaaRating = mpaaRating;
+        this.reviews = reviews;
+        this.posterLink = posterLink;
+        this.showtimes = showtimes;
     }
 
     public String getTitle() {
@@ -125,6 +117,56 @@ public class Movie {
 
     public void setMpaaRating(MPAA_rating newMpaaRating) {
         mpaaRating = newMpaaRating;
+    }
+
+    public List<Review> getReviews() {
+        return reviews;
+    }
+
+    public void setReviews(List<Review> reviews) {
+        this.reviews = reviews;
+    }
+
+    public String getPosterLink() {
+        return posterLink;
+    }
+
+    public void setPosterLink(String posterLink) {
+        this.posterLink = posterLink;
+    }
+
+    public List<Showtime> getShowtimes() {
+        return showtimes;
+    }
+
+    public void setShowtimes(List<Showtime> showtimes) {
+        this.showtimes = showtimes;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public enum MovieCategory {
+        SCI_FI,
+        ROMANCE,
+        ACTION,
+        COMEDY,
+        HORROR,
+        DRAMA,
+        THRILLER,
+        FANTASY,
+        ANIMATION,
+        CRIME,
+        WESTERN
+    }
+
+    public enum MPAA_rating {
+        G,
+        PG,
+        PG_13,
+        R,
+        NC_17
     }
 }
    

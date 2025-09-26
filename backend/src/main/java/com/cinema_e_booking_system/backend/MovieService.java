@@ -1,49 +1,57 @@
 package com.cinema_e_booking_system.backend;
 
+import com.cinema_e_booking_system.db.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.cinema_e_booking_system.db.Movie;
-import com.cinema_e_booking_system.db.MovieRepository;
-import com.cinema_e_booking_system.db.Review;
-import com.cinema_e_booking_system.db.ReviewRepository;
-
 @Service
 public class MovieService {
-  private final MovieRepository repo;
+    private final MovieRepository repo;
+    private final ReviewRepository reviewRepo;
+    private final ShowtimeRepository showtimeRepository;
 
-  @Transactional
-  public Movie create(Movie b) { return repo.save(b); }        // C/U
+    public MovieService(MovieRepository repo, ReviewRepository reviewRepo, ShowtimeRepository showtimeRepository) {
+        this.repo = repo;
+        this.reviewRepo = reviewRepo;
+        this.showtimeRepository = showtimeRepository;
+    }
 
-  public java.util.Optional<Movie> get(Long id) { return repo.findById(id); } // R
+    @Transactional
+    public Movie create(Movie b) {
+        return repo.save(b);
+    }        // C/U
 
-  @Transactional
-  public void delete(Long id) { repo.deleteById(id); }       // D
+    public java.util.Optional<Movie> get(Long id) {
+        return repo.findById(id);
+    } // R
 
-  public java.util.List<Movie> listSorted() {
-    return repo.findAll(Sort.by("title").ascending());       // sorting
-  }
+    @Transactional
+    public void delete(Long id) {
+        repo.deleteById(id);
+    }       // D
 
-  public Page<Movie> page(int page, int size) {
-    return repo.findAll(PageRequest.of(page, size, Sort.by("title"))); // paging
-  }
+    public java.util.List<Movie> listSorted() {
+        return repo.findAll(Sort.by("title").ascending());       // sorting
+    }
 
-  private final ReviewRepository reviewRepo;
-  public MovieService(MovieRepository repo, ReviewRepository reviewRepo) {
-    this.repo = repo;
-    this.reviewRepo = reviewRepo;
-  }
+    public Page<Movie> page(int page, int size) {
+        return repo.findAll(PageRequest.of(page, size, Sort.by("title"))); // paging
+    }
 
-  @Transactional
-  public Review addReview(long movieId, int rating, String comment) {
-    Movie m = repo.findById(movieId).orElseThrow();
-    Review r = new Review();
-    r.setMovie(m);
-    r.setRating(rating);
-    r.setComment(comment);
-    return reviewRepo.save(r);
-  }
+    @Transactional
+    public Review addReview(long movieId, Review review) {
+        Movie movie = repo.findById(movieId).orElseThrow();
+        review.setMovie(movie);
+        return reviewRepo.save(review);
+    }
+
+    @Transactional
+    public Showtime addShowtime(long movieId, Showtime showtime) {
+        Movie movie = repo.findById(movieId).orElseThrow();
+        showtime.setMovie(movie);
+        return showtimeRepository.save(showtime);
+    }
 }

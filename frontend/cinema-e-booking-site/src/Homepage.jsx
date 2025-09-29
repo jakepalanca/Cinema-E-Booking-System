@@ -12,12 +12,15 @@ function Homepage() {
   useEffect(() => {
     const fetchMovies = async () => {
       try {
-        const response = await fetch("http://localhost:8080/all-movies");
+        const response = await fetch("http://localhost:8080/return-all");
         if (!response.ok) {
           throw new Error("Failed to fetch movies");
         }
         const data = await response.json();
-        setMovies(data);
+        setMovies({
+          nowShowing: data.content.filter(movie => movie.showtimes.length > 0),
+          upcoming: data.content.filter(movie => movie.showtimes.length === 0)
+        })
       } catch (err) {
         setError(err.message);
       } finally {
@@ -42,7 +45,7 @@ function Homepage() {
       </div>
       <div>
         {displayedMovies.map((movie) => (
-          <MovieDisplay key={movie.id} title = {movie.title} poster={movie.poster}/>
+          <MovieDisplay key={movie.id} title = {movie.title} poster={movie.posterLink}/>
         ))}
       </div>
     </>

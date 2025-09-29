@@ -7,6 +7,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+/**
+ * The main application for the backend.
+ */
 @SpringBootApplication(scanBasePackages = "com.cinema_e_booking_system")
 @EnableJpaRepositories(basePackages = "com.cinema_e_booking_system")
 @EntityScan(basePackages = "com.cinema_e_booking_system")
@@ -14,6 +17,9 @@ public class BackendApplication {
     @Autowired
     MovieRepository movieRepository;
 
+    /**
+     * The main method for the backend application.
+     */
     public static void main(String[] args) {
         SpringApplication.run(BackendApplication.class, args);
     }

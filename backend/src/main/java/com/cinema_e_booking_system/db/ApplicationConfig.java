@@ -12,10 +12,18 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.sql.DataSource;
 
+/**
+ * Configuration class for setting up the application's database connection,
+ * JPA entity manager, and transaction management using SQLite as the database.
+ */
 @Configuration
 @EnableTransactionManagement
 class ApplicationConfig {
 
+    /**
+     * Configures database connection, JPA entity manager, and transaction management for the app.
+     * Uses SQLite as the database.
+     */
     @Bean
     public DataSource dataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
@@ -24,6 +32,9 @@ class ApplicationConfig {
         return dataSource;
     }
 
+    /**
+     * Creates and configures the JPA entity manager factory bean.
+     */
     @Bean
     public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
@@ -37,6 +48,9 @@ class ApplicationConfig {
         return factory;
     }
 
+    /**
+     * Creates and configures the transaction manager for the JPA entity manager.
+     */
     @Bean
     public PlatformTransactionManager transactionManager(EntityManagerFactory entityManagerFactory) {
         JpaTransactionManager txManager = new JpaTransactionManager();

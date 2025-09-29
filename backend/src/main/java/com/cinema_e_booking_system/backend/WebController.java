@@ -28,35 +28,32 @@ public class WebController {
     @Autowired
     MovieService movieService;
 
-    /*
-    Use this to ensure that the backend is online and healthy
+    /**
+     * The endpoint to check if the backend is healthy.
      */
     @GetMapping("/health")
     public int getHealth() {
         return 200;
     }
 
-    /*
-    Make a request to receive a Page object as json that contains the corresponding movies of requested genre/MoveCategory Enum
-    Check Movie.java to see what values of MovieCategory are possible and make sure they match frontend (case-sensitive)
+    /**
+     * The endpoint to filter movies by genre.
      */
     @GetMapping("/by-genre")
     public Page<Movie> filterByGenre(@RequestParam(name = "genre", required = true) Movie.MovieCategory genre) {
         return movieRepository.findByMovieCategory(Movie.MovieCategory.valueOf(genre.toString()), Pageable.unpaged());
     }
 
-    /*
-    Simply returns all movies as a Page
+    /**
+     * The endpoint to return all movies.
      */
     @GetMapping("/return-all")
     public Page<Movie> returnAll() {
         return movieService.listSorted(0, 10);
     }
 
-    /*
-    'title' and 'genre' should be a parameter (not in url but as a query parameter)
-    Make sure 'title' is required on frontend (we haven't dealt with exceptions yet)
-    Returns a Page object as json
+    /**
+     * The endpoint to search for movies by title.
      */
     @GetMapping("/search-title")
     public Page<Movie> searchByTitle(
@@ -72,8 +69,10 @@ public class WebController {
         );
     }
 
-    /*
-    FOR TESTING ONLY. CREATES SQL ITEMS
+    // *** BELOW THIS LINE IS FOR TESTING AND DEVELOPMENT ONLY. ***
+
+    /**
+     * The endpoint to initialize the database.
      */
     @GetMapping("/initialize-db")
     public void initializeDb() {
@@ -224,8 +223,8 @@ public class WebController {
         }
     }
 
-    /*
-    FOR TESTING ONLY. DELETES ALL SQL ITEMS
+    /**
+     * The endpoint to clear the database.
      */
     @GetMapping("/clear-db")
     public void clearDb() {

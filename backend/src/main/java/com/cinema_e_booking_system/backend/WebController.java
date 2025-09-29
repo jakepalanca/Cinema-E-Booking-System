@@ -17,6 +17,7 @@ import java.sql.Date;
 import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 
 @RestController
 public class WebController {
@@ -65,11 +66,11 @@ public class WebController {
 
   @GetMapping("/movies")
   public MovieData movies() {
-    java.util.List<Movie> nowShowing = java.util.Arrays.asList();
-    java.util.List<Movie> upcoming = java.util.Arrays.asList();
+    java.util.List<Movie> nowShowing = new ArrayList<Movie>();
+    java.util.List<Movie> upcoming = new ArrayList<Movie>();
     //for every movie in db, if showtimes are empty add to upcoming, else add to nowShowing
     for (Movie movie : movieService.listSorted()) {
-      if (movie.showtimes.isEmpty()) {
+      if (movie.getShowtimes().isEmpty()) {
         upcoming.add(movie);
       } else {
         nowShowing.add(movie);

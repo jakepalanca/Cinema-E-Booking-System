@@ -3,6 +3,7 @@ package com.cinema_e_booking_system.backend;
 import com.cinema_e_booking_system.db.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,12 +34,13 @@ public class MovieService {
         repo.deleteById(id);
     }
 
-    public java.util.List<Movie> listSorted() {
-        return repo.findAll(Sort.by("title").ascending()); // sorting
+    public Page<Movie> listSorted(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("title").ascending());
+        return repo.findAll(pageable);
     }
 
     public Page<Movie> page(int page, int size) {
-        return repo.findAll(PageRequest.of(page, size, Sort.by("title"))); // paging
+        return repo.findAll(PageRequest.of(page, size, Sort.by("title")));
     }
 
     @Transactional

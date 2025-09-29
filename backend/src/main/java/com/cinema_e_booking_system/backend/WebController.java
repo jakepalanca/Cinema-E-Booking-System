@@ -1,6 +1,9 @@
 package com.cinema_e_booking_system.backend;
 
-import com.cinema_e_booking_system.db.*;
+import com.cinema_e_booking_system.db.Movie;
+import com.cinema_e_booking_system.db.MovieRepository;
+import com.cinema_e_booking_system.db.Review;
+import com.cinema_e_booking_system.db.Showtime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,7 +16,7 @@ import java.sql.Date;
 import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
+import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
@@ -21,28 +24,40 @@ public class WebController {
 
     @Autowired
     MovieRepository movieRepository;
+
     @Autowired
     MovieService movieService;
 
+    /*
+    Use this to ensure that the backend is online and healthy
+     */
     @GetMapping("/health")
     public int getHealth() {
         return 200;
     }
 
-    @GetMapping("/filter")
+    /*
+    Make a request to receive a Page object as json that contains the corresponding movies of requested genre/MoveCategory Enum
+    Check Movie.java to see what values of MovieCategory are possible and make sure they match frontend (case-sensitive)
+     */
+    @GetMapping("/by-genre")
     public Page<Movie> filterByGenre(@RequestParam(name = "genre", required = true) Movie.MovieCategory genre) {
-
-        Page<Movie> results = movieRepository.findByMovieCategory(Movie.MovieCategory.valueOf(genre.toString()), Pageable.unpaged());
-        //Page<Movie> results = movieService.listSorted() return results
-        return results;
+        return movieRepository.findByMovieCategory(Movie.MovieCategory.valueOf(genre.toString()), Pageable.unpaged());
     }
 
+    /*
+    Simply returns all movies as a Page
+     */
     @GetMapping("/return-all")
-    public java.util.List<Movie> returnAll() {
-        return movieService.listSorted();
+    public Page<Movie> returnAll() {
+        return movieService.listSorted(1, 10);
     }
 
-    //URL .../searchTitle?title=xxxx
+    /*
+    'title' and 'genre' should be a parameter (not in url but as a query parameter)
+    Make sure 'title' is required on frontend (we haven't dealt with exceptions yet)
+    Returns a Page object as json
+     */
     @GetMapping("/search-title")
     public Page<Movie> searchByTitle(
             @RequestParam(name = "title", required = true) String title,
@@ -55,30 +70,15 @@ public class WebController {
                 genre,
                 pageable
         );
-
     }
 
-
-    @GetMapping("/all-movies")
-    public MovieData movies() {
-        java.util.List<Movie> nowShowing = new ArrayList<Movie>();
-        java.util.List<Movie> upcoming = new ArrayList<Movie>();
-        //for every movie in db, if showtimes are empty add to upcoming, else add to nowShowing
-        for (Movie movie : movieService.listSorted()) {
-            if (movie.getShowtimes().isEmpty()) {
-                upcoming.add(movie);
-            } else {
-                nowShowing.add(movie);
-            }
-        }
-        return new MovieData(nowShowing, upcoming);
-    }
-
+    /*
+    FOR TESTING ONLY. CREATES SQL ITEMS
+     */
     @GetMapping("/initialize-db")
     public void initializeDb() {
         int moviesCreated = 0, showtimesCreated = 0, reviewsCreated = 0;
 
-        // tiny helpers
         Date today = Date.valueOf(LocalDate.now());
         Date tomorrow = Date.valueOf(LocalDate.now().plusDays(1));
         Date dayAfterTomorrow = Date.valueOf(LocalDate.now().plusDays(2));
@@ -87,7 +87,7 @@ public class WebController {
         Time night = Time.valueOf(LocalTime.of(13, 0));
         Time lateNight = Time.valueOf(LocalTime.of(14, 0));
 
-        java.util.List<Movie> seed = java.util.List.of(
+        List<Movie> seed = List.of(
                 new Movie(
                         "Interstellar",
                         Movie.MovieCategory.SCI_FI,
@@ -224,7 +224,9 @@ public class WebController {
         }
     }
 
-
+    /*
+    FOR TESTING ONLY. DELETES ALL SQL ITEMS
+     */
     @GetMapping("/clear-db")
     public void clearDb() {
         movieRepository.deleteAll();

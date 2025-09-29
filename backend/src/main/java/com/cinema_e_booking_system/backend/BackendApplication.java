@@ -11,23 +11,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EnableJpaRepositories(basePackages = "com.cinema_e_booking_system")
 @EntityScan(basePackages = "com.cinema_e_booking_system")
 public class BackendApplication {
-
     @Autowired
     MovieRepository movieRepository;
 
     public static void main(String[] args) {
         SpringApplication.run(BackendApplication.class, args);
     }
-
-    /*
-	@Bean
-    public CommandLineRunner seed(MovieService service) {
-		List<String> cast_a = new ArrayList<>(Arrays.asList("hello", "hi"));
-		Movie a = new Movie("Interstellar", MovieCategory.ROMANCE, cast_a, "Michael Rosenburg", "Michael Rosenburg", "Jake writes some code", "https://www.google.com", MPAA_rating.G);
-
-		return args -> {
-			service.create(a);
-		};
-	}
-     */
 }

@@ -1,6 +1,7 @@
 package com.cinema_e_booking_system.db;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "review")
@@ -12,6 +13,7 @@ public class Review {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "movie_id")
+    @JsonBackReference("movie-reviews")
     private Movie movie;
     private int rating;
     private String comment;

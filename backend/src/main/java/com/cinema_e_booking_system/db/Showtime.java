@@ -1,6 +1,7 @@
 package com.cinema_e_booking_system.db;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import java.sql.Date;
 import java.sql.Time;
@@ -15,6 +16,7 @@ public class Showtime {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "movie_id")
+    @JsonBackReference("movie-showtimes")
     private Movie movie;
 
     private Date date;
@@ -23,6 +25,9 @@ public class Showtime {
     public Showtime(Date date, Time time) {
         this.date = date;
         this.time = time;
+    }
+
+    public Showtime() {
     }
 
     public Long getId() {

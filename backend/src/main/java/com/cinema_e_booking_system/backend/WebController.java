@@ -50,7 +50,7 @@ public class WebController {
      */
     @GetMapping("/return-all")
     public Page<Movie> returnAll() {
-        return movieService.listSorted(1, 10);
+        return movieService.listSorted(0, 10);
     }
 
     /*

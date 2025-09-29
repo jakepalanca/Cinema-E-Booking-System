@@ -1,6 +1,7 @@
 package com.cinema_e_booking_system.db;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import java.util.List;
 
@@ -19,9 +20,11 @@ public class Movie {
     String synopsis;
     String trailerLink;
     String posterLink;
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JsonManagedReference("movie-reviews")
     List<Review> reviews;
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JsonManagedReference("movie-showtimes")
     List<Showtime> showtimes;
     @Enumerated(EnumType.STRING)
     MPAA_rating mpaaRating;

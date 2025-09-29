@@ -37,6 +37,54 @@ public class WebController {
         return results;
     }
 
+  @GetMapping("/returnAll")
+  public java.util.List<Movie> returnAll() {
+      return movieService.listSorted();
+  }
+
+  @GetMapping("/movies")
+  public java.util.List<Movie> movies() {
+    java.util.List<Movie> nowShowing = java.util.Arrays.asList(
+      new Movie(
+        "Inception",
+        Movie.MovieCategory.SCI_FI,
+        java.util.List.of("Leonardo DiCaprio", "Joseph Gordon-Levitt", "Elliot Page"),
+        "Christopher Nolan",
+        "Emma Thomas",
+        "A thief who invades dreams is offered a clean slate.",
+        "https://youtu.be/YoHD9XEInc0",
+        "https://m.media-amazon.com/images/I/51nbVEuw1HL._AC_.jpg",
+        new java.util.ArrayList<>(), new java.util.ArrayList<>(), Movie.MPAA_rating.PG_13
+      ),
+      new Movie(
+        "Titanic",
+        Movie.MovieCategory.ROMANCE,
+        java.util.List.of("Leonardo DiCaprio", "Kate Winslet", "Billy Zane"),
+        "James Cameron",
+        "James Cameron",
+        "A love story aboard the ill-fated RMS Titanic.",
+        "https://youtu.be/kVrqfYjkTdQ",
+        "https://m.media-amazon.com/images/I/71d7n5v1iSL._AC_SY679_.jpg",
+        new java.util.ArrayList<>(), new java.util.ArrayList<>(), Movie.MPAA_rating.PG_13
+      ),
+      new Movie(
+        "The Matrix",
+        Movie.MovieCategory.SCI_FI,
+        java.util.List.of("Keanu Reeves", "Laurence Fishburne", "Carrie-Anne Moss"),
+        "Lana Wachowski, Lilly Wachowski",
+        "Joel Silver",
+        "A hacker discovers reality is a simulation.",
+        "https://youtu.be/vKQi3bBA1y8",
+        "https://m.media-amazon.com/images/I/51vpnbwFHrL._AC_.jpg",
+        new java.util.ArrayList<>(), new java.util.ArrayList<>(), Movie.MPAA_rating.R
+      )
+    );
+    for (Movie movie : nowShowing) {
+      Movie created = movieService.create(movie);
+    }
+    return nowShowing;
+  }
+
     @GetMapping("/initialize-db")
     public void initializeDb() {
         int moviesCreated = 0, showtimesCreated = 0, reviewsCreated = 0;

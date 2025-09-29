@@ -28,5 +28,6 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
             where lower(m.title) like lower(concat('%', ?1, '%'))
               and (coalesce(?2, m.movieCategory) = m.movieCategory)
             """)
+
     Page<Movie> searchByTitleAndOptionalMovieCategory(String titlePart, Movie.MovieCategory movieCategory, Pageable pageable);
 }

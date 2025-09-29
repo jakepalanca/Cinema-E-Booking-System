@@ -1,10 +1,12 @@
 package com.cinema_e_booking_system.backend;
 
 import com.cinema_e_booking_system.db.Movie;
+import com.cinema_e_booking_system.db.MovieData;
 import com.cinema_e_booking_system.db.MovieRepository;
 import com.cinema_e_booking_system.db.Review;
 import com.cinema_e_booking_system.db.Showtime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,47 +44,38 @@ public class WebController {
       return movieService.listSorted();
   }
 
+  //URL .../searchTitle?title=xxxx
+  @GetMapping("/searchTitle")
+  public Page<Movie> searchByTitle(
+    @RequestParam(name = "title", required = true) String title,
+    @RequestParam(name = "genre", required = false) Movie.MovieCategory genre,
+    Pageable pageable)
+  {
+    String titlePart = (title == null) ? "" : title;
+
+      return movieRepository.searchByTitleAndOptionalMovieCategory(
+        titlePart,
+        genre,
+        pageable
+      );
+
+  }
+
+
+
   @GetMapping("/movies")
-  public java.util.List<Movie> movies() {
-    java.util.List<Movie> nowShowing = java.util.Arrays.asList(
-      new Movie(
-        "Inception",
-        Movie.MovieCategory.SCI_FI,
-        java.util.List.of("Leonardo DiCaprio", "Joseph Gordon-Levitt", "Elliot Page"),
-        "Christopher Nolan",
-        "Emma Thomas",
-        "A thief who invades dreams is offered a clean slate.",
-        "https://youtu.be/YoHD9XEInc0",
-        "https://m.media-amazon.com/images/I/51nbVEuw1HL._AC_.jpg",
-        new java.util.ArrayList<>(), new java.util.ArrayList<>(), Movie.MPAA_rating.PG_13
-      ),
-      new Movie(
-        "Titanic",
-        Movie.MovieCategory.ROMANCE,
-        java.util.List.of("Leonardo DiCaprio", "Kate Winslet", "Billy Zane"),
-        "James Cameron",
-        "James Cameron",
-        "A love story aboard the ill-fated RMS Titanic.",
-        "https://youtu.be/kVrqfYjkTdQ",
-        "https://m.media-amazon.com/images/I/71d7n5v1iSL._AC_SY679_.jpg",
-        new java.util.ArrayList<>(), new java.util.ArrayList<>(), Movie.MPAA_rating.PG_13
-      ),
-      new Movie(
-        "The Matrix",
-        Movie.MovieCategory.SCI_FI,
-        java.util.List.of("Keanu Reeves", "Laurence Fishburne", "Carrie-Anne Moss"),
-        "Lana Wachowski, Lilly Wachowski",
-        "Joel Silver",
-        "A hacker discovers reality is a simulation.",
-        "https://youtu.be/vKQi3bBA1y8",
-        "https://m.media-amazon.com/images/I/51vpnbwFHrL._AC_.jpg",
-        new java.util.ArrayList<>(), new java.util.ArrayList<>(), Movie.MPAA_rating.R
-      )
-    );
-    for (Movie movie : nowShowing) {
-      Movie created = movieService.create(movie);
+  public MovieData movies() {
+    java.util.List<Movie> nowShowing = java.util.Arrays.asList();
+    java.util.List<Movie> upcoming = java.util.Arrays.asList();
+    //for every movie in db, if showtimes are empty add to upcoming, else add to nowShowing
+    for (Movie movie : movieService.listSorted()) {
+      if (movie.showtimes.isEmpty()) {
+        upcoming.add(movie);
+      } else {
+        nowShowing.add(movie);
+      }
     }
-    return nowShowing;
+    return new MovieData(nowShowing,upcoming);
   }
 
     @GetMapping("/initialize-db")

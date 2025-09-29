@@ -1,0 +1,29 @@
+body {
+    background-color: rgba(29, 29, 34, 0.932);
+}
+hr {
+    background-color: rgba(2, 2, 2, 0.932);
+    border-color: rgba(2, 2, 2, 0.932);
+}
+
+.buttons {
+    display: flex;
+    padding: 1rem;
+    gap: 40px;
+    justify-content: center;
+}
+button {
+  padding: 10px 20px;           /* space inside the button */
+  font-size: 16px;              /* text size */
+  background-color: rgba(152, 2, 2, 0.826);    /* button background */
+  color: white;                 /* text color */
+  border: 1px solid #6e0202d3;    /* border color */
+  border-radius: 5px;           /* rounded corners */
+  cursor: pointer;              /* pointer on hover */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* subtle shadow */
+  transition: all 0.2s ease;    /* smooth hover effect */
+}
+button:hover {
+    background-color: #6e0202d3;
+}
+

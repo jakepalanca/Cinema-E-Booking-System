@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.sql.Date;
 import java.sql.Time;
@@ -19,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 
+@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 public class WebController {
 

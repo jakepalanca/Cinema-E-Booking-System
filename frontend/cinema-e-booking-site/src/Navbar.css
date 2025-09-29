@@ -1,0 +1,18 @@
+nav {
+    flex-direction: column;
+    list-style-type: none;
+    background-color: rgba(152, 2, 2, 0.826);
+    padding-top: .25rem;
+    padding-bottom: .25rem;
+    border-bottom: 3px solid #6e0202d3;
+}
+.flex-list{
+    display: flex;
+    justify-content: space-evenly;
+    list-style-type: none;
+    padding: 4px;
+    gap: 20px;
+}
+.logo{
+    display: flex;
+}

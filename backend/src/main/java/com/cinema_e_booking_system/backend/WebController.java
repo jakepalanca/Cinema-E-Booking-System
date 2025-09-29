@@ -1,18 +1,13 @@
 package com.cinema_e_booking_system.backend;
 
-import com.cinema_e_booking_system.db.Movie;
-import com.cinema_e_booking_system.db.MovieData;
-import com.cinema_e_booking_system.db.MovieRepository;
-import com.cinema_e_booking_system.db.Review;
-import com.cinema_e_booking_system.db.Showtime;
+import com.cinema_e_booking_system.db.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.sql.Date;
 import java.sql.Time;
@@ -42,44 +37,42 @@ public class WebController {
         return results;
     }
 
-  @GetMapping("/returnAll")
-  public java.util.List<Movie> returnAll() {
-      return movieService.listSorted();
-  }
-
-  //URL .../searchTitle?title=xxxx
-  @GetMapping("/searchTitle")
-  public Page<Movie> searchByTitle(
-    @RequestParam(name = "title", required = true) String title,
-    @RequestParam(name = "genre", required = false) Movie.MovieCategory genre,
-    Pageable pageable)
-  {
-    String titlePart = (title == null) ? "" : title;
-
-      return movieRepository.searchByTitleAndOptionalMovieCategory(
-        titlePart,
-        genre,
-        pageable
-      );
-
-  }
-
-
-
-  @GetMapping("/movies")
-  public MovieData movies() {
-    java.util.List<Movie> nowShowing = new ArrayList<Movie>();
-    java.util.List<Movie> upcoming = new ArrayList<Movie>();
-    //for every movie in db, if showtimes are empty add to upcoming, else add to nowShowing
-    for (Movie movie : movieService.listSorted()) {
-      if (movie.getShowtimes().isEmpty()) {
-        upcoming.add(movie);
-      } else {
-        nowShowing.add(movie);
-      }
+    @GetMapping("/return-all")
+    public java.util.List<Movie> returnAll() {
+        return movieService.listSorted();
     }
-    return new MovieData(nowShowing,upcoming);
-  }
+
+    //URL .../searchTitle?title=xxxx
+    @GetMapping("/search-title")
+    public Page<Movie> searchByTitle(
+            @RequestParam(name = "title", required = true) String title,
+            @RequestParam(name = "genre", required = false) Movie.MovieCategory genre,
+            Pageable pageable) {
+        String titlePart = (title == null) ? "" : title;
+
+        return movieRepository.searchByTitleAndOptionalMovieCategory(
+                titlePart,
+                genre,
+                pageable
+        );
+
+    }
+
+
+    @GetMapping("/all-movies")
+    public MovieData movies() {
+        java.util.List<Movie> nowShowing = new ArrayList<Movie>();
+        java.util.List<Movie> upcoming = new ArrayList<Movie>();
+        //for every movie in db, if showtimes are empty add to upcoming, else add to nowShowing
+        for (Movie movie : movieService.listSorted()) {
+            if (movie.getShowtimes().isEmpty()) {
+                upcoming.add(movie);
+            } else {
+                nowShowing.add(movie);
+            }
+        }
+        return new MovieData(nowShowing, upcoming);
+    }
 
     @GetMapping("/initialize-db")
     public void initializeDb() {
@@ -103,7 +96,7 @@ public class WebController {
                         "Emma Thomas",
                         "Explorers venture through a wormhole to save humanity.",
                         "https://youtu.be/zSWdZVtXT7E",
-                        "https://m.media-amazon.com/images/I/81F9ZQk2lXL._AC_SY679_.jpg",
+                        "https://cdn.cinematerial.com/p/297x/ctpnz4mq/interstellar-movie-poster-md.jpg?v=1456424450",
                         new java.util.ArrayList<>(), new java.util.ArrayList<>(), Movie.MPAA_rating.PG_13
                 ),
                 new Movie(
@@ -114,7 +107,7 @@ public class WebController {
                         "Emma Thomas",
                         "A thief who invades dreams is offered a clean slate.",
                         "https://youtu.be/YoHD9XEInc0",
-                        "https://m.media-amazon.com/images/I/51nbVEuw1HL._AC_.jpg",
+                        "https://www.movieposters.com/cdn/shop/products/20664117398ad7301d9a9af6d2e5aa5c_1e3ea98b-b962-4982-9f74-2e44381fc6ff_1024x1024.jpg?v=1573618694",
                         new java.util.ArrayList<>(), new java.util.ArrayList<>(), Movie.MPAA_rating.PG_13
                 ),
                 new Movie(
@@ -125,7 +118,7 @@ public class WebController {
                         "Emma Thomas",
                         "Batman faces the Joker’s reign of chaos in Gotham.",
                         "https://youtu.be/EXeTwQWrcwY",
-                        "https://m.media-amazon.com/images/I/71pox3P3v+L._AC_SY679_.jpg",
+                        "https://i.ebayimg.com/images/g/CEEAAOSw9NdXr8OJ/s-l1200.jpg",
                         new java.util.ArrayList<>(), new java.util.ArrayList<>(), Movie.MPAA_rating.PG_13
                 ),
                 new Movie(
@@ -136,7 +129,7 @@ public class WebController {
                         "Kwak Sin-ae",
                         "A poor family infiltrates a wealthy household.",
                         "https://youtu.be/SEUXfv87Wpk",
-                        "https://m.media-amazon.com/images/I/81HyW8pXGmL._AC_SL1500_.jpg",
+                        "https://m.media-amazon.com/images/I/91KArYP03YL._AC_SL1500_.jpg",
                         new java.util.ArrayList<>(), new java.util.ArrayList<>(), Movie.MPAA_rating.R
                 ),
                 new Movie(
@@ -147,7 +140,7 @@ public class WebController {
                         "Albert S. Ruddy",
                         "The Corleone family navigates power, loyalty, and betrayal.",
                         "https://youtu.be/sY1S34973zA",
-                        "https://m.media-amazon.com/images/I/51rOnIjLqzL._AC_.jpg",
+                        "https://m.media-amazon.com/images/M/MV5BNGEwYjgwOGQtYjg5ZS00Njc1LTk2ZGEtM2QwZWQ2NjdhZTE5XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
                         new java.util.ArrayList<>(), new java.util.ArrayList<>(), Movie.MPAA_rating.R
                 ),
                 new Movie(
@@ -158,7 +151,7 @@ public class WebController {
                         "Bonnie Arnold",
                         "Woody and Buzz learn to work together.",
                         "https://youtu.be/v-PjgYDrg70",
-                        "https://m.media-amazon.com/images/I/81aA7hEEykL._AC_SL1500_.jpg",
+                        "https://m.media-amazon.com/images/I/71aBLaC4TzL.jpg",
                         new java.util.ArrayList<>(), new java.util.ArrayList<>(), Movie.MPAA_rating.G
                 ),
                 new Movie(
@@ -180,7 +173,7 @@ public class WebController {
                         "Joel Silver",
                         "A hacker discovers reality is a simulation.",
                         "https://youtu.be/vKQi3bBA1y8",
-                        "https://m.media-amazon.com/images/I/51vpnbwFHrL._AC_.jpg",
+                        "https://m.media-amazon.com/images/I/811lT7khIrL._UF894,1000_QL80_.jpg",
                         new java.util.ArrayList<>(), new java.util.ArrayList<>(), Movie.MPAA_rating.R
                 ),
                 new Movie(
@@ -191,7 +184,7 @@ public class WebController {
                         "Toshio Suzuki",
                         "A girl must free her parents in a spirit world.",
                         "https://youtu.be/ByXuk9QqQkk",
-                        "https://m.media-amazon.com/images/I/81oZKQWb2LL._AC_SL1500_.jpg",
+                        "https://m.media-amazon.com/images/M/MV5BNTEyNmEwOWUtYzkyOC00ZTQ4LTllZmUtMjk0Y2YwOGUzYjRiXkEyXkFqcGc@._V1_.jpg",
                         new java.util.ArrayList<>(), new java.util.ArrayList<>(), Movie.MPAA_rating.PG
                 ),
                 new Movie(
@@ -202,27 +195,27 @@ public class WebController {
                         "Kevin Feige",
                         "T’Challa returns to Wakanda to claim the throne.",
                         "https://youtu.be/xjDjIWPwcPU",
-                        "https://m.media-amazon.com/images/I/81LZ8q9QW-L._AC_SL1500_.jpg",
+                        "https://m.media-amazon.com/images/M/MV5BMTg1MTY2MjYzNV5BMl5BanBnXkFtZTgwMTc4NTMwNDI@._V1_.jpg",
                         new java.util.ArrayList<>(), new java.util.ArrayList<>(), Movie.MPAA_rating.PG_13
                 )
         );
 
         for (Movie m : seed) {
-            // 1) Persist movie to get ID (owner id)
             Movie saved = movieService.create(m);
             Long movieId = saved.getId();
             moviesCreated++;
 
-            // 2) Create showtimes (after movie exists)
-            Showtime s1 = new Showtime(today, lateNight);
-            Showtime s2 = new Showtime(tomorrow, afternoon);
-            Showtime s3 = new Showtime(dayAfterTomorrow, night);
+            if (seed.indexOf(m) % 2 == 1) {
+                Showtime s1 = new Showtime(today, lateNight);
+                Showtime s2 = new Showtime(tomorrow, afternoon);
+                Showtime s3 = new Showtime(dayAfterTomorrow, night);
 
-            movieService.addShowtime(movieId, s1);
-            movieService.addShowtime(movieId, s2);
-            showtimesCreated += 2;
+                movieService.addShowtime(movieId, s1);
+                movieService.addShowtime(movieId, s2);
+                movieService.addShowtime(movieId, s3);
+                showtimesCreated += 3;
+            }
 
-            // 3) Create reviews (after movie exists)
             Review r1 = new Review(5, "Amazing. Visuals & score are top tier.");
             Review r2 = new Review(4, "Great pacing and performances.");
             movieService.addReview(movieId, r1);

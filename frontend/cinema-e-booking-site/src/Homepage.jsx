@@ -12,7 +12,7 @@ function Homepage() {
   useEffect(() => {
     const fetchMovies = async () => {
       try {
-        const response = await fetch("http://localhost:8080/movies"); // needs to be replaced with our api
+        const response = await fetch("http://localhost:8080/all-movies");
         if (!response.ok) {
           throw new Error("Failed to fetch movies");
         }

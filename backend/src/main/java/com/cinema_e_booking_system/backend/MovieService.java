@@ -22,19 +22,19 @@ public class MovieService {
     @Transactional
     public Movie create(Movie b) {
         return repo.save(b);
-    }        // C/U
+    }
 
     public java.util.Optional<Movie> get(Long id) {
         return repo.findById(id);
-    } // R
+    }
 
     @Transactional
     public void delete(Long id) {
         repo.deleteById(id);
-    }       // D
+    }
 
     public java.util.List<Movie> listSorted() {
-        return repo.findAll(Sort.by("title").ascending());       // sorting
+        return repo.findAll(Sort.by("title").ascending()); // sorting
     }
 
     public Page<Movie> page(int page, int size) {

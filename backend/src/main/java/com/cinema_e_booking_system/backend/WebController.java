@@ -1,21 +1,26 @@
 package com.cinema_e_booking_system.backend;
 
 import com.cinema_e_booking_system.db.Movie;
+import com.cinema_e_booking_system.db.MovieData;
 import com.cinema_e_booking_system.db.MovieRepository;
 import com.cinema_e_booking_system.db.Review;
 import com.cinema_e_booking_system.db.Showtime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.sql.Date;
 import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 
+@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 public class WebController {
 
@@ -36,6 +41,45 @@ public class WebController {
         //Page<Movie> results = movieService.listSorted() return results
         return results;
     }
+
+  @GetMapping("/returnAll")
+  public java.util.List<Movie> returnAll() {
+      return movieService.listSorted();
+  }
+
+  //URL .../searchTitle?title=xxxx
+  @GetMapping("/searchTitle")
+  public Page<Movie> searchByTitle(
+    @RequestParam(name = "title", required = true) String title,
+    @RequestParam(name = "genre", required = false) Movie.MovieCategory genre,
+    Pageable pageable)
+  {
+    String titlePart = (title == null) ? "" : title;
+
+      return movieRepository.searchByTitleAndOptionalMovieCategory(
+        titlePart,
+        genre,
+        pageable
+      );
+
+  }
+
+
+
+  @GetMapping("/movies")
+  public MovieData movies() {
+    java.util.List<Movie> nowShowing = new ArrayList<Movie>();
+    java.util.List<Movie> upcoming = new ArrayList<Movie>();
+    //for every movie in db, if showtimes are empty add to upcoming, else add to nowShowing
+    for (Movie movie : movieService.listSorted()) {
+      if (movie.getShowtimes().isEmpty()) {
+        upcoming.add(movie);
+      } else {
+        nowShowing.add(movie);
+      }
+    }
+    return new MovieData(nowShowing,upcoming);
+  }
 
     @GetMapping("/initialize-db")
     public void initializeDb() {

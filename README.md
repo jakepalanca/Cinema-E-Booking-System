@@ -7,8 +7,13 @@
 
 ### Run the Application
 ```bash
-./run.sh
+./run.sh # For MacOS
 ```
+or 
+```powershell
+./run.ps1 # For Windows
+```
+
 
 ### Manual Setup
 1. **Backend**: `cd backend && mvn spring-boot:run`

@@ -1,9 +1,11 @@
 package com.cinema_e_booking_system.backend;
 
-import com.cinema_e_booking_system.db.Movie;
-import com.cinema_e_booking_system.db.MovieRepository;
-import com.cinema_e_booking_system.db.Review;
-import com.cinema_e_booking_system.db.Showtime;
+import java.sql.Date;
+import java.sql.Time;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,12 +14,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.sql.Date;
-import java.sql.Time;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
+import com.cinema_e_booking_system.db.Movie;
+import com.cinema_e_booking_system.db.MovieRepository;
+import com.cinema_e_booking_system.db.Review;
+import com.cinema_e_booking_system.db.Showtime;
 
+/**
+ * The controller for the web.
+ */
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
 public class WebController {

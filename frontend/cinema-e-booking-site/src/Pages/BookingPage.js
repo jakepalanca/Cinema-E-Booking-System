@@ -1,20 +1,19 @@
 // src/Pages/BookingPage.js
-import { useParams, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 export default function BookingPage() {
-  const { movieId } = useParams();
   const { state } = useLocation();
-  const title = state?.title || "Movie Title";
+  const movie = state?.movie;
+  const title = movie?.title || state?.title || "Movie Title";
   const showtime = state?.showtime || "Showtime";
 
   return (
-    <div style={{ padding: 20, maxWidth: 720, margin: "0 auto" }}>
+    <div style={{ padding: 20, maxWidth: 720, margin: "0 auto", color: "white" }}>
       <h2>Booking Page</h2>
 
       <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, marginBottom: 12 }}>
         <p><strong>Movie:</strong> {title}</p>
         <p><strong>Showtime:</strong> {showtime}</p>
-        <small style={{ color: "#666" }}>movieId: {movieId}</small>
       </div>
 
       <form onSubmit={(e)=>e.preventDefault()} style={{ display: "grid", gap: 10 }}>

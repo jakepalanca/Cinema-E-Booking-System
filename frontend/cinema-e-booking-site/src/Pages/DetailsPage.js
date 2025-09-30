@@ -18,10 +18,39 @@ export default function DetailsPage() {
     return match ? `https://www.youtube.com/embed/${match[1]}` : null;
   };
 
+  // Format genre from enum style to readable text
+  const formatGenre = (genre) => {
+    if (!genre) return "Genre not available";
+    return genre
+      .split('_')
+      .map(word => word.charAt(0) + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  // Format date to readable format
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  // Format time to 12-hour format
+  const formatTime = (timeString) => {
+    const [hours, minutes] = timeString.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const formattedHour = hour % 12 || 12;
+    return `${formattedHour}:${minutes} ${ampm}`;
+  };
+
   const embedUrl = getYouTubeEmbedUrl(movie.trailerLink);
 
   return (
-    <div style={{ padding: 20, maxWidth: 960, margin: "0 auto" }}>
+    <div style={{ padding: 20, maxWidth: 960, margin: "0 auto", color: "white" }}>
       <h2>Movie Details</h2>
 
       <div
@@ -51,12 +80,26 @@ export default function DetailsPage() {
           <h3 style={{ marginTop: 0 }}>{movie.title}</h3>
 
           <div style={{ marginBottom: 12 }}>
-            <strong>Showtimes:</strong>
+            <strong>Book Now:</strong>
             {movie.showtimes?.length > 0 ? (
               <ul style={{ marginTop: 4, paddingLeft: 20 }}>
                 {movie.showtimes.map((showtime) => (
-                  <li key={showtime.id}>
-                    {showtime.date} at {showtime.time}
+                  <li key={showtime.id} style={{ marginBottom: 4 }}>
+                    <a
+                      onClick={() => navigate(`/booking/${movieId}`, {
+                        state: {
+                          movie,
+                          showtime: `${formatDate(showtime.date)} at ${formatTime(showtime.time)}`
+                        }
+                      })}
+                      style={{
+                        color: "#dc3545",
+                        cursor: "pointer",
+                        textDecoration: "underline"
+                      }}
+                    >
+                      {formatDate(showtime.date)} at {formatTime(showtime.time)}
+                    </a>
                   </li>
                 ))}
               </ul>
@@ -65,14 +108,12 @@ export default function DetailsPage() {
             )}
           </div>
 
-          <p><strong>Genre:</strong> {movie.movieCategory || "Genre not available"}</p>
+          <p><strong>Genre:</strong> {formatGenre(movie.movieCategory)}</p>
           <p><strong>Director:</strong> {movie.director || "Not available"}</p>
           <p><strong>Producer:</strong> {movie.producer || "Not available"}</p>
           <p><strong>Cast:</strong> {movie.cast?.join(", ") || "Not available"}</p>
           <p><strong>Rating:</strong> {movie.mpaaRating || "Not Rated"}</p>
           <p style={{ marginTop: 12 }}>{movie.synopsis || "No description provided. This is placeholder text for the details page."}</p>
-
-          <small style={{ color: "#666" }}>movieId: {movieId}</small>
         </div>
       </div>
 
@@ -110,20 +151,6 @@ export default function DetailsPage() {
           ))}
         </div>
       )}
-
-      <button
-        onClick={() => navigate(`/booking/${movieId}`, { state: { movie } })}
-        style={{
-          padding: "10px 20px",
-          borderRadius: 6,
-          background: "#007bff",
-          color: "white",
-          border: "none",
-          cursor: "pointer",
-        }}
-      >
-        Book Now
-      </button>
     </div>
   );
 }

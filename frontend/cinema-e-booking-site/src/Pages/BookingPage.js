@@ -9,7 +9,7 @@ export default function BookingPage() {
 
   return (
     <div style={{ padding: 20, maxWidth: 720, margin: "0 auto" }}>
-      <h2>Booking Page (Prototype)</h2>
+      <h2>Booking Page</h2>
 
       <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, marginBottom: 12 }}>
         <p><strong>Movie:</strong> {title}</p>
@@ -21,12 +21,8 @@ export default function BookingPage() {
         <label>Full Name <input type="text" placeholder="Jane Doe" required style={{ width: "100%" }} /></label>
         <label>Email <input type="email" placeholder="jane@example.com" required style={{ width: "100%" }} /></label>
         <label>Number of Tickets <input type="number" min="1" defaultValue={1} style={{ width: 120 }} /></label>
-        <button type="submit">Continue (Prototype)</button>
+        <button type="submit">Continue</button>
       </form>
-
-      <p style={{ color: "#777", marginTop: 8 }}>
-        * UI-only for Sprint 1 — no seats/pricing/checkout yet.
-      </p>
     </div>
   );
 }

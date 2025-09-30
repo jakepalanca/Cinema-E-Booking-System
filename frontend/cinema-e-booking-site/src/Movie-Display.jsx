@@ -21,7 +21,17 @@ function MovieDisplay({ movie }){
             <h2 className="movie-title">{movie.title || "Movie Title"}</h2>
             </Link>
             <div className="showtimes">
-                Showtimes: 2:00 PM 5:00 PM 8:00 PM
+                <ul>
+                    <li>
+                        Monday, September 29, 2025 at 2:00 PM
+                    </li>
+                    <li>
+                        Tuesday, September 30, 2025 at 11:00 AM 
+                    </li>
+                    <li>
+                        Wednesday, October 1, 2025 at 1:00 PM
+                    </li>
+                </ul>
             </div>
 
         </div>

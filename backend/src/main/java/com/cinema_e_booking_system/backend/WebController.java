@@ -210,6 +210,7 @@ public class WebController {
             Movie saved = movieService.create(m);
             Long movieId = saved.getId();
 
+            // Only creates showtime for half of the test data
             if (seed.indexOf(m) % 2 == 1) {
                 Showtime s1 = new Showtime(today, lateNight);
                 Showtime s2 = new Showtime(tomorrow, afternoon);

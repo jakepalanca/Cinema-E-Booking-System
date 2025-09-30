@@ -20,6 +20,9 @@ function MovieDisplay({ movie }){
                 >
             <h2 className="movie-title">{movie.title || "Movie Title"}</h2>
             </Link>
+            <div className="showtimes">
+                Showtimes: 2:00 PM 5:00 PM 8:00 PM
+            </div>
 
         </div>
 

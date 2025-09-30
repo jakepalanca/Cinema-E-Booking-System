@@ -48,9 +48,7 @@ function Homepage() {
         {displayedMovies.map((movie) => (
           <MovieDisplay
           key={movie.id}
-          title = {movie.title}
-          poster={movie.posterLink}
-          showtimes={movie.showtimes}
+          movie={movie}
           />
         ))}
       </div>

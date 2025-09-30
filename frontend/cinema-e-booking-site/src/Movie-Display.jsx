@@ -1,26 +1,26 @@
 import { Link } from "react-router-dom";
-function MovieDisplay({ title, poster, showtimes }){
+function MovieDisplay({ movie }){
     return (
         <div className="moviecard">
             <Link
-                to={`/details/${title.replace(/\s+/g, '-').toLowerCase()}`}
-                state={{ title, poster, showtimes }}
+                to={`/details/${movie.title.replace(/\s+/g, '-').toLowerCase()}`}
+                state={{ movie }}
                 style={{ textDecoration: 'none', color: 'inherit' }}
                 >
-            <img 
-                src={poster} 
-                alt={`${title} Poster`}
+            <img
+                src={movie.posterLink}
+                alt={`${movie.title} Poster`}
                 style={{ width: "200px", height: "300px"}}
             />
             </Link>
             <Link
-                to={`/details/${title.replace(/\s+/g, '-').toLowerCase()}`}
-                state={{ title, poster, showtimes }}
+                to={`/details/${movie.title.replace(/\s+/g, '-').toLowerCase()}`}
+                state={{ movie }}
                 style={{ textDecoration: 'none', color: 'inherit' }}
                 >
-            <h2 className="movie-title">{title || "Movie Title"}</h2>
+            <h2 className="movie-title">{movie.title || "Movie Title"}</h2>
             </Link>
-      
+
         </div>
 
     );

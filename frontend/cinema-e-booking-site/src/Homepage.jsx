@@ -29,6 +29,7 @@ function Homepage() {
     };
     fetchMovies();
   }, []);
+
   const displayedMovies = movies[selectedCategory] || [];
   if (loading) return <p>Loading movies</p>;
   if (error) return <p>Error loading movies: {error}</p>;
@@ -45,7 +46,12 @@ function Homepage() {
       </div>
       <div>
         {displayedMovies.map((movie) => (
-          <MovieDisplay key={movie.id} title = {movie.title} poster={movie.posterLink}/>
+          <MovieDisplay
+          key={movie.id}
+          title = {movie.title}
+          poster={movie.posterLink}
+          showtimes={movie.showtimes}
+          />
         ))}
       </div>
     </>

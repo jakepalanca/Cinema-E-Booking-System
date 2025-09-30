@@ -29,9 +29,9 @@ function Kill-Port {
         $pids = $pids | Sort-Object -Unique
     }
 
-    if ($pids -and $pids.Count -gt 0) {
-        Write-Host "Killing process(es) on port $Port: $($pids -join ', ')"
-        foreach ($pid in $pids) {
+    if ($pids.Count -gt 0) {
+        Write-Host "Killing process(es) on port ${Port}: $($pids -join ', ')"
+        foreach ($procId in $pids) {
             try { Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue } catch {}
             try { taskkill /PID $pid /F | Out-Null } catch {}
         }
@@ -70,7 +70,7 @@ Kill-Port -Port $BACKEND_PORT
 Kill-Port -Port $FRONTEND_PORT
 
 if (Test-Path -LiteralPath $DB_FILE) {
-    Write-Host "Deleting $DB_FILE…"
+    Write-Host "Deleting $DB_FILE..."
     Remove-Item -LiteralPath $DB_FILE -Force
 } else {
     Write-Host "No DB file at $DB_FILE (ok)."

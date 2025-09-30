@@ -1,11 +1,9 @@
 package com.cinema_e_booking_system.backend;
 
-import java.sql.Date;
-import java.sql.Time;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
-
+import com.cinema_e_booking_system.db.Movie;
+import com.cinema_e_booking_system.db.MovieRepository;
+import com.cinema_e_booking_system.db.Review;
+import com.cinema_e_booking_system.db.Showtime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,10 +12,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.cinema_e_booking_system.db.Movie;
-import com.cinema_e_booking_system.db.MovieRepository;
-import com.cinema_e_booking_system.db.Review;
-import com.cinema_e_booking_system.db.Showtime;
+import java.sql.Date;
+import java.sql.Time;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
 
 /**
  * The controller for the web.
@@ -26,9 +25,15 @@ import com.cinema_e_booking_system.db.Showtime;
 @RestController
 public class WebController {
 
+    /**
+     * Movie repository object.
+     */
     @Autowired
     MovieRepository movieRepository;
 
+    /**
+     * Movie service object.
+     */
     @Autowired
     MovieService movieService;
 
@@ -44,7 +49,7 @@ public class WebController {
      * The endpoint to filter movies by genre.
      */
     @GetMapping("/by-genre")
-    public Page<Movie> filterByGenre(@RequestParam(name = "genre", required = true) Movie.MovieCategory genre) {
+    public Page<Movie> filterByGenre(@RequestParam(name = "genre") Movie.MovieCategory genre) {
         return movieRepository.findByMovieCategory(Movie.MovieCategory.valueOf(genre.toString()), Pageable.unpaged());
     }
 
@@ -61,7 +66,7 @@ public class WebController {
      */
     @GetMapping("/search-title")
     public Page<Movie> searchByTitle(
-            @RequestParam(name = "title", required = true) String title,
+            @RequestParam(name = "title") String title,
             @RequestParam(name = "genre", required = false) Movie.MovieCategory genre,
             Pageable pageable) {
         String titlePart = (title == null) ? "" : title;
@@ -80,8 +85,6 @@ public class WebController {
      */
     @GetMapping("/initialize-db")
     public void initializeDb() {
-        int moviesCreated = 0, showtimesCreated = 0, reviewsCreated = 0;
-
         Date today = Date.valueOf(LocalDate.now());
         Date tomorrow = Date.valueOf(LocalDate.now().plusDays(1));
         Date dayAfterTomorrow = Date.valueOf(LocalDate.now().plusDays(2));
@@ -206,7 +209,6 @@ public class WebController {
         for (Movie m : seed) {
             Movie saved = movieService.create(m);
             Long movieId = saved.getId();
-            moviesCreated++;
 
             if (seed.indexOf(m) % 2 == 1) {
                 Showtime s1 = new Showtime(today, lateNight);
@@ -216,14 +218,12 @@ public class WebController {
                 movieService.addShowtime(movieId, s1);
                 movieService.addShowtime(movieId, s2);
                 movieService.addShowtime(movieId, s3);
-                showtimesCreated += 3;
             }
 
             Review r1 = new Review(5, "Amazing. Visuals & score are top tier.");
             Review r2 = new Review(4, "Great pacing and performances.");
             movieService.addReview(movieId, r1);
             movieService.addReview(movieId, r2);
-            reviewsCreated += 2;
         }
     }
 

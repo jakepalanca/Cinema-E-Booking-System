@@ -165,7 +165,7 @@ public class WebController {
                         "James Cameron",
                         "A love story aboard the ill-fated RMS Titanic.",
                         "https://youtu.be/kVrqfYjkTdQ",
-                        "https://m.media-amazon.com/images/I/71d7n5v1iSL._AC_SY679_.jpg",
+                        "https://m.media-amazon.com/images/I/811lT7khIrL._UF894,1000_QL80_.jpg",
                         new java.util.ArrayList<>(), new java.util.ArrayList<>(), Movie.MPAA_rating.PG_13
                 ),
                 new Movie(
@@ -176,7 +176,7 @@ public class WebController {
                         "Joel Silver",
                         "A hacker discovers reality is a simulation.",
                         "https://youtu.be/vKQi3bBA1y8",
-                        "https://m.media-amazon.com/images/I/811lT7khIrL._UF894,1000_QL80_.jpg",
+                        "https://m.media-amazon.com/images/I/71PfZFFz9yL._UF894,1000_QL80_.jpg",
                         new java.util.ArrayList<>(), new java.util.ArrayList<>(), Movie.MPAA_rating.R
                 ),
                 new Movie(

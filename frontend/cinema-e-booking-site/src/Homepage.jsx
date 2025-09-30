@@ -38,10 +38,10 @@ function Homepage() {
       <Navbar/>
       <div className='buttons'>
         <button onClick={() => setSelectedCategory("nowShowing")}>
-          Now Showing
+          Currently Running
         </button>
         <button onClick={() => setSelectedCategory("upcoming")}>
-          Upcoming
+          Coming Soon
         </button>
       </div>
       <div className='movie-grid'>

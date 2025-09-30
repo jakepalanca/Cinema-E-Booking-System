@@ -6,7 +6,7 @@ function Navbar(){
                 <ul className="flex-list">
                     <div className="logo">
                         <li><img src="./assets/react.svg" alt="Logo Placeholder"></img></li>
-                        <li>Title Placeholder</li>
+                        <li className="title">Team14 Cinemas</li>
                     </div>
                     <li><a href="#">Showtimes</a></li>
                     <li><a href="#">Promotions</a></li>

@@ -5,6 +5,14 @@ nav {
     padding-top: .25rem;
     padding-bottom: .25rem;
     border-bottom: 3px solid #6e0202d3;
+    color: whitesmoke;
+}
+nav a {
+    color: whitesmoke;
+    text-decoration: none;
+}
+nav a:hover{
+    color: rgb(160, 160, 160)
 }
 .flex-list{
     display: flex;
@@ -15,4 +23,7 @@ nav {
 }
 .logo{
     display: flex;
+}
+.title{
+    margin-left: 10px;
 }

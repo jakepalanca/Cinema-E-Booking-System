@@ -14,6 +14,8 @@ hr {
 }
 button {
   padding: 10px 20px;           /* space inside the button */
+  flex: 1 1 150px;
+  max-width: 150px;
   font-size: 16px;              /* text size */
   background-color: rgba(152, 2, 2, 0.826);    /* button background */
   color: white;                 /* text color */
@@ -28,7 +30,20 @@ button:hover {
 }
 .moviecard {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 20px;
+  padding: 20px;
   margin-top: 20px;
+}
+.movie-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+}
+.movie-title{
+  text-align: center;
+  color: rgb(202, 199, 199);
+  margin-top: 0px;
 }

@@ -44,7 +44,7 @@ function Homepage() {
           Upcoming
         </button>
       </div>
-      <div>
+      <div className='movie-grid'>
         {displayedMovies.map((movie) => (
           <MovieDisplay
           key={movie.id}

@@ -1,3 +1,4 @@
+```powershell
 #Requires -Version 5.1
 # start.ps1
 
@@ -29,11 +30,11 @@ function Kill-Port {
         $pids = $pids | Sort-Object -Unique
     }
 
-    if ($pids.Count -gt 0) {
+    if (@($pids).Count -gt 0) {
         Write-Host "Killing process(es) on port ${Port}: $($pids -join ', ')"
         foreach ($procId in $pids) {
-            try { Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue } catch {}
-            try { taskkill /PID $pid /F | Out-Null } catch {}
+            try { Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue } catch {}
+            try { taskkill /PID $procId /F | Out-Null } catch {}
         }
     } else {
         Write-Host "No process is listening on $Port (ok)."
@@ -79,7 +80,7 @@ if (Test-Path -LiteralPath $DB_FILE) {
 Write-Host "Starting backend…"
 Push-Location $BACKEND_DIR
 try {
-    $backProc = Start-Process -FilePath "mvn" -ArgumentList "-q","spring-boot:run" -PassThru -WindowStyle Hidden
+    $backProc = Start-Process -FilePath "mvn.cmd" -ArgumentList "-q","spring-boot:run" -PassThru -WindowStyle Hidden
 } finally {
     Pop-Location
 }
@@ -111,16 +112,17 @@ try {
 Write-Host "Starting frontend…"
 Push-Location $FRONTEND_DIR
 try {
-    $ci = Start-Process -FilePath "npm" -ArgumentList "ci" -Wait -PassThru
+    $ci = Start-Process -FilePath "npm.cmd" -ArgumentList "ci" -Wait -PassThru
     if ($ci.ExitCode -ne 0) {
         Write-Warning "npm ci failed (exit $($ci.ExitCode)); falling back to npm install…"
-        $inst = Start-Process -FilePath "npm" -ArgumentList "install" -Wait -PassThru
+        $inst = Start-Process -FilePath "npm.cmd" -ArgumentList "install" -Wait -PassThru
         if ($inst.ExitCode -ne 0) {
             throw "npm install failed with exit $($inst.ExitCode)."
         }
     }
-    & npm start
+    & npm.cmd start
 } finally {
     Pop-Location
     & $cleanup
 }
+```

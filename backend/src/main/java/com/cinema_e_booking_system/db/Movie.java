@@ -11,7 +11,7 @@ import java.util.List;
 @Entity
 public class Movie {
     /**
-     * The unique identifier for the movie.
+     * The primary key of movie.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -52,15 +52,17 @@ public class Movie {
     String posterLink;
     /**
      * The reviews of the movie.
+     * One-To-Many
      */
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JsonManagedReference("movie-reviews")
+    @JsonManagedReference("movie-reviews") // NOT Foreign Key
     List<Review> reviews;
     /**
      * The showtimes of the movie.
+     * One-To-Many
      */
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JsonManagedReference("movie-showtimes")
+    @JsonManagedReference("movie-showtimes") // NOT Foreign Key
     List<Showtime> showtimes;
     /**
      * The MPAA rating of the movie.

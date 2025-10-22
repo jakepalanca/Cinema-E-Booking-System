@@ -11,7 +11,7 @@ import jakarta.persistence.*;
 public class Review {
 
     /**
-     * The id of the review.
+     * The primary key of the review.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,9 +19,10 @@ public class Review {
 
     /**
      * The movie of the review.
+     * Many-to-One
      */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "movie_id")
+    @JoinColumn(name = "movie_id") // Foreign Key
     @JsonBackReference("movie-reviews")
     private Movie movie;
     /**

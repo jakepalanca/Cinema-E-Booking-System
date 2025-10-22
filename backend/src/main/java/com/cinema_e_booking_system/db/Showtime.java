@@ -14,7 +14,7 @@ import java.sql.Time;
 public class Showtime {
 
     /**
-     * The id of the showtime.
+     * The primary key of the showtime.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,7 +24,7 @@ public class Showtime {
      * The movie of the showtime.
      */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "movie_id")
+    @JoinColumn(name = "movie_id") // Foreign Key
     @JsonBackReference("movie-showtimes")
     private Movie movie;
 

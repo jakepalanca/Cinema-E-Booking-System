@@ -10,7 +10,7 @@ function Browse() {
     const [selectedGenre, setSelectedGenre] = useState('All');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const genreOptions = ['All', 'ACTION', 'SCI_FI', 'ROMANCE', 'CRIME', 'THRILLER', 'ANIMATION'];
+    const genreOptions = ['All', 'ACTION', 'SCI_FI', 'ROMANCE', 'CRIME', 'THRILLER', 'ANIMATION', 'COMEDY'];
     // fetch data
     useEffect(() => {
         const fetchFilteredMovies = async () => {

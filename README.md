@@ -41,7 +41,8 @@ lsof -ti:3000 | xargs kill -9
 - Spring Boot 3.5.6 (Java 21)
 - Spring Web (REST API)
 - Spring Data JPA (database)
-- SQLite (database)
+- Jasypt (encryption/decryption)
+- Spring Security (JWT Token)
 
 ## Database
 

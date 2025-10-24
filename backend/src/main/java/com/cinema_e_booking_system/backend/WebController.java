@@ -1,20 +1,51 @@
 package com.cinema_e_booking_system.backend;
 
-import com.cinema_e_booking_system.db.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
 import java.sql.Date;
 import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.cinema_e_booking_system.db.Admin;
+import com.cinema_e_booking_system.db.AdminRepository;
+import com.cinema_e_booking_system.db.Booking;
+import com.cinema_e_booking_system.db.BookingRepository;
+import com.cinema_e_booking_system.db.Cinema;
+import com.cinema_e_booking_system.db.CinemaRepository;
+import com.cinema_e_booking_system.db.Customer;
+import com.cinema_e_booking_system.db.CustomerRepository;
+import com.cinema_e_booking_system.db.Movie;
+import com.cinema_e_booking_system.db.MovieRepository;
+import com.cinema_e_booking_system.db.PaymentMethod;
+import com.cinema_e_booking_system.db.PaymentMethodRepository;
+import com.cinema_e_booking_system.db.Promotion;
+import com.cinema_e_booking_system.db.PromotionRepository;
+import com.cinema_e_booking_system.db.Review;
+import com.cinema_e_booking_system.db.ReviewRepository;
+import com.cinema_e_booking_system.db.Show;
+import com.cinema_e_booking_system.db.ShowRepository;
+import com.cinema_e_booking_system.db.Showroom;
+import com.cinema_e_booking_system.db.ShowroomRepository;
+import com.cinema_e_booking_system.db.Theater;
+import com.cinema_e_booking_system.db.TheaterRepository;
+import com.cinema_e_booking_system.db.Ticket;
+import com.cinema_e_booking_system.db.TicketCategory;
+import com.cinema_e_booking_system.db.TicketCategoryRepository;
+import com.cinema_e_booking_system.db.TicketRepository;
+import com.cinema_e_booking_system.db.User;
+import com.cinema_e_booking_system.db.UserRepository;
 
 /**
  * The controller for the web.
@@ -71,6 +102,9 @@ public class WebController {
     @Autowired
     ReviewRepository reviewRepository;
 
+    @Autowired
+    UserRepository userRepository;
+
     /**
      * The endpoint to check if the backend is healthy.
      */
@@ -96,6 +130,286 @@ public class WebController {
     }
 
     /**
+     * Returns all movies with their associated shows and reviews.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/movies")
+    public List<Movie> getAllMovies() {
+        return movieRepository.findAll();
+    }
+
+    /**
+     * Returns a single movie by id.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/movies/{id}")
+    public ResponseEntity<Movie> getMovieById(@PathVariable Long id) {
+        return movieRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Returns all customers with nested payment methods, promotions, and bookings.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/customers")
+    public List<Customer> getAllCustomers() {
+        return customerRepository.findAll();
+    }
+
+    /**
+     * Returns a single customer by id.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/customers/{id}")
+    public ResponseEntity<Customer> getCustomerById(@PathVariable Long id) {
+        return customerRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Returns all bookings with nested tickets.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/bookings")
+    public List<Booking> getAllBookings() {
+        return bookingRepository.findAll();
+    }
+
+    /**
+     * Returns a single booking by id.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/bookings/{id}")
+    public ResponseEntity<Booking> getBookingById(@PathVariable Long id) {
+        return bookingRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Returns all scheduled shows.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/shows")
+    public List<Show> getAllShows() {
+        return showRepository.findAll();
+    }
+
+    /**
+     * Returns a single show by id.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/shows/{id}")
+    public ResponseEntity<Show> getShowById(@PathVariable Long id) {
+        return showRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Returns all cinemas.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/cinemas")
+    public List<Cinema> getAllCinemas() {
+        return cinemaRepository.findAll();
+    }
+
+    /**
+     * Returns a single cinema by id.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/cinemas/{id}")
+    public ResponseEntity<Cinema> getCinemaById(@PathVariable Long id) {
+        return cinemaRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Returns all theaters.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/theaters")
+    public List<Theater> getAllTheaters() {
+        return theaterRepository.findAll();
+    }
+
+    /**
+     * Returns a single theater by id.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/theaters/{id}")
+    public ResponseEntity<Theater> getTheaterById(@PathVariable Long id) {
+        return theaterRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Returns all showrooms.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/showrooms")
+    public List<Showroom> getAllShowrooms() {
+        return showroomRepository.findAll();
+    }
+
+    /**
+     * Returns a single showroom by id.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/showrooms/{id}")
+    public ResponseEntity<Showroom> getShowroomById(@PathVariable Long id) {
+        return showroomRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Returns all ticket categories.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/ticket-categories")
+    public List<TicketCategory> getAllTicketCategories() {
+        return ticketCategoryRepository.findAll();
+    }
+
+    /**
+     * Returns a single ticket category by id.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/ticket-categories/{id}")
+    public ResponseEntity<TicketCategory> getTicketCategoryById(@PathVariable Long id) {
+        return ticketCategoryRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Returns all tickets.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/tickets")
+    public List<Ticket> getAllTickets() {
+        return ticketRepository.findAll();
+    }
+
+    /**
+     * Returns a single ticket by id.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/tickets/{id}")
+    public ResponseEntity<Ticket> getTicketById(@PathVariable Long id) {
+        return ticketRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Returns all promotions.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/promotions")
+    public List<Promotion> getAllPromotions() {
+        return promotionRepository.findAll();
+    }
+
+    /**
+     * Returns a single promotion by id.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/promotions/{id}")
+    public ResponseEntity<Promotion> getPromotionById(@PathVariable Long id) {
+        return promotionRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Returns all payment methods.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/payment-methods")
+    public List<PaymentMethod> getAllPaymentMethods() {
+        return paymentMethodRepository.findAll();
+    }
+
+    /**
+     * Returns a single payment method by id.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/payment-methods/{id}")
+    public ResponseEntity<PaymentMethod> getPaymentMethodById(@PathVariable Long id) {
+        return paymentMethodRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Returns all admins.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/admins")
+    public List<Admin> getAllAdmins() {
+        return adminRepository.findAll();
+    }
+
+    /**
+     * Returns a single admin by id.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/admins/{id}")
+    public ResponseEntity<Admin> getAdminById(@PathVariable Long id) {
+        return adminRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Returns all users (customers and admins).
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/users")
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    /**
+     * Returns a single user by id.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/users/{id}")
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+        return userRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Returns all reviews.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/reviews")
+    public List<Review> getAllReviews() {
+        return reviewRepository.findAll();
+    }
+
+    /**
+     * Returns a single review by id.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/reviews/{id}")
+    public ResponseEntity<Review> getReviewById(@PathVariable Long id) {
+        return reviewRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
      * The endpoint to search for movies by title.
      */
     @GetMapping("/search-title")
@@ -111,8 +425,6 @@ public class WebController {
                 pageable
         );
     }
-
-    // *** BELOW THIS LINE IS FOR TESTING AND DEVELOPMENT ONLY. ***
 
     /**
      * The endpoint to initialize the database.

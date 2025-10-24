@@ -44,7 +44,7 @@ public class PaymentMethod {
         // JPA requirement
     }
 
-    public PaymentMethod(Customer customer, Long cardNumber, String cardHolderFirstName, String cardHolderLastName, Date expirationDate,  int securityCode) {
+    public PaymentMethod(Customer customer, Long cardNumber, String cardHolderFirstName, String cardHolderLastName, Date expirationDate, int securityCode) {
         this.customer = customer;
         this.cardNumber = cardNumber;
         this.cardHolderFirstName = cardHolderFirstName;
@@ -53,12 +53,12 @@ public class PaymentMethod {
         this.securityCode = securityCode;
     }
 
-    public void  setId(Long id) {
-        this.id = id;
-    }
-
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public Customer getCustomer() {

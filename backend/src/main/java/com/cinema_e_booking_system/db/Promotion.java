@@ -11,22 +11,19 @@ import java.util.List;
 @Table(name = "promotion")
 public class Promotion {
 
+    @ManyToMany(mappedBy = "promotions")
+    @JsonBackReference("customer-promotions")
+    private final List<Customer> customers = new ArrayList<>();
     /**
      * The primary key of promotion.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-
     @Column(nullable = false, unique = true)
     private String code;
-
     // 0.00 - 1.00
     private double discountPercentage;
-
-    @ManyToMany(mappedBy = "promotions")
-    @JsonBackReference("customer-promotions")
-    private List<Customer> customers = new ArrayList<>();
 
     protected Promotion() {
         // JPA requirement

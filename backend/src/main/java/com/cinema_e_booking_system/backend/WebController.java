@@ -1,51 +1,19 @@
 package com.cinema_e_booking_system.backend;
 
+import com.cinema_e_booking_system.db.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
+
 import java.sql.Date;
 import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.cinema_e_booking_system.db.Admin;
-import com.cinema_e_booking_system.db.AdminRepository;
-import com.cinema_e_booking_system.db.Booking;
-import com.cinema_e_booking_system.db.BookingRepository;
-import com.cinema_e_booking_system.db.Cinema;
-import com.cinema_e_booking_system.db.CinemaRepository;
-import com.cinema_e_booking_system.db.Customer;
-import com.cinema_e_booking_system.db.CustomerRepository;
-import com.cinema_e_booking_system.db.Movie;
-import com.cinema_e_booking_system.db.MovieRepository;
-import com.cinema_e_booking_system.db.PaymentMethod;
-import com.cinema_e_booking_system.db.PaymentMethodRepository;
-import com.cinema_e_booking_system.db.Promotion;
-import com.cinema_e_booking_system.db.PromotionRepository;
-import com.cinema_e_booking_system.db.Review;
-import com.cinema_e_booking_system.db.ReviewRepository;
-import com.cinema_e_booking_system.db.Show;
-import com.cinema_e_booking_system.db.ShowRepository;
-import com.cinema_e_booking_system.db.Showroom;
-import com.cinema_e_booking_system.db.ShowroomRepository;
-import com.cinema_e_booking_system.db.Theater;
-import com.cinema_e_booking_system.db.TheaterRepository;
-import com.cinema_e_booking_system.db.Ticket;
-import com.cinema_e_booking_system.db.TicketCategory;
-import com.cinema_e_booking_system.db.TicketCategoryRepository;
-import com.cinema_e_booking_system.db.TicketRepository;
-import com.cinema_e_booking_system.db.User;
-import com.cinema_e_booking_system.db.UserRepository;
 
 /**
  * The controller for the web.

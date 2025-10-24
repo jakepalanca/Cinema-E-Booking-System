@@ -1,21 +1,20 @@
 package com.cinema_e_booking_system.db;
 
-import java.util.Optional;
-
-import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
-
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
+import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
+
+import java.util.Optional;
 
 /**
  * JPA Attribute Converter for encrypting and decrypting String attributes. This
  * converter uses the Jasypt library for encryption and decryption operations.
  * It is configured with an environment variable for the encryption password.
- * 
+ * <p>
  * Note: Ensure that the Jasypt library is correctly configured in your project.
  * The encryption password should be provided through the
  * "jasypt.encryptor.password" property.
- * 
+ *
  * @author rahul.chauhan
  */
 @Converter
@@ -45,7 +44,7 @@ public class StringCryptoConverter implements AttributeConverter<String, String>
 
     /**
      * Converts the attribute value to the encrypted form.
-     * 
+     *
      * @param attribute The original attribute value to be encrypted.
      * @return The encrypted form of the attribute.
      */
@@ -59,7 +58,7 @@ public class StringCryptoConverter implements AttributeConverter<String, String>
 
     /**
      * Converts the encrypted database value to its decrypted form.
-     * 
+     *
      * @param dbData The encrypted value stored in the database.
      * @return The decrypted form of the database value.
      */

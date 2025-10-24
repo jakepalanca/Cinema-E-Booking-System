@@ -14,18 +14,9 @@ import java.util.List;
 @PrimaryKeyJoinColumn(name = "user_id")
 public class Customer extends User {
 
-    // CUSTOMER STATE ENUMERATION
-    public enum CustomerState {
-        ACTIVE, INACTIVE, SUSPENDED
-    }
-
-    @Enumerated(EnumType.STRING)
-    private CustomerState state;
-
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("customer-paymentMethods")
-    private List<PaymentMethod> paymentMethods = new ArrayList<>();
-
+    private final List<PaymentMethod> paymentMethods = new ArrayList<>();
     @ManyToMany
     @JoinTable(
             name = "customer_promotion",
@@ -33,11 +24,12 @@ public class Customer extends User {
             inverseJoinColumns = @JoinColumn(name = "promotion_id")
     )
     @JsonManagedReference("customer-promotions")
-    private List<Promotion> promotions = new ArrayList<>();
-
+    private final List<Promotion> promotions = new ArrayList<>();
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("customer-bookings")
-    private List<Booking> bookings = new ArrayList<>();
+    private final List<Booking> bookings = new ArrayList<>();
+    @Enumerated(EnumType.STRING)
+    private CustomerState state;
 
     protected Customer() {
         // JPA requirement
@@ -46,19 +38,19 @@ public class Customer extends User {
     /**
      * The constructor for the user.
      */
-    public Customer(String  email, String username, String firstName, String lastName, String password, CustomerState state, List<PaymentMethod> paymentMethods,  List<Promotion> promotions) {
+    public Customer(String email, String username, String firstName, String lastName, String password, CustomerState state, List<PaymentMethod> paymentMethods, List<Promotion> promotions) {
         super(email, username, firstName, lastName, password);
         this.state = state;
         setPaymentMethods(paymentMethods);
         setPromotions(promotions);
     }
 
-    public void setState(CustomerState state) {
-        this.state = state;
-    }
-
     public CustomerState getState() {
         return state;
+    }
+
+    public void setState(CustomerState state) {
+        this.state = state;
     }
 
     public void removePaymentMethod(PaymentMethod paymentMethod) {
@@ -100,6 +92,10 @@ public class Customer extends User {
         }
     }
 
+    public List<PaymentMethod> getPaymentMethods() {
+        return paymentMethods;
+    }
+
     public void setPaymentMethods(List<PaymentMethod> paymentMethods) {
         this.paymentMethods.clear();
         if (paymentMethods != null) {
@@ -107,8 +103,8 @@ public class Customer extends User {
         }
     }
 
-    public List<PaymentMethod> getPaymentMethods() {
-        return paymentMethods;
+    public List<Promotion> getPromotions() {
+        return promotions;
     }
 
     public void setPromotions(List<Promotion> promotions) {
@@ -116,10 +112,6 @@ public class Customer extends User {
         if (promotions != null) {
             promotions.forEach(this::addPromotion);
         }
-    }
-
-    public List<Promotion> getPromotions() {
-        return promotions;
     }
 
     public List<Booking> getBookings() {
@@ -150,5 +142,10 @@ public class Customer extends User {
         if (this.bookings.remove(booking)) {
             booking.setCustomer(null);
         }
+    }
+
+    // CUSTOMER STATE ENUMERATION
+    public enum CustomerState {
+        ACTIVE, INACTIVE, SUSPENDED
     }
 }

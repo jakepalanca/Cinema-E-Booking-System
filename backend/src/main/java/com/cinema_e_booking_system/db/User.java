@@ -35,7 +35,7 @@ public class User {
     /**
      * The constructor for the user.
      */
-    public User(String  email, String username, String firstName, String lastName,  String password) {
+    public User(String email, String username, String firstName, String lastName, String password) {
         this.email = email;
         this.username = username;
         this.firstName = firstName;

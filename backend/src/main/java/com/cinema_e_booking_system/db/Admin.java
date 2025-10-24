@@ -12,12 +12,13 @@ import jakarta.persistence.Table;
 @PrimaryKeyJoinColumn(name = "user_id")
 public class Admin extends User {
 
-    protected Admin() {}
+    protected Admin() {
+    }
 
     /**
      * The constructor for the admin.
      */
-    public Admin(String  email, String username, String firstName, String lastName, String password) {
+    public Admin(String email, String username, String firstName, String lastName, String password) {
         super(email, username, firstName, lastName, password);
     }
 }

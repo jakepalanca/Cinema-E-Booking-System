@@ -13,18 +13,17 @@ import java.util.List;
 @Table(name = "show")
 public class Show {
 
+    @OneToMany(mappedBy = "show", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("show-tickets")
+    private final List<Ticket> tickets = new ArrayList<>();
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-
     // duration in minutes
     private int duration;
-
     private Date date;
-
     private Time startTime;
     private Time endTime;
-
     /**
      * The movie being shown.
      * Many-to-One
@@ -33,7 +32,6 @@ public class Show {
     @JoinColumn(name = "movie_id") // Foreign Key
     @JsonBackReference("movie-shows")
     private Movie movie;
-
     /**
      * The showroom hosting this show.
      * Many-to-One
@@ -42,10 +40,6 @@ public class Show {
     @JoinColumn(name = "showroom_id") // Foreign Key
     @JsonBackReference("showroom-shows")
     private Showroom showroom;
-
-    @OneToMany(mappedBy = "show", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference("show-tickets")
-    private List<Ticket> tickets = new ArrayList<>();
 
     protected Show() {
         // JPA requirement
@@ -62,36 +56,36 @@ public class Show {
         return id;
     }
 
-    public void  setDuration(int duration) {
-        this.duration = duration;
-    }
-
     public int getDuration() {
         return duration;
     }
 
-    public void setDate(Date date) {
-        this.date = date;
+    public void setDuration(int duration) {
+        this.duration = duration;
     }
 
     public Date getDate() {
         return date;
     }
 
-    public void setStartTime(Time startTime) {
-        this.startTime = startTime;
+    public void setDate(Date date) {
+        this.date = date;
     }
 
     public Time getStartTime() {
         return startTime;
     }
 
-    public void setEndTime(Time endTime) {
-        this.endTime = endTime;
+    public void setStartTime(Time startTime) {
+        this.startTime = startTime;
     }
 
     public Time getEndTime() {
         return endTime;
+    }
+
+    public void setEndTime(Time endTime) {
+        this.endTime = endTime;
     }
 
     public Movie getMovie() {

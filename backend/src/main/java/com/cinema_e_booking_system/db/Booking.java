@@ -15,19 +15,17 @@ import java.util.List;
 public class Booking {
 
     /**
+     * The tickets that belong to this booking.
+     */
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("booking-tickets")
+    private final List<Ticket> tickets = new ArrayList<>();
+    /**
      * The primary key of the booking.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-
-    /**
-     * The tickets that belong to this booking.
-     */
-    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference("booking-tickets")
-    private List<Ticket> tickets = new ArrayList<>();
-
     /**
      * The customer that owns this booking.
      */

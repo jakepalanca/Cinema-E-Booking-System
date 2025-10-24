@@ -18,8 +18,8 @@ function Homepage() {
         }
         const data = await response.json();
         setMovies({
-          nowShowing: data.content.filter(movie => movie.showtimes.length > 0),
-          upcoming: data.content.filter(movie => movie.showtimes.length === 0)
+          nowShowing: data.content.filter(movie => movie.shows.length > 0),
+          upcoming: data.content.filter(movie => movie.shows.length === 0)
         })
       } catch (err) {
         setError(err.message);

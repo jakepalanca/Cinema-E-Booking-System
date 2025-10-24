@@ -15,7 +15,7 @@ import java.util.List;
 public class Booking {
 
     /**
-     * The primary key of the review.
+     * The primary key of the booking.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

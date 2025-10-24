@@ -14,7 +14,6 @@ import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -69,6 +68,9 @@ public class WebController {
     @Autowired
     AdminRepository adminRepository;
 
+    @Autowired
+    ReviewRepository reviewRepository;
+
     /**
      * The endpoint to check if the backend is healthy.
      */
@@ -122,21 +124,12 @@ public class WebController {
         Date today = Date.valueOf(LocalDate.now());
         Date tomorrow = Date.valueOf(LocalDate.now().plusDays(1));
         Date weekend = Date.valueOf(LocalDate.now().plusDays(2));
+        Date nextWeek = Date.valueOf(LocalDate.now().plusDays(7));
 
         Time matinee = Time.valueOf(LocalTime.of(12, 0));
-        Time evening = Time.valueOf(LocalTime.of(18, 30));
+        Time afternoon = Time.valueOf(LocalTime.of(15, 15));
+        Time evening = Time.valueOf(LocalTime.of(18, 45));
         Time lateShow = Time.valueOf(LocalTime.of(21, 30));
-
-        Cinema downtown = cinemaRepository.save(new Cinema("Downtown Cinema"));
-        Cinema uptown = cinemaRepository.save(new Cinema("Uptown Screens"));
-
-        Theater auditoriumOne = theaterRepository.save(new Theater(downtown, "Auditorium 1", "123 Main Street"));
-        Theater auditoriumTwo = theaterRepository.save(new Theater(downtown, "Auditorium 2", "123 Main Street"));
-        Theater premiereHall = theaterRepository.save(new Theater(uptown, "Premiere Hall", "456 High Street"));
-
-        Showroom showroomA = showroomRepository.save(new Showroom(auditoriumOne, 8, 10));
-        Showroom showroomB = showroomRepository.save(new Showroom(auditoriumTwo, 10, 12));
-        Showroom showroomC = showroomRepository.save(new Showroom(premiereHall, 12, 14));
 
         TicketCategory adultCategory = ticketCategoryRepository.save(new TicketCategory("Adult", 15.00));
         TicketCategory childCategory = ticketCategoryRepository.save(new TicketCategory("Child", 9.50));
@@ -144,10 +137,29 @@ public class WebController {
 
         Promotion welcomePromo = promotionRepository.save(new Promotion("WELCOME10", 0.10));
         Promotion loyaltyPromo = promotionRepository.save(new Promotion("LOYAL15", 0.15));
+        Promotion blockbusterPromo = promotionRepository.save(new Promotion("BLOCKBUSTER20", 0.20));
 
         adminRepository.save(new Admin("admin@cinemae.com", "sysadmin", "System", "Admin", "admin123"));
+        adminRepository.save(new Admin("manager@cinemae.com", "cinemamgr", "Morgan", "Reeves", "managersafe"));
 
-        List<Movie> seedMovies = Arrays.asList(
+        Cinema downtown = cinemaRepository.save(new Cinema("Downtown Cinema"));
+        Cinema uptown = cinemaRepository.save(new Cinema("Uptown Screens"));
+
+        Theater auditoriumOne = theaterRepository.save(new Theater(downtown, "Auditorium 1", "123 Main Street"));
+        Theater auditoriumTwo = theaterRepository.save(new Theater(downtown, "Auditorium 2", "123 Main Street"));
+        Theater premiereHall = theaterRepository.save(new Theater(uptown, "Premiere Hall", "456 High Street"));
+        Theater indieHall = theaterRepository.save(new Theater(uptown, "Indie Hall", "456 High Street"));
+
+        List<Showroom> showrooms = List.of(
+                showroomRepository.save(new Showroom(auditoriumOne, 8, 10)),
+                showroomRepository.save(new Showroom(auditoriumOne, 6, 8)),
+                showroomRepository.save(new Showroom(auditoriumTwo, 10, 12)),
+                showroomRepository.save(new Showroom(premiereHall, 12, 14)),
+                showroomRepository.save(new Showroom(indieHall, 7, 9))
+        );
+
+        List<Movie> savedMovies = new ArrayList<>();
+        List<Movie> seedMovies = List.of(
                 new Movie(
                         "Interstellar",
                         Movie.Genre.SCI_FI,
@@ -260,79 +272,78 @@ public class WebController {
                 )
         );
 
-        List<Showroom> showrooms = Arrays.asList(showroomA, showroomB, showroomC);
-        List<Show> scheduledShows = new ArrayList<>();
-
-        int roomIndex = 0;
         for (Movie movie : seedMovies) {
             Movie savedMovie = movieService.create(movie);
-            Long movieId = savedMovie.getId();
-
-            Showroom firstRoom = showrooms.get(roomIndex % showrooms.size());
-            Show matineeShow = new Show(
-                    135,
-                    today,
-                    matinee,
-                    Time.valueOf(matinee.toLocalTime().plusMinutes(135))
-            );
-            matineeShow.setShowroom(firstRoom);
-            Show savedMatinee = movieService.addShow(movieId, matineeShow);
-            scheduledShows.add(savedMatinee);
-            roomIndex++;
-
-            Showroom eveningRoom = showrooms.get(roomIndex % showrooms.size());
-            Show eveningShow = new Show(
-                    135,
-                    tomorrow,
-                    evening,
-                    Time.valueOf(evening.toLocalTime().plusMinutes(135))
-            );
-            eveningShow.setShowroom(eveningRoom);
-            Show savedEvening = movieService.addShow(movieId, eveningShow);
-            scheduledShows.add(savedEvening);
-            roomIndex++;
-
-            Showroom weekendRoom = showrooms.get(roomIndex % showrooms.size());
-            Show weekendShow = new Show(
-                    135,
-                    weekend,
-                    lateShow,
-                    Time.valueOf(lateShow.toLocalTime().plusMinutes(135))
-            );
-            weekendShow.setShowroom(weekendRoom);
-            Show savedWeekend = movieService.addShow(movieId, weekendShow);
-            scheduledShows.add(savedWeekend);
-            roomIndex++;
-
-            movieService.addReview(movieId, new Review(5, "Captivating cinema experience."));
-            movieService.addReview(movieId, new Review(4, "Worth watching with friends."));
+            savedMovies.add(savedMovie);
         }
 
-        Customer alice = customerRepository.save(
-                new Customer(
-                        "alice@example.com",
-                        "alice1",
-                        "Alice",
-                        "Johnson",
-                        "password123",
-                        Customer.CustomerState.ACTIVE,
-                        new ArrayList<>(),
-                        new ArrayList<>(List.of(welcomePromo))
-                )
-        );
+        List<Show> scheduledShows = new ArrayList<>();
+        int roomIndex = 0;
+        for (Movie movie : savedMovies) {
+            Showroom matineeRoom = showrooms.get(roomIndex % showrooms.size());
+            Showroom afternoonRoom = showrooms.get((roomIndex + 1) % showrooms.size());
+            Showroom eveningRoom = showrooms.get((roomIndex + 2) % showrooms.size());
+            roomIndex++;
 
-        Customer bob = customerRepository.save(
-                new Customer(
-                        "bob@example.com",
-                        "bobby",
-                        "Bob",
-                        "Miller",
-                        "password123",
-                        Customer.CustomerState.ACTIVE,
-                        new ArrayList<>(),
-                        new ArrayList<>(List.of(welcomePromo, loyaltyPromo))
-                )
+            int matineeDuration = 120 + (movie.getTitle().length() % 20);
+            int afternoonDuration = 130 + (movie.getTitle().length() % 15);
+            int eveningDuration = 110 + (movie.getTitle().length() % 10);
+
+            Show matineeShow = new Show(matineeDuration, today, matinee, addMinutes(matinee, matineeDuration));
+            matineeShow.setShowroom(matineeRoom);
+            scheduledShows.add(movieService.addShow(movie.getId(), matineeShow));
+
+            Show afternoonShow = new Show(afternoonDuration, tomorrow, afternoon, addMinutes(afternoon, afternoonDuration));
+            afternoonShow.setShowroom(afternoonRoom);
+            scheduledShows.add(movieService.addShow(movie.getId(), afternoonShow));
+
+            Show lateNightShow = new Show(eveningDuration, weekend, lateShow, addMinutes(lateShow, eveningDuration));
+            lateNightShow.setShowroom(eveningRoom);
+            scheduledShows.add(movieService.addShow(movie.getId(), lateNightShow));
+
+            movieService.addReview(movie.getId(), new Review(5, movie.getTitle() + " was incredible on the big screen."));
+            movieService.addReview(movie.getId(), new Review(4, "Crowd loved the show and sound design."));
+        }
+
+        Customer alice = new Customer(
+                "alice@example.com",
+                "alice1",
+                "Alice",
+                "Johnson",
+                "password123",
+                Customer.CustomerState.ACTIVE,
+                new ArrayList<>(),
+                new ArrayList<>()
         );
+        alice.addPromotion(welcomePromo);
+        alice = customerRepository.save(alice);
+
+        Customer bob = new Customer(
+                "bob@example.com",
+                "bobby",
+                "Bob",
+                "Miller",
+                "password123",
+                Customer.CustomerState.ACTIVE,
+                new ArrayList<>(),
+                new ArrayList<>()
+        );
+        bob.addPromotion(welcomePromo);
+        bob.addPromotion(loyaltyPromo);
+        bob = customerRepository.save(bob);
+
+        Customer carol = new Customer(
+                "carol@example.com",
+                "carolc",
+                "Carol",
+                "Nguyen",
+                "password123",
+                Customer.CustomerState.SUSPENDED,
+                new ArrayList<>(),
+                new ArrayList<>()
+        );
+        carol.addPromotion(blockbusterPromo);
+        carol = customerRepository.save(carol);
 
         PaymentMethod aliceCard = paymentMethodRepository.save(
                 new PaymentMethod(
@@ -345,7 +356,6 @@ public class WebController {
                 )
         );
         alice.addPaymentMethod(aliceCard);
-        customerRepository.save(alice);
 
         PaymentMethod bobCard = paymentMethodRepository.save(
                 new PaymentMethod(
@@ -358,34 +368,62 @@ public class WebController {
                 )
         );
         bob.addPaymentMethod(bobCard);
-        customerRepository.save(bob);
 
-        Booking aliceBooking = bookingRepository.save(new Booking(new ArrayList<>(), alice));
-        Booking bobBooking = bookingRepository.save(new Booking(new ArrayList<>(), bob));
+        PaymentMethod carolCard = paymentMethodRepository.save(
+                new PaymentMethod(
+                        carol,
+                        6011000990139424L,
+                        "Carol",
+                        "Nguyen",
+                        Date.valueOf(LocalDate.now().plusYears(2)),
+                        789
+                )
+        );
+        carol.addPaymentMethod(carolCard);
+
+        customerRepository.saveAll(List.of(alice, bob, carol));
 
         if (!scheduledShows.isEmpty()) {
-            Show firstShow = scheduledShows.get(0);
-            Ticket aliceAdult = new Ticket(2, 5, adultCategory, firstShow, firstShow.getShowroom());
-            aliceAdult.setBooking(aliceBooking);
-            ticketRepository.save(aliceAdult);
-            aliceBooking.getTickets().add(aliceAdult);
+            Booking aliceMatinee = bookingRepository.save(new Booking(new ArrayList<>(), alice));
+            alice.addBooking(aliceMatinee);
+            Booking bobEvening = bookingRepository.save(new Booking(new ArrayList<>(), bob));
+            bob.addBooking(bobEvening);
+            Booking carolLate = bookingRepository.save(new Booking(new ArrayList<>(), carol));
+            carol.addBooking(carolLate);
 
-            Ticket aliceChild = new Ticket(2, 6, childCategory, firstShow, firstShow.getShowroom());
-            aliceChild.setBooking(aliceBooking);
-            ticketRepository.save(aliceChild);
-            aliceBooking.getTickets().add(aliceChild);
+            issueTicket(aliceMatinee, scheduledShows.get(0), adultCategory, 1, 4);
+            issueTicket(aliceMatinee, scheduledShows.get(0), childCategory, 1, 5);
+            bookingRepository.save(aliceMatinee);
 
-            bookingRepository.save(aliceBooking);
+            if (scheduledShows.size() > 1) {
+                issueTicket(bobEvening, scheduledShows.get(1), adultCategory, 2, 3);
+                issueTicket(bobEvening, scheduledShows.get(1), seniorCategory, 2, 4);
+                bookingRepository.save(bobEvening);
+            }
+
+            if (scheduledShows.size() > 2) {
+                issueTicket(carolLate, scheduledShows.get(2), adultCategory, 0, 2);
+                bookingRepository.save(carolLate);
+            }
+
+            if (scheduledShows.size() > 3) {
+                Booking aliceWeekend = bookingRepository.save(new Booking(new ArrayList<>(), alice));
+                alice.addBooking(aliceWeekend);
+                issueTicket(aliceWeekend, scheduledShows.get(3), adultCategory, 3, 3);
+                bookingRepository.save(aliceWeekend);
+            }
+
+            if (scheduledShows.size() > 4) {
+                Booking bobFamily = bookingRepository.save(new Booking(new ArrayList<>(), bob));
+                bob.addBooking(bobFamily);
+                issueTicket(bobFamily, scheduledShows.get(4), childCategory, 4, 1);
+                issueTicket(bobFamily, scheduledShows.get(4), childCategory, 4, 2);
+                bookingRepository.save(bobFamily);
+            }
         }
 
-        if (scheduledShows.size() > 1) {
-            Show secondShow = scheduledShows.get(1);
-            Ticket bobSenior = new Ticket(5, 8, seniorCategory, secondShow, secondShow.getShowroom());
-            bobSenior.setBooking(bobBooking);
-            ticketRepository.save(bobSenior);
-            bobBooking.getTickets().add(bobSenior);
-            bookingRepository.save(bobBooking);
-        }
+        customerRepository.saveAll(List.of(alice, bob, carol));
+        promotionRepository.saveAll(List.of(welcomePromo, loyaltyPromo, blockbusterPromo));
     }
 
     /**
@@ -400,6 +438,7 @@ public class WebController {
         ticketRepository.deleteAll();
         bookingRepository.deleteAll();
         showRepository.deleteAll();
+        reviewRepository.deleteAll();
         movieRepository.deleteAll();
         paymentMethodRepository.deleteAll();
         customerRepository.deleteAll();
@@ -409,5 +448,16 @@ public class WebController {
         theaterRepository.deleteAll();
         cinemaRepository.deleteAll();
         adminRepository.deleteAll();
+    }
+
+    private Time addMinutes(Time startTime, int minutes) {
+        return Time.valueOf(startTime.toLocalTime().plusMinutes(minutes));
+    }
+
+    private void issueTicket(Booking booking, Show show, TicketCategory category, int seatRow, int seatCol) {
+        Ticket ticket = new Ticket(seatRow, seatCol, category, show, show.getShowroom());
+        booking.addTicket(ticket);
+        show.getShowroom().occupySeat(seatRow, seatCol);
+        ticketRepository.save(ticket);
     }
 }

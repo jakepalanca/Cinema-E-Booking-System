@@ -9,47 +9,58 @@ import java.util.List;
  * Movie entity class for the cinema e-booking system.
  */
 @Entity
+@Table(name = "movie")
 public class Movie {
+
     /**
      * The primary key of movie.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     Long id;
+
     /**
      * The title of the movie.
      */
     String title;
+
     /**
      * The category of the movie.
      */
     @Enumerated(EnumType.STRING)
-    MovieCategory movieCategory;
+    Genre movieGenre;
+
     /**
      * The cast of the movie.
      */
     @ElementCollection
     List<String> cast;
+
     /**
      * The director of the movie.
      */
     String director;
+
     /**
      * The producer of the movie.
      */
     String producer;
+
     /**
      * The synopsis/description of the movie.
      */
     String synopsis;
+
     /**
      * The trailer link of the movie.
      */
     String trailerLink;
+
     /**
      * The poster link of the movie.
      */
     String posterLink;
+
     /**
      * The reviews of the movie.
      * One-To-Many
@@ -57,6 +68,7 @@ public class Movie {
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonManagedReference("movie-reviews") // NOT Foreign Key
     List<Review> reviews;
+
     /**
      * The showtimes of the movie.
      * One-To-Many
@@ -64,11 +76,12 @@ public class Movie {
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonManagedReference("movie-showtimes") // NOT Foreign Key
     List<Showtime> showtimes;
+
     /**
      * The MPAA rating of the movie.
      */
     @Enumerated(EnumType.STRING)
-    MPAA_rating mpaaRating;
+    MPAA_Rating mpaaRating;
 
     /**
      * The constructor for the Movie class.
@@ -81,7 +94,7 @@ public class Movie {
      */
     public Movie(
             String title,
-            MovieCategory movieCategory,
+            Genre movieGenre,
             List<String> cast,
             String director,
             String producer,
@@ -90,10 +103,10 @@ public class Movie {
             String posterLink,
             List<Showtime> showtimes,
             List<Review> reviews,
-            MPAA_rating mpaaRating
+            MPAA_Rating mpaaRating
     ) {
         this.title = title;
-        this.movieCategory = movieCategory;
+        this.movieGenre = movieGenre;
         this.cast = cast;
         this.director = director;
         this.producer = producer;
@@ -122,17 +135,16 @@ public class Movie {
     /**
      * The getter for the category of the movie.
      */
-    public MovieCategory getMovieCategory() {
-        return movieCategory;
+    public Genre getMovieGenrey() {
+        return movieGenre;
     }
 
     /**
      * The setter for the category of the movie.
      */
-    public void setMovieCategory(MovieCategory movieCategory) {
-        this.movieCategory = movieCategory;
+    public void setMovieGenre(Genre movieGenre) {
+        this.movieGenre = movieGenre;
     }
-
 
     /**
      * The getter for the cast of the movie.
@@ -207,15 +219,15 @@ public class Movie {
     /**
      * The getter for the MPAA rating of the movie.
      */
-    public MPAA_rating getMpaaRating() {
+    public MPAA_Rating getMpaaRating() {
         return mpaaRating;
     }
 
     /**
      * The setter for the MPAA rating of the movie.
      */
-    public void setMpaaRating(MPAA_rating newMpaaRating) {
-        mpaaRating = newMpaaRating;
+    public void setMpaaRating(MPAA_Rating mpaaRating) {
+        this.mpaaRating = mpaaRating;
     }
 
     /**
@@ -270,7 +282,7 @@ public class Movie {
     /**
      * The enum for the category of the movie.
      */
-    public enum MovieCategory {
+    public enum Genre {
         SCI_FI,
         ROMANCE,
         ACTION,
@@ -287,7 +299,7 @@ public class Movie {
     /**
      * The enum for the MPAA rating of the movie.
      */
-    public enum MPAA_rating {
+    public enum MPAA_Rating {
         G,
         PG,
         PG_13,

@@ -25,28 +25,30 @@ public class Review {
     @JoinColumn(name = "movie_id") // Foreign Key
     @JsonBackReference("movie-reviews")
     private Movie movie;
+
     /**
      * The rating of the review.
      */
     private int rating;
+
     /**
      * The comment of the review.
      */
     private String comment;
 
     /**
-     * The constructor for the review.
+     * The constructor for a review with a comment.
      */
-    public Review(int i, String s) {
-        this.rating = i;
-        this.comment = s;
+    public Review(int rating, String comment) {
+        this.rating = rating;
+        this.comment = comment;
     }
 
     /**
-     * The constructor for the review.
+     * The constructor for a review without a comment.
      */
-    public Review() {
-
+    public Review(int rating) {
+        this.rating = rating;
     }
 
     /**

@@ -19,3 +19,8 @@ spring:
 logging:
   level:
     org.springframework.jdbc.core: DEBUG
+
+jasypt:
+  encryptor:
+    algorithm: PBEWithMD5AndDES
+    password: Ják3i$C0ōŁ

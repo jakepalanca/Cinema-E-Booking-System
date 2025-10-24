@@ -1,8 +1,10 @@
 package com.cinema_e_booking_system.db;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -14,19 +16,28 @@ public class Theater {
      */
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    Long id;
+    private Long id;
 
     /**
      * The cinema associated with this theater.
      * One-To-One
      */
-    @OneToOne(mappedBy = "cinema", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JsonManagedReference("theater-cinema") // NOT Foreign Key
-    Cinema cinema;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "cinema_id")
+    @JsonBackReference("cinema-theaters")
+    private Cinema cinema;
 
-    String name;
+    private String name;
 
-    String address;
+    private String address;
+
+    @OneToMany(mappedBy = "theater", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("theater-showrooms")
+    private List<Showroom> showrooms = new ArrayList<>();
+
+    protected Theater() {
+        // JPA requirement
+    }
 
     public Theater(Cinema cinema, String name, String address) {
         this.cinema = cinema;
@@ -64,5 +75,13 @@ public class Theater {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public List<Showroom> getShowrooms() {
+        return showrooms;
+    }
+
+    public void setShowrooms(List<Showroom> showrooms) {
+        this.showrooms = showrooms;
     }
 }

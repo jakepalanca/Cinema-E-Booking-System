@@ -36,9 +36,10 @@ public class Review {
      */
     private String comment;
 
-    /**
-     * The constructor for a review with a comment.
-     */
+    protected Review() {
+        // JPA requirement
+    }
+
     public Review(int rating, String comment) {
         this.rating = rating;
         this.comment = comment;

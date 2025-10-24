@@ -24,17 +24,17 @@ public class MovieService {
      */
     private final ReviewRepository reviewRepo;
     /**
-     * The repository for the showtime.
+     * The repository for the show.
      */
-    private final ShowtimeRepository showtimeRepository;
+    private final ShowRepository showRepository;
 
     /**
      * The constructor for the movie service.
      */
-    public MovieService(MovieRepository repo, ReviewRepository reviewRepo, ShowtimeRepository showtimeRepository) {
+    public MovieService(MovieRepository repo, ReviewRepository reviewRepo, ShowRepository showRepository) {
         this.repo = repo;
         this.reviewRepo = reviewRepo;
-        this.showtimeRepository = showtimeRepository;
+        this.showRepository = showRepository;
     }
 
     /**
@@ -86,12 +86,16 @@ public class MovieService {
     }
 
     /**
-     * The method to add a showtime to a movie.
+     * The method to add a show to a movie.
      */
     @Transactional
-    public Showtime addShowtime(long movieId, Showtime showtime) {
+    public Show addShow(long movieId, Show show) {
         Movie movie = repo.findById(movieId).orElseThrow();
-        showtime.setMovie(movie);
-        return showtimeRepository.save(showtime);
+        show.setMovie(movie);
+        if (show.getShowroom() == null) {
+            throw new IllegalArgumentException("Show must be assigned to a showroom.");
+        }
+        movie.getShows().add(show);
+        return showRepository.save(show);
     }
 }

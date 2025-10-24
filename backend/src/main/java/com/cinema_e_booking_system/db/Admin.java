@@ -1,33 +1,23 @@
 package com.cinema_e_booking_system.db;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.PrimaryKeyJoinColumn;
+import jakarta.persistence.Table;
 
 /**
  * The entity for the admin.
  */
 @Entity
 @Table(name = "admin")
+@PrimaryKeyJoinColumn(name = "user_id")
 public class Admin extends User {
 
-    /**
-     * The primary key of the admin.
-     */
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // NOT USERID ANYMORE
+    protected Admin() {}
 
     /**
      * The constructor for the admin.
      */
     public Admin(String  email, String username, String firstName, String lastName, String password) {
         super(email, username, firstName, lastName, password);
-    }
-
-    /**
-     * The getter for the id of the admin.
-     */
-    public Long getId() {
-        return id;
     }
 }

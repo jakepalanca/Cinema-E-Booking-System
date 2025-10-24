@@ -13,7 +13,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
     /**
      * The query to find movies by movie category.
      */
-    Page<Movie> findByMovieCategory(Movie.Genre movieCategory, Pageable pageable);
+    Page<Movie> findByMovieGenre(Movie.Genre movieGenre, Pageable pageable);
 
     /**
      * The query to search for a movie by title and optional movie category.
@@ -22,7 +22,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
             select m
             from Movie m
             where lower(m.title) like lower(concat('%', ?1, '%'))
-              and (coalesce(?2, m.movieCategory) = m.movieCategory)
+              and (coalesce(?2, m.movieGenre) = m.movieGenre)
             """)
-    Page<Movie> searchByTitleAndOptionalMovieCategory(String titlePart, Movie.Genre movieCategory, Pageable pageable);
+    Page<Movie> searchByTitleAndOptionalMovieCategory(String titlePart, Movie.Genre movieGenre, Pageable pageable);
 }

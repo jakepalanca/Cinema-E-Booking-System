@@ -1,6 +1,6 @@
 package com.cinema_e_booking_system.db;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 
 @Entity
@@ -9,24 +9,45 @@ public class Ticket {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
 
     private int seatRow;
     private int seatCol;
 
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JsonManagedReference("ticket-ticketcategory") // NOT Foreign Key
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "ticket_category_id")
+    @JsonBackReference("category-tickets")
     private TicketCategory ticketCategory;
 
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JsonManagedReference("showroom-ticketcategory") // NOT Foreign Key
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "showroom_id")
+    @JsonBackReference("showroom-tickets")
     private Showroom showroom;
 
-    public Ticket(int seatRow, int seatCol, TicketCategory ticketCategory,  Showroom showroom) {
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "show_id")
+    @JsonBackReference("show-tickets")
+    private Show show;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "booking_id")
+    @JsonBackReference("booking-tickets")
+    private Booking booking;
+
+    protected Ticket() {
+        // JPA requirement
+    }
+
+    public Ticket(int seatRow, int seatCol, TicketCategory ticketCategory, Show show, Showroom showroom) {
         this.seatRow = seatRow;
         this.seatCol = seatCol;
         this.ticketCategory = ticketCategory;
+        this.show = show;
         this.showroom = showroom;
+    }
+
+    public Long getId() {
+        return id;
     }
 
     public int getSeatRow() {
@@ -59,5 +80,21 @@ public class Ticket {
 
     public void setShowroom(Showroom showroom) {
         this.showroom = showroom;
+    }
+
+    public Show getShow() {
+        return show;
+    }
+
+    public void setShow(Show show) {
+        this.show = show;
+    }
+
+    public Booking getBooking() {
+        return booking;
+    }
+
+    public void setBooking(Booking booking) {
+        this.booking = booking;
     }
 }

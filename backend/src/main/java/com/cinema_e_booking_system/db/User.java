@@ -1,6 +1,5 @@
 package com.cinema_e_booking_system.db;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 
 /**
@@ -8,6 +7,7 @@ import jakarta.persistence.*;
  */
 @Entity
 @Table(name = "user")
+@Inheritance(strategy = InheritanceType.JOINED)
 public class User {
 
     /**
@@ -19,6 +19,8 @@ public class User {
 
     private String email;
 
+    private String username;
+
     private String firstName;
 
     private String lastName;
@@ -26,11 +28,16 @@ public class User {
     @Convert(converter = StringCryptoConverter.class)
     private String password;
 
+    protected User() {
+        // JPA requirement
+    }
+
     /**
      * The constructor for the user.
      */
     public User(String  email, String username, String firstName, String lastName,  String password) {
         this.email = email;
+        this.username = username;
         this.firstName = firstName;
         this.lastName = lastName;
         this.password = password;
@@ -41,6 +48,14 @@ public class User {
      */
     public Long getId() {
         return id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     /**

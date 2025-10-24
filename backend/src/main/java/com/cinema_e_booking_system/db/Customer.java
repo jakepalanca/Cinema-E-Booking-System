@@ -1,8 +1,9 @@
 package com.cinema_e_booking_system.db;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -10,25 +11,37 @@ import java.util.List;
  */
 @Entity
 @Table(name = "customer")
+@PrimaryKeyJoinColumn(name = "user_id")
 public class Customer extends User {
 
     // CUSTOMER STATE ENUMERATION
-    enum CustomerState {
+    public enum CustomerState {
         ACTIVE, INACTIVE, SUSPENDED
     }
-    /**
-     * The primary key of the user.
-     */
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // NOT USERID ANYMORE
 
+    @Enumerated(EnumType.STRING)
     private CustomerState state;
 
-    @Convert(converter = StringCryptoConverter.class)
-    private List<PaymentMethod>  paymentMethods;
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("customer-paymentMethods")
+    private List<PaymentMethod> paymentMethods = new ArrayList<>();
 
-    private List<Promotion>  promotions;
+    @ManyToMany
+    @JoinTable(
+            name = "customer_promotion",
+            joinColumns = @JoinColumn(name = "customer_id"),
+            inverseJoinColumns = @JoinColumn(name = "promotion_id")
+    )
+    @JsonManagedReference("customer-promotions")
+    private List<Promotion> promotions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("customer-bookings")
+    private List<Booking> bookings = new ArrayList<>();
+
+    protected Customer() {
+        // JPA requirement
+    }
 
     /**
      * The constructor for the user.
@@ -36,15 +49,8 @@ public class Customer extends User {
     public Customer(String  email, String username, String firstName, String lastName, String password, CustomerState state, List<PaymentMethod> paymentMethods,  List<Promotion> promotions) {
         super(email, username, firstName, lastName, password);
         this.state = state;
-        this.paymentMethods = paymentMethods;
-        this.promotions = promotions;
-    }
-
-    /**
-     * The getter for the id of the user.
-     */
-    public Long getId() {
-        return id;
+        setPaymentMethods(paymentMethods);
+        setPromotions(promotions);
     }
 
     public void setState(CustomerState state) {
@@ -56,23 +62,49 @@ public class Customer extends User {
     }
 
     public void removePaymentMethod(PaymentMethod paymentMethod) {
+        if (paymentMethod == null) {
+            return;
+        }
         this.paymentMethods.remove(paymentMethod);
+        paymentMethod.setCustomer(null);
     }
 
     public void addPaymentMethod(PaymentMethod paymentMethod) {
-        this.paymentMethods.add(paymentMethod);
+        if (paymentMethod == null) {
+            return;
+        }
+        if (!this.paymentMethods.contains(paymentMethod)) {
+            paymentMethod.setCustomer(this);
+            this.paymentMethods.add(paymentMethod);
+        }
     }
 
     public void removePromotion(Promotion promotion) {
-        this.promotions.remove(promotion);
+        if (promotion == null) {
+            return;
+        }
+        if (this.promotions.remove(promotion)) {
+            promotion.getCustomers().remove(this);
+        }
     }
 
     public void addPromotion(Promotion promotion) {
-        this.promotions.add(promotion);
+        if (promotion == null) {
+            return;
+        }
+        if (!this.promotions.contains(promotion)) {
+            this.promotions.add(promotion);
+            if (!promotion.getCustomers().contains(this)) {
+                promotion.getCustomers().add(this);
+            }
+        }
     }
 
     public void setPaymentMethods(List<PaymentMethod> paymentMethods) {
-        this.paymentMethods = paymentMethods;
+        this.paymentMethods.clear();
+        if (paymentMethods != null) {
+            paymentMethods.forEach(this::addPaymentMethod);
+        }
     }
 
     public List<PaymentMethod> getPaymentMethods() {
@@ -80,10 +112,43 @@ public class Customer extends User {
     }
 
     public void setPromotions(List<Promotion> promotions) {
-        this.promotions = promotions;
+        this.promotions.clear();
+        if (promotions != null) {
+            promotions.forEach(this::addPromotion);
+        }
     }
 
     public List<Promotion> getPromotions() {
         return promotions;
+    }
+
+    public List<Booking> getBookings() {
+        return bookings;
+    }
+
+    public void setBookings(List<Booking> bookings) {
+        this.bookings.clear();
+        if (bookings != null) {
+            bookings.forEach(this::addBooking);
+        }
+    }
+
+    public void addBooking(Booking booking) {
+        if (booking == null) {
+            return;
+        }
+        if (!this.bookings.contains(booking)) {
+            booking.setCustomer(this);
+            this.bookings.add(booking);
+        }
+    }
+
+    public void removeBooking(Booking booking) {
+        if (booking == null) {
+            return;
+        }
+        if (this.bookings.remove(booking)) {
+            booking.setCustomer(null);
+        }
     }
 }

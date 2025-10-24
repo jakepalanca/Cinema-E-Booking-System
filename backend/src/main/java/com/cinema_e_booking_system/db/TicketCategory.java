@@ -1,7 +1,10 @@
 package com.cinema_e_booking_system.db;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "ticket_category")
@@ -14,32 +17,22 @@ public class TicketCategory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * A ticket category can "have" many movies
-     * One-To-Many
-     */
-    @OneToMany(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ticket_id") // Foreign Key
-    @JsonBackReference("ticket-category-of-ticket")
-    private Ticket ticket;
-
     // Child, adult, senior
     private String name;
 
     private double price;
 
-    public TicketCategory(Ticket ticket, String name, double price) {
-        this.ticket = ticket;
+    @OneToMany(mappedBy = "ticketCategory", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("category-tickets")
+    private List<Ticket> tickets = new ArrayList<>();
+
+    protected TicketCategory() {
+        // JPA requirement
+    }
+
+    public TicketCategory(String name, double price) {
         this.name = name;
         this.price = price;
-    }
-
-    public void  setTicket(Ticket ticket) {
-        this.ticket = ticket;
-    }
-
-    public Ticket getTicket() {
-        return ticket;
     }
 
     public void setName(String name) {
@@ -48,5 +41,25 @@ public class TicketCategory {
 
     public String getName() {
         return name;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public List<Ticket> getTickets() {
+        return tickets;
+    }
+
+    public void setTickets(List<Ticket> tickets) {
+        this.tickets = tickets;
     }
 }

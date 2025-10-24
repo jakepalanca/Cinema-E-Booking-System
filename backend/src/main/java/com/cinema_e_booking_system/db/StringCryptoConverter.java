@@ -1,7 +1,8 @@
 package com.cinema_e_booking_system.db;
 
+import java.util.Optional;
+
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
-import org.springframework.core.env.Environment;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
@@ -22,19 +23,24 @@ public class StringCryptoConverter implements AttributeConverter<String, String>
 
     // Property name for the encryption password
     private static final String ENCRYPTION_PASSWORD_PROPERTY = "jasypt.encryptor.password";
+    private static final String ENCRYPTION_PASSWORD_ENV = "JASYPT_ENCRYPTOR_PASSWORD";
+    private static final String DEFAULT_PASSWORD = "cinema-e-booking";
 
     // Jasypt StringEncryptor for performing encryption and decryption
-    private final StandardPBEStringEncryptor encryptor;
+    private static final StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
 
-    /**
-     * Constructor for StringCryptoConverter.
-     * 
-     * @param environment The Spring Environment used to access properties.
-     */
-    public StringCryptoConverter(Environment environment) {
-        // Initialize the encryptor with the encryption password from the environment
-        this.encryptor = new StandardPBEStringEncryptor();
-        this.encryptor.setPassword(environment.getProperty(ENCRYPTION_PASSWORD_PROPERTY));
+    static {
+        // Initialize encryptor using system property or environment variable with fallback
+        String password = Optional
+                .ofNullable(System.getProperty(ENCRYPTION_PASSWORD_PROPERTY))
+                .orElseGet(() -> Optional
+                        .ofNullable(System.getenv(ENCRYPTION_PASSWORD_ENV))
+                        .orElse(DEFAULT_PASSWORD));
+        encryptor.setPassword(password);
+    }
+
+    public StringCryptoConverter() {
+        // Default constructor
     }
 
     /**
@@ -45,6 +51,9 @@ public class StringCryptoConverter implements AttributeConverter<String, String>
      */
     @Override
     public String convertToDatabaseColumn(String attribute) {
+        if (attribute == null) {
+            return null;
+        }
         return encryptor.encrypt(attribute);
     }
 
@@ -56,6 +65,9 @@ public class StringCryptoConverter implements AttributeConverter<String, String>
      */
     @Override
     public String convertToEntityAttribute(String dbData) {
+        if (dbData == null) {
+            return null;
+        }
         return encryptor.decrypt(dbData);
     }
 }

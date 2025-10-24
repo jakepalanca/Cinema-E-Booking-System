@@ -25,7 +25,7 @@ public class PaymentMethod {
      */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "customer_id") // Foreign Key
-    @JsonBackReference("payment-method")
+    @JsonBackReference("customer-paymentMethods")
     private Customer customer;
 
     private Long cardNumber;
@@ -39,6 +39,10 @@ public class PaymentMethod {
 
     // 3 or 4 digits
     private int securityCode;
+
+    protected PaymentMethod() {
+        // JPA requirement
+    }
 
     public PaymentMethod(Customer customer, Long cardNumber, String cardHolderFirstName, String cardHolderLastName, Date expirationDate,  int securityCode) {
         this.customer = customer;

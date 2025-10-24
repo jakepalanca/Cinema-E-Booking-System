@@ -1,9 +1,23 @@
 package com.cinema_e_booking_system.db;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import jakarta.persistence.*;
-
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "showroom")
@@ -14,35 +28,49 @@ public class Showroom {
      */
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    Long id;
+    private Long id;
 
     /**
      * The cinema associated with this theater.
-     * One-To-One
      */
-    @OneToMany(mappedBy = "seat", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JsonManagedReference("seats-in-showroom") // NOT Foreign Key
-    boolean[][] seats;
+    @Transient
+    private boolean[][] seats;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "theater_id")
-    Theater theater;
+    @JsonBackReference("theater-showrooms")
+    private Theater theater;
 
-    int seatCount;
-    int roomWidth; // # of seat rows [MUST BE 1 OR MORE] (increasing from top facing theater to bottom back wall
-    int roomHeight; // # of seat columns [MUST BE 1 OR MORE] (increasing from left of lefter to right of theater
+    private int seatCount;
+    private int roomWidth; // # of seat rows [MUST BE 1 OR MORE] (increasing from top facing theater to bottom back wall
+    private int roomHeight; // # of seat columns [MUST BE 1 OR MORE] (increasing from left of lefter to right of theater
 
-    public Showroom(int roomHeight, int roomWidth) throws InvalidParameterException {
+    @OneToMany(mappedBy = "showroom", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("showroom-shows")
+    private List<Show> shows = new ArrayList<>();
+
+    @OneToMany(mappedBy = "showroom", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("showroom-tickets")
+    private List<Ticket> tickets = new ArrayList<>();
+
+    protected Showroom() {
+        // JPA requirement
+    }
+
+    public Showroom(Theater theater, int roomHeight, int roomWidth) throws InvalidParameterException {
         if (roomHeight <= 0 || roomWidth <= 0) {
             throw new InvalidParameterException("Room height and room width are invalid");
         }
-        this.seats = new boolean[roomHeight - 1][roomWidth - 1]; // subtract one for 0-indexing of arrays
-        for (int x = 0; x < roomHeight - 1; x++) {
-            for (int y = 0; y < roomWidth - 1; y++) {
+        this.theater = theater;
+        this.roomHeight = roomHeight;
+        this.roomWidth = roomWidth;
+        this.seats = new boolean[roomHeight][roomWidth];
+        for (int x = 0; x < roomHeight; x++) {
+            for (int y = 0; y < roomWidth; y++) {
                 seats[x][y] = false;
             }
         }
-        int seatCount = roomHeight * roomWidth;
+        this.seatCount = roomHeight * roomWidth;
     }
 
     // GETTERS AND SETTERS
@@ -82,5 +110,42 @@ public class Showroom {
     public int getRoomHeight() {
         return roomHeight;
     }
-}
 
+    public void setRoomHeight(int roomHeight) {
+        this.roomHeight = roomHeight;
+    }
+
+    public List<Show> getShows() {
+        return shows;
+    }
+
+    public void setShows(List<Show> shows) {
+        this.shows = shows;
+    }
+
+    public List<Ticket> getTickets() {
+        return tickets;
+    }
+
+    public void setTickets(List<Ticket> tickets) {
+        this.tickets = tickets;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public boolean seatIsTaken(int row, int col) {
+        if (seats == null || row < 0 || col < 0 || row >= roomHeight || col >= roomWidth) {
+            throw new InvalidParameterException("Seat coordinates are invalid.");
+        }
+        return seats[row][col];
+    }
+
+    public void occupySeat(int row, int col) {
+        if (seats == null || row < 0 || col < 0 || row >= roomHeight || col >= roomWidth) {
+            throw new InvalidParameterException("Seat coordinates are invalid.");
+        }
+        seats[row][col] = true;
+    }
+}

@@ -3,7 +3,7 @@ package com.cinema_e_booking_system.db;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
- * Repository for tickets.
+ * Repository for movie shows.
  */
-public interface TicketRepository extends JpaRepository<Ticket, Long> {
+public interface ShowRepository extends JpaRepository<Show, Long> {
 }

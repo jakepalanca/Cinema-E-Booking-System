@@ -1,9 +1,20 @@
 package com.cinema_e_booking_system.db;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import jakarta.persistence.*;
-
+import java.util.ArrayList;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 /**
  * Movie entity class for the cinema e-booking system.
@@ -17,76 +28,77 @@ public class Movie {
      */
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    Long id;
+    private Long id;
 
     /**
      * The title of the movie.
      */
-    String title;
+    private String title;
 
     /**
      * The category of the movie.
      */
     @Enumerated(EnumType.STRING)
-    Genre movieGenre;
+    private Genre movieGenre;
 
     /**
      * The cast of the movie.
      */
     @ElementCollection
-    List<String> cast;
+    private List<String> cast = new ArrayList<>();
 
     /**
      * The director of the movie.
      */
-    String director;
+    private String director;
 
     /**
      * The producer of the movie.
      */
-    String producer;
+    private String producer;
 
     /**
      * The synopsis/description of the movie.
      */
-    String synopsis;
+    private String synopsis;
 
     /**
      * The trailer link of the movie.
      */
-    String trailerLink;
+    private String trailerLink;
 
     /**
      * The poster link of the movie.
      */
-    String posterLink;
+    private String posterLink;
 
     /**
      * The reviews of the movie.
      * One-To-Many
      */
-    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JsonManagedReference("movie-reviews") // NOT Foreign Key
-    List<Review> reviews;
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("movie-reviews")
+    private List<Review> reviews = new ArrayList<>();
 
     /**
      * The showtimes of the movie.
      * One-To-Many
      */
-    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JsonManagedReference("movie-showtimes") // NOT Foreign Key
-    List<Showtime> showtimes;
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("movie-shows")
+    private List<Show> shows = new ArrayList<>();
 
     /**
      * The MPAA rating of the movie.
      */
     @Enumerated(EnumType.STRING)
-    MPAA_Rating mpaaRating;
+    private MPAA_Rating mpaaRating;
 
     /**
      * The constructor for the Movie class.
      */
-    public Movie() {
+    protected Movie() {
+        // Required by JPA
     }
 
     /**
@@ -101,7 +113,7 @@ public class Movie {
             String synopsis,
             String trailerLink,
             String posterLink,
-            List<Showtime> showtimes,
+            List<Show> shows,
             List<Review> reviews,
             MPAA_Rating mpaaRating
     ) {
@@ -113,9 +125,9 @@ public class Movie {
         this.synopsis = synopsis;
         this.trailerLink = trailerLink;
         this.mpaaRating = mpaaRating;
-        this.reviews = reviews;
+        this.reviews = (reviews != null) ? reviews : new ArrayList<>();
         this.posterLink = posterLink;
-        this.showtimes = showtimes;
+        this.shows = (shows != null) ? shows : new ArrayList<>();
     }
 
     /**
@@ -135,7 +147,7 @@ public class Movie {
     /**
      * The getter for the category of the movie.
      */
-    public Genre getMovieGenrey() {
+    public Genre getMovieGenre() {
         return movieGenre;
     }
 
@@ -198,8 +210,8 @@ public class Movie {
     /**
      * The setter for the synopsis of the movie.
      */
-    public void setSynopsis() {
-        synopsis = synopsis;
+    public void setSynopsis(String synopsis) {
+        this.synopsis = synopsis;
     }
 
     /**
@@ -213,7 +225,7 @@ public class Movie {
      * The setter for the trailer link of the movie.
      */
     public void setTrailerLink(String trailerLink) {
-        trailerLink = trailerLink;
+        this.trailerLink = trailerLink;
     }
 
     /**
@@ -259,17 +271,17 @@ public class Movie {
     }
 
     /**
-     * The getter for the showtimes of the movie.
+     * The getter for the shows of the movie.
      */
-    public List<Showtime> getShowtimes() {
-        return showtimes;
+    public List<Show> getShows() {
+        return shows;
     }
 
     /**
-     * The setter for the showtimes of the movie.
+     * The setter for the shows of the movie.
      */
-    public void setShowtimes(List<Showtime> showtimes) {
-        this.showtimes = showtimes;
+    public void setShows(List<Show> shows) {
+        this.shows = shows;
     }
 
     /**
@@ -308,4 +320,3 @@ public class Movie {
     }
 }
    
-

@@ -39,7 +39,7 @@ function Browse() {
 
     const filteredMovies = movies.filter((movie) => {
         const matchesTitle = movie.title.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesGenre = selectedGenre === "All" || movie.movieCategory === selectedGenre;
+        const matchesGenre = selectedGenre === "All" || movie.movieGenre === selectedGenre;
         return matchesTitle && matchesGenre;
     });
 

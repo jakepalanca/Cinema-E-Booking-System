@@ -1,3 +1,13 @@
+## Notes
+
+- Removed the seat object and just made 2d boolean array in showroom with number coordinations
+- What is a booking card number? (from deliverable 4)
+- Relationships closely follow deliverable 4 but names were altered so refer to ORM and .java files
+- Use Spring Security JWT token in backend and session storage for auth
+- Use mailgun.com for email verification
+- Test endpoints in Postman show format of each type of object in JSON. REMEMBER TO ENSURE PASSWORD AND PAYMENT INFO ENCRYPTED AND NEVER SENT DECRYPTED (which is the case in the test endpoints)
+
+
 ## Quick Setup
 
 ### Prerequisites

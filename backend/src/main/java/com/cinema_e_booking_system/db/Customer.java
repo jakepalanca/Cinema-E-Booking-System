@@ -29,7 +29,14 @@ public class Customer extends User {
     @JsonManagedReference("customer-bookings")
     private final List<Booking> bookings = new ArrayList<>();
     @Enumerated(EnumType.STRING)
-    private CustomerState state;
+    private CustomerState customerState;
+
+    private String phoneNumber;
+    private String address;
+    private String city;
+    private String state;
+    private String zipCode;
+    private String country;
 
     protected Customer() {
         // JPA requirement
@@ -38,19 +45,25 @@ public class Customer extends User {
     /**
      * The constructor for the user.
      */
-    public Customer(String email, String username, String firstName, String lastName, String password, CustomerState state, List<PaymentMethod> paymentMethods, List<Promotion> promotions) {
+    public Customer(String email, String username, String firstName, String lastName, String password, CustomerState customerState, List<PaymentMethod> paymentMethods, List<Promotion> promotions, String phoneNumber, String address, String city, String state, String zipCode, String country) {
         super(email, username, firstName, lastName, password);
-        this.state = state;
+        this.customerState = customerState;
         setPaymentMethods(paymentMethods);
         setPromotions(promotions);
-    }
-
-    public CustomerState getState() {
-        return state;
-    }
-
-    public void setState(CustomerState state) {
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+        this.city = city;
         this.state = state;
+        this.zipCode = zipCode;
+        this.country = country;
+    }
+
+    public CustomerState getCustomerState() {
+        return customerState;
+    }
+
+    public void setCustomerState(CustomerState state) {
+        this.customerState = state;
     }
 
     public void removePaymentMethod(PaymentMethod paymentMethod) {
@@ -147,5 +160,53 @@ public class Customer extends User {
     // CUSTOMER STATE ENUMERATION
     public enum CustomerState {
         ACTIVE, INACTIVE, SUSPENDED
+    }
+
+    public void setCustomerState(String state) {
+        this.state = state;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public String getZipCode() {
+        return zipCode;
+    }
+
+    public void setZipCode(String zipCode) {
+        this.zipCode = zipCode;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
     }
 }

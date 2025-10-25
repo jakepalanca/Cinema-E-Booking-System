@@ -593,7 +593,13 @@ public class WebController {
                 "password123",
                 Customer.CustomerState.ACTIVE,
                 new ArrayList<>(),
-                new ArrayList<>()
+                new ArrayList<>(),
+                "123456789",
+                "123 Main St",
+                "Anytown",
+                "CA",
+                "12345",
+                "USA"
         );
         alice.addPromotion(welcomePromo);
         alice = customerRepository.save(alice);
@@ -606,7 +612,13 @@ public class WebController {
                 "password123",
                 Customer.CustomerState.ACTIVE,
                 new ArrayList<>(),
-                new ArrayList<>()
+                new ArrayList<>(),
+                "321456789",
+                "123 Main St",
+                "Anytown",
+                "CA",
+                "12345",
+                "USA"
         );
         bob.addPromotion(welcomePromo);
         bob.addPromotion(loyaltyPromo);
@@ -620,7 +632,13 @@ public class WebController {
                 "password123",
                 Customer.CustomerState.SUSPENDED,
                 new ArrayList<>(),
-                new ArrayList<>()
+                new ArrayList<>(),
+                "321456879",
+                "123 Main St",
+                "Anytown",
+                "CA",
+                "12345",
+                "USA"
         );
         carol.addPromotion(blockbusterPromo);
         carol = customerRepository.save(carol);

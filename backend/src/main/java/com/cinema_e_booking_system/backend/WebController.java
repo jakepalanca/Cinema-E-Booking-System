@@ -650,7 +650,12 @@ public class WebController {
                         "Alice",
                         "Johnson",
                         Date.valueOf(LocalDate.now().plusYears(3)),
-                        123
+                        123,
+                        30338,
+                        "USA",
+                        "GA",
+                        "Dunwoody",
+                        "1234 Parliament Drive"
                 )
         );
         alice.addPaymentMethod(aliceCard);
@@ -662,7 +667,12 @@ public class WebController {
                         "Bob",
                         "Miller",
                         Date.valueOf(LocalDate.now().plusYears(4)),
-                        456
+                        456,
+                        30318,
+                        "FSU",
+                        "GA",
+                        "Atlanta",
+                        "4321 Parliament Drive"
                 )
         );
         bob.addPaymentMethod(bobCard);
@@ -674,7 +684,12 @@ public class WebController {
                         "Carol",
                         "Nguyen",
                         Date.valueOf(LocalDate.now().plusYears(2)),
-                        789
+                        789,
+                        11111,
+                        "CND",
+                        "WH",
+                        "Pearl",
+                        "6767 Parliament Drive"
                 )
         );
         carol.addPaymentMethod(carolCard);

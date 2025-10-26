@@ -37,6 +37,13 @@ public class PaymentMethod {
     // java.sql not java.util
     private Date expirationDate;
 
+    private String address;
+    private String city;
+    private String state;
+    private int zipCode;
+    private String country;
+
+
     // 3 or 4 digits
     private int securityCode;
 
@@ -44,13 +51,18 @@ public class PaymentMethod {
         // JPA requirement
     }
 
-    public PaymentMethod(Customer customer, Long cardNumber, String cardHolderFirstName, String cardHolderLastName, Date expirationDate, int securityCode) {
+    public PaymentMethod(Customer customer, Long cardNumber, String cardHolderFirstName, String cardHolderLastName, Date expirationDate, int securityCode, int zipCode, String country, String state, String city, String address) {
         this.customer = customer;
         this.cardNumber = cardNumber;
         this.cardHolderFirstName = cardHolderFirstName;
         this.cardHolderLastName = cardHolderLastName;
         this.expirationDate = expirationDate;
         this.securityCode = securityCode;
+        this.address = address;
+        this.city = city;
+        this.state = state;
+        this.zipCode = zipCode;
+        this.country = country;
     }
 
     public Long getId() {

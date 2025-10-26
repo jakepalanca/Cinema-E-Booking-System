@@ -17,6 +17,7 @@ function Navbar(){
                     <li><a href="#">Promotions</a></li>
                     <li><a href="#">Contact Us</a></li>
                     <li><Link to="/browse" className="nav-item">Browse</Link></li>
+                    <li><Link to="/register" className="nav-item">Sign Up</Link></li>
                     <li><a href="#">Sign In</a></li>
                 </ul>
             </nav>

@@ -82,6 +82,21 @@ public class WebController {
     }
 
     /**
+    // attempting postmapping for setProfile (registration)
+    @PostMapping("/setProfile")
+    public void receiveData(@RequestBody Profile newProfile) {
+      System.out.println("New user: " + newProfile)
+    }
+    //need to create a profile class, also change url
+    */
+
+  /**
+   * //edit profile
+   * //Post Mapping to receive new values for Name, address, etc
+   * //similar to setProfile but cannot allowed for email change
+   */
+
+  /**
      * The endpoint to filter movies by genre.
      */
     @GetMapping("/by-genre")

@@ -1,5 +1,7 @@
 package com.cinema_e_booking_system.backend;
 
+import com.cinema_e_booking_system.backend.EmailRequest;
+
 import com.cinema_e_booking_system.db.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -37,6 +39,9 @@ public class WebController {
      */
     @Autowired
     MovieService movieService;
+
+    @Autowired
+    EmailSenderService senderService;
 
     @Autowired
     ShowRepository showRepository;
@@ -242,8 +247,23 @@ public String test() {
     public int getHealth() {
         return 200;
     }
+  /**
+   * Endpoint to send Emails
+   */
+    @PostMapping("/sendEmail")
+    public ResponseEntity<Map<String, String>> sendEmail(
+      @RequestBody EmailRequest request
+    ) {
+      String toEmail = emailRequest.getToEmail();
+      String subject = emailRequest.getSubject();
+      String body = emailRequest.getBody();
 
-    /**
+      senderService.sendEmail(toEmail, subject, body);
+      return ResponseEntity.ok(Map.of("message", "Email sent successfully."));
+    }
+
+
+  /**
      * The endpoint to filter movies by genre.
      */
     @GetMapping("/by-genre")

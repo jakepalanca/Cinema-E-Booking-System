@@ -5,7 +5,7 @@ import Navbar from './Navbar.jsx';
 
 function Login(){
     const [credentials, setCredentials] = useState({
-        emailOrUser: "",
+        emailOrUsername: "",
         password: "",
     });
     const [loading, setLoading] = useState(false);

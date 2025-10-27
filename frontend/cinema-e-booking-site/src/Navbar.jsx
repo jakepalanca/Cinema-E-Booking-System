@@ -22,7 +22,7 @@ function Navbar(){
                     <div className="logo">
                     <li>
                         <a href="/">
-                        <img src="TODO" alt="Team 14"></img>
+                        <img src="logo192.png" alt="Team 14"></img>
                         </a>
                     </li>
                     </div>
@@ -32,7 +32,7 @@ function Navbar(){
                     <li><Link to="/browse" className="nav-item">Browse</Link></li>
                     {isLoggedIn ? (
                         <>
-                            <li><Link to="/editprofile" className="nav-item">Edit Profile</Link></li>
+                            <li><Link to="/edit-profile" className="nav-item">Edit Profile</Link></li>
                             <li>
                                 <Link
                                     to="/"

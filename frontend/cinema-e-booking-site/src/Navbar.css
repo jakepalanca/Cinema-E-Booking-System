@@ -21,9 +21,15 @@ nav a:hover{
     padding: 4px;
     gap: 20px;
 }
-.logo{
+.logo {
     display: flex;
 }
+
+.logo img{
+    height: 50px;
+    width: auto;
+}
+
 .title{
     margin-left: 10px;
 }

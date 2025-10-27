@@ -8,6 +8,7 @@ import Navbar from './Navbar';
 import logo from './logo.svg';
 import RegistrationPage from "./RegistrationPage";
 import Login from "./Login";
+import Profile from "./EditProfile";
 import './App.css';
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
         <Route path="/browse" element={<Browse />} />
         <Route path="/register" element={<RegistrationPage />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/edit-profile" element={<Profile />} />
       </Routes>
   );
 }

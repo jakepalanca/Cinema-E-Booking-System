@@ -1,0 +1,84 @@
+import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+import { Link, useNavigate } from "react-router-dom";
+import "./Login.css";
+import Navbar from './Navbar.jsx';
+
+function Login(){
+    const [credentials, setCredentials] = useState({
+        emailOrUser: "",
+        password: "",
+    });
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState("");
+    const navigate = useNavigate();
+    
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setCredentials({...credentials, [name]: value});
+    };
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setMessage("");
+        try {
+            const res = await fetch("http://localhost:8080/login", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(credentials),
+            });
+            if (res.ok){
+                const data = await res.json();
+                localStorage.setItem("user", JSON.stringify(data));
+                setMessage("Login successful");
+                navigate("/");
+            }else {
+                const err = await res.json();
+                setMessage(err.message || "Invalid email, username, or password");
+            }
+        } catch(error) {
+            console.error(error);
+            setMessage("Error connecting to the server.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <>
+        <Navbar />
+        <div className="login-div">
+            <h2>Sign In</h2>
+            <form onSubmit={handleSubmit} className="login-form">
+                <label>
+                    Email or Username:
+                    <input
+                        type="text"
+                        name="emailOrUsername"
+                        value={credentials.emailOrUsername}
+                        onChange={handleChange}
+                        required
+                    />
+                </label>
+                <label>
+                    Password:
+                    <input
+                        type="password"
+                        name="password"
+                        value={credentials.password}
+                        onChange={handleChange}
+                        required
+                    />
+                </label>
+                <button type="submit" disabled={loading}>
+                    {loading ? "Logging in..." : "Login"}
+                </button>
+                {message && <p className="info-message">{message}</p>}
+            </form>
+            <p className="signup-redirect">
+                Don't have an account? <Link to="/register">Sign Up</Link>
+            </p>
+        </div>
+        </>
+    );
+}
+export default Login

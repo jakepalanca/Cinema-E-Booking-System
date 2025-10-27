@@ -1,7 +1,20 @@
 import './Navbar.css';
-import React from 'react';
-import { Link } from "react-router-dom";
+import React, {useEffect, useState} from 'react';
+import { Link, useNavigate } from "react-router-dom";
 function Navbar(){
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const navigate = useNavigate();
+    useEffect(() => {
+        const storedUser = localStorage.getItem("user");
+        setIsLoggedIn(!!storedUser);
+    }, []);
+    //Logout
+    const handleLogout = () => {
+        localStorage.removeItem("user");
+        setIsLoggedIn(false);
+        navigate("/");
+    };
+
     return(
         <header>
             <nav>
@@ -17,8 +30,25 @@ function Navbar(){
                     <li><a href="#">Promotions</a></li>
                     <li><a href="#">Contact Us</a></li>
                     <li><Link to="/browse" className="nav-item">Browse</Link></li>
-                    <li><Link to="/register" className="nav-item">Sign Up</Link></li>
-                    <li><a href="#">Sign In</a></li>
+                    {isLoggedIn ? (
+                        <>
+                            <li><Link to="/editprofile" className="nav-item">Edit Profile</Link></li>
+                            <li>
+                                <Link
+                                    to="/"
+                                    className="nav-item"
+                                    onClick={(e) => { e.preventDefault(); handleLogout(); }}
+                                >
+                                    Log Out
+                                </Link>
+                            </li>
+                        </>
+                    ) : (
+                        <>
+                            <li><Link to="/register" className="nav-item">Sign Up</Link></li>
+                            <li><Link to="/login" className="nav-item">Sign In</Link></li>
+                        </>
+                    )}
                 </ul>
             </nav>
             <hr></hr>

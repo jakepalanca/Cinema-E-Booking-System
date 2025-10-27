@@ -1,0 +1,36 @@
+.registration-form button {
+    display: block;
+    margin-top: 1rem;
+}
+.registration-div {
+    color: whitesmoke;
+    padding: .5rem;
+    gap: 1rem;
+}
+.registration-div input,
+.registration-div select,
+.registration-div textarea {
+    background-color: rgb(239, 239, 239);
+    padding: .25rem;
+}
+.registration-form label{
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    align-items: center;
+    column-gap: 1rem;
+    margin-bottom: .25rem;
+}
+/* --- TEXT INPUTS --- */
+.registration-form input[type="text"],
+.registration-form input[type="email"],
+.registration-form input[type="password"],
+.registration-form input[type="tel"],
+.registration-form input[type="month"] {
+  width: 320px;
+  padding: 0.6rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background-color: #1e1e1e;
+  color: white;
+  box-sizing: border-box;
+}

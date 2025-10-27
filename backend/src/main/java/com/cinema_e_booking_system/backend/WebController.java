@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.MediaType;
 
 import java.sql.Date;
 import java.sql.Time;
@@ -14,6 +15,9 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 
 /**
  * The controller for the web.
@@ -72,6 +76,121 @@ public class WebController {
 
     @Autowired
     UserRepository userRepository;
+
+// ---------------------- USER AUTHENTICATION & PROFILE MANAGEMENT ----------------------
+
+// ---------------------- REGISTER ----------------------
+@PostMapping(
+    value = "/register",
+    consumes = MediaType.APPLICATION_JSON_VALUE,
+    produces = MediaType.APPLICATION_JSON_VALUE
+)
+public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, String> newUser) {
+    String email = newUser.get("email");
+    String username = newUser.get("username");
+    String firstName = newUser.get("firstName");
+    String lastName = newUser.get("lastName");
+    String password = newUser.get("password");
+
+    if (customerRepository.findByEmail(email).isPresent()) {
+        return ResponseEntity.badRequest().body(Map.of("message", "Email already registered."));
+    }
+
+    StringCryptoConverter crypto = new StringCryptoConverter();
+    Customer c = new Customer(
+            email,
+            username,
+            firstName,
+            lastName,
+            crypto.convertToDatabaseColumn(password),
+            Customer.CustomerState.INACTIVE,
+            null, null,
+            null, null, null, null, null, null
+    );
+
+    customerRepository.save(c);
+    return ResponseEntity.ok(Map.of("message", "Registration successful! Verify your email before login."));
+}
+
+// ---------------------- LOGIN ----------------------
+@PostMapping(
+    value = "/login",
+    consumes = MediaType.APPLICATION_JSON_VALUE,
+    produces = MediaType.APPLICATION_JSON_VALUE
+)
+public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String> credentials) {
+    String email = credentials.get("email");
+    String password = credentials.get("password");
+
+    Optional<Customer> customerOpt = customerRepository.findByEmail(email);
+    if (customerOpt.isEmpty()) {
+        return ResponseEntity.status(401).body(Map.of("message", "User not found."));
+    }
+
+    Customer c = customerOpt.get();
+    StringCryptoConverter crypto = new StringCryptoConverter();
+    String decryptedPassword = crypto.convertToEntityAttribute(c.getPassword());
+
+    if (!decryptedPassword.equals(password)) {
+        return ResponseEntity.status(401).body(Map.of("message", "Incorrect password."));
+    }
+
+    if (c.getCustomerState() == Customer.CustomerState.SUSPENDED) {
+        return ResponseEntity.status(403).body(Map.of("message", "Account suspended."));
+    }
+
+    return ResponseEntity.ok(Map.of("message", "Login successful for " + c.getFirstName()));
+}
+
+// ---------------------- UPDATE PROFILE ----------------------
+@PutMapping(
+    value = "/profile/{id}",
+    consumes = {
+        MediaType.APPLICATION_JSON_VALUE,
+        MediaType.ALL_VALUE
+    },
+    produces = MediaType.APPLICATION_JSON_VALUE
+)
+public ResponseEntity<Map<String, String>> updateProfile(
+        @PathVariable Long id,
+        @RequestBody Map<String, String> updatedFields
+) {
+    Optional<Customer> opt = customerRepository.findById(id);
+    if (opt.isEmpty()) {
+        return ResponseEntity.status(404).body(Map.of("message", "User not found."));
+    }
+
+    Customer c = opt.get();
+
+    if (updatedFields.containsKey("firstName")) c.setFirstName(updatedFields.get("firstName"));
+    if (updatedFields.containsKey("lastName")) c.setLastName(updatedFields.get("lastName"));
+    if (updatedFields.containsKey("city")) c.setCity(updatedFields.get("city"));
+    if (updatedFields.containsKey("address")) c.setAddress(updatedFields.get("address"));
+    if (updatedFields.containsKey("zipCode")) c.setZipCode(updatedFields.get("zipCode"));
+    if (updatedFields.containsKey("country")) c.setCountry(updatedFields.get("country"));
+    if (updatedFields.containsKey("password") && !updatedFields.get("password").isBlank()) {
+        StringCryptoConverter crypto = new StringCryptoConverter();
+        c.setPassword(crypto.convertToDatabaseColumn(updatedFields.get("password")));
+    }
+
+    customerRepository.save(c);
+    return ResponseEntity.ok(Map.of("message", "Profile updated successfully."));
+}
+
+// ---------------------- LOGOUT ----------------------
+@PostMapping("/logout")
+public ResponseEntity<Map<String, String>> logout() {
+    return ResponseEntity.ok(Map.of("message", "Logout successful."));
+}
+
+// ---------------------- TEST ----------------------
+@GetMapping("/test")
+public String test() {
+    return "User controller connected to DB!";
+}
+
+// -----------------------------------------------------------
+
 
     /**
      * The endpoint to check if the backend is healthy.

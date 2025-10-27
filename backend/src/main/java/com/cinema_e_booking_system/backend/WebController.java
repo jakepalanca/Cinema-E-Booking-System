@@ -177,6 +177,49 @@ public ResponseEntity<Map<String, String>> updateProfile(
     return ResponseEntity.ok(Map.of("message", "Profile updated successfully."));
 }
 
+//Doesn't! :-(
+@PutMapping("setUserPayment/{id}")
+public ResponseEntity<Map<String, String>> updatePayment(
+  @RequestBody PaymentMethod newCard,
+  @PathVariable Long id
+) {
+  Optional<Customer> opt = customerRepository.findById(id);
+  if (opt.isEmpty()) {
+    return ResponseEntity.status(404).body(Map.of("message", "User not found."));
+  }
+  Customer currentCustomer = opt.get();
+
+  //add if statement for checking # of payments <= 4
+  newCard.setCustomer(currentCustomer);
+  paymentMethodRepository.save(newCard);
+  currentCustomer.addPaymentMethod(newCard);
+  customerRepository.save(currentCustomer);
+  return ResponseEntity.ok(Map.of("message", "New card added to user " + currentCustomer.getFirstName()));
+}
+
+//Works! :-)
+@PutMapping("promotions/remove/{customerId}/{promotionId}")
+public ResponseEntity<Map<String, String>> removePromotion(
+  @PathVariable Long promotionId,
+  @PathVariable Long customerId
+) {
+  Optional<Customer> opt = customerRepository.findById(customerId);
+  if (opt.isEmpty()) {
+    return ResponseEntity.status(404).body(Map.of("message", "User not found."));
+  }
+  Customer currentCustomer = opt.get();
+
+  Optional<Promotion> promotionOptional = promotionRepository.findById(promotionId);
+  if (promotionOptional.isEmpty()) {
+    return ResponseEntity.status(404).body(Map.of("message", "Promotion not found."));
+  }
+  Promotion p = promotionOptional.get();
+
+  currentCustomer.removePromotion(p);
+  customerRepository.save(currentCustomer);
+  return ResponseEntity.ok(Map.of("message", "Promotion removed from " + currentCustomer.getFirstName()));
+}
+
 // ---------------------- LOGOUT ----------------------
 @PostMapping("/logout")
 public ResponseEntity<Map<String, String>> logout() {

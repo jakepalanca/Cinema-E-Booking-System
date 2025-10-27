@@ -182,25 +182,52 @@ public ResponseEntity<Map<String, String>> updateProfile(
     return ResponseEntity.ok(Map.of("message", "Profile updated successfully."));
 }
 
-//Doesn't! :-(
-@PutMapping("setUserPayment/{id}")
+@PutMapping(
+    value = "/setUserPayment/{id}",
+    consumes = MediaType.APPLICATION_JSON_VALUE,
+    produces = MediaType.APPLICATION_JSON_VALUE
+)
 public ResponseEntity<Map<String, String>> updatePayment(
-  @RequestBody PaymentMethod newCard,
-  @PathVariable Long id
+        @RequestBody Map<String, Object> newCard,
+        @PathVariable Long id
 ) {
-  Optional<Customer> opt = customerRepository.findById(id);
-  if (opt.isEmpty()) {
-    return ResponseEntity.status(404).body(Map.of("message", "User not found."));
-  }
-  Customer currentCustomer = opt.get();
+    Optional<Customer> opt = customerRepository.findById(id);
+    if (opt.isEmpty()) {
+        return ResponseEntity.status(404).body(Map.of("message", "User not found."));
+    }
+    Customer currentCustomer = opt.get();
 
-  //add if statement for checking # of payments <= 4
-  newCard.setCustomer(currentCustomer);
-  paymentMethodRepository.save(newCard);
-  currentCustomer.addPaymentMethod(newCard);
-  customerRepository.save(currentCustomer);
-  return ResponseEntity.ok(Map.of("message", "New card added to user " + currentCustomer.getFirstName()));
+
+    // Enforce 3-card limit
+if (currentCustomer.getPaymentMethods().size() >= 3) {
+    return ResponseEntity.badRequest().body(Map.of(
+        "message", "You cannot add more than 3 payment methods."
+    ));
 }
+
+    // Extract data from JSON and build the PaymentMethod object
+    PaymentMethod card = new PaymentMethod(
+            currentCustomer,
+            ((Number)newCard.get("cardNumber")).longValue(),
+            (String)newCard.get("firstName"),
+            (String)newCard.get("lastName"),
+            java.sql.Date.valueOf((String)newCard.get("expirationDate")),
+            ((Number)newCard.get("securityCode")).intValue(),
+            ((Number)newCard.get("zipCode")).intValue(),
+            (String)newCard.get("country"),
+            (String)newCard.get("state"),
+            (String)newCard.get("city"),
+            (String)newCard.get("address")
+    );
+
+    // Save it and link to the customer
+    paymentMethodRepository.save(card);
+    currentCustomer.addPaymentMethod(card);
+    customerRepository.save(currentCustomer);
+
+    return ResponseEntity.ok(Map.of("message", "New card added to user " + currentCustomer.getFirstName()));
+}
+
 
 //Works! :-)
 @PutMapping("promotions/remove/{customerId}/{promotionId}")

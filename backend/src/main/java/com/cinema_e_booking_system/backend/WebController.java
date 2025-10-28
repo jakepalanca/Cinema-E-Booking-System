@@ -369,6 +369,40 @@ public String test() {
       return ResponseEntity.ok(Map.of("message", "Email sent successfully."));
     }
 
+  /**
+   * Endpoint to set new User
+   */
+  // attempting postmapping for setUser (registration)
+  // also adds to customer repo
+    @PostMapping("/setUser")
+    public void receiveData(@RequestBody User newUser) {
+      userRepository.save(newUser);
+      //newUser = customerRepository.save(newUser);
+      System.out.println("New user: " + newUser.getUsername());
+    }
+    // change url
+
+  /**
+   * Endpoint to set payment method by user
+
+  @PostMapping("/setUserPayment/{id}")
+  public void receiveData(@RequestBody PaymentMethod newCard, @PathVariable Long id) {
+    List<Customer> currentCustomer = customerRepository.findById(id);
+    paymentMethodRepository.save(newCard);
+    currentCustomer.addPaymentMethod(newCard);
+    customerRepository.save(currentCustomer);
+    System.out.println("User " + id + ", Payment method: " + newCard.getCardNumber());
+  }
+   //Not actually sure if this works
+   //findById isn't working, type incompatibility
+   */
+
+
+  /**
+   * //edit profile
+   * //Post Mapping to receive new values for Name, address, etc
+   * //similar to setProfile but cannot allowed for email change
+   */
 
   /**
      * The endpoint to filter movies by genre.

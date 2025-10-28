@@ -1,0 +1,92 @@
+.profile button {
+    display: block;
+    margin-top: 1rem;
+}
+.profile {
+    color: whitesmoke;
+    padding: .5rem;
+    gap: 1rem;
+}
+.profile input,
+.profile select,
+.profile textarea {
+    background-color: rgb(239, 239, 239);
+    padding: .25rem;
+}
+.profile label {
+    display: grid;
+    grid-template-columns: 160px auto;
+    align-items: center;
+    column-gap: 1rem;
+    margin-bottom: .25rem;
+}
+
+.profile fieldset {
+    border: 1px solid #444;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 4px;
+    background-color: #2e2e2e;
+}
+/* --- TEXT INPUTS --- */
+.profile input{
+  width: 320px;
+  padding: 0.6rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background-color: #1e1e1e;
+  color: white;
+  box-sizing: border-box;
+}
+
+/* --- SELECT INPUTS --- */
+.profile select{
+  width: 100px;
+  padding: 0.6rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background-color: #1e1e1e;
+  color: white;
+  box-sizing: border-box;
+}
+
+/* --- TOGGLE SWITCH --- */
+.toggle-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 46px;
+  height: 24px;
+  background: #555;
+  border-radius: 24px;
+  transition: 0.3s;
+}
+
+.toggle-switch::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: 0.3s;
+}
+
+.toggle-input {
+  display: none;
+}
+
+.toggle-input:checked + .toggle-switch {
+  background: #4caf50;
+}
+
+.toggle-input:checked + .toggle-switch::after {
+  transform: translateX(22px);
+}

@@ -37,8 +37,6 @@ public class Customer extends User {
     private String state;
     private String zipCode;
     private String country;
-    private String verificationToken;
-    private boolean verified = false; //default false
 
     protected Customer() {
         // JPA requirement
@@ -58,8 +56,6 @@ public class Customer extends User {
         this.state = state;
         this.zipCode = zipCode;
         this.country = country;
-        this.verificationToken = null;
-        this.verified = false;
     }
 
     public CustomerState getCustomerState() {
@@ -212,21 +208,5 @@ public class Customer extends User {
 
     public void setCountry(String country) {
         this.country = country;
-    }
-
-    public String getVerificationToken() {
-      return verificationToken;
-    }
-
-    public void setVerificationToken(String token) {
-      this.verificationToken = token;
-    }
-
-    public boolean isVerified() {
-      return verified;
-    }
-
-    public void setVerified(boolean verified) {
-      this.verified = verified;
     }
 }

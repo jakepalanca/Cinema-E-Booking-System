@@ -31,7 +31,7 @@ public class EmailSenderService {
     String baseUrl = "http://localhost:8080/users/confirm";
     String verificationLink = baseUrl + "?token=" + token;
 
-    String subject = "Confirm Your Cinema E-Booking Account";
+    String subject = "Confirm your Cinema E-Booking Account";
     String body = String.format(
         "Hello %s,\n\n" +
         "Thank you for registering. Please click the link below to confirm your account:\n\n" +
@@ -48,5 +48,31 @@ public class EmailSenderService {
     message.setText(body);
 
     mailSender.send(message);
+  }
+
+  public void sendPasswordResetLink(Customer customer, String token) {
+    String baseUrl = "http://localhost:8080/reset-password";
+    String passwordResetLink = baseUrl + "?token=" + token;
+
+    String subject = "Reset your Password";
+
+    String body = String.format(
+            "Hello %s,\n\n" +
+                    "Please click the link to reset your password:\n\n" +
+                    "%s\n\n" +
+                    "This link will expire soon.\n\n" +
+                    "The Cinema Team",
+            customer.getFirstName(), passwordResetLink
+    );
+
+    SimpleMailMessage message = new SimpleMailMessage();
+    message.setFrom("ashvijhosdurg@gmail.com");
+    message.setTo(customer.getEmail());
+    message.setSubject(subject);
+    message.setText(body);
+
+    mailSender.send(message);
+
+
   }
 }

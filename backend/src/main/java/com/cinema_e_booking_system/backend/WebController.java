@@ -228,8 +228,9 @@ public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<Strin
     customerRepository.save(c);
 
     // Teammate handles email sending later
-    // senderService.sendPasswordResetEmail(c, token);
+    senderService.sendPasswordResetLink(c, token);
 
+    System.out.println(token);
     return ResponseEntity.ok(Map.of("message", "Password reset link sent to your email."));
 }
 
@@ -437,6 +438,7 @@ public String test() {
 
   /**
    * Endpoint to set new User
+   * Don't use this
    */
   // attempting postmapping for setUser (registration)
   // also adds to customer repo

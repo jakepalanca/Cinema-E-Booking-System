@@ -117,6 +117,7 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Str
     return ResponseEntity.ok(Map.of("message", "Registration successful! Verify your email before login."));
 }
 
+
 // ---------------------- LOGIN ----------------------
 @PostMapping(
     value = "/login",
@@ -128,13 +129,34 @@ public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String
     String password = credentials.get("password");
 
     Optional<Customer> customerOpt = customerRepository.findByEmail(email);
+    StringCryptoConverter crypto = new StringCryptoConverter();
+
+    // --- If no customer, check Admin ---
     if (customerOpt.isEmpty()) {
+        Optional<Admin> adminOpt = adminRepository.findByEmail(email);
+        if (adminOpt.isPresent()) {
+            Admin a = adminOpt.get();
+            if (!a.getPassword().equals(password)) {
+                return ResponseEntity.status(401).body(Map.of("message", "Incorrect password."));
+            }
+            return ResponseEntity.ok(Map.of(
+                "message", "Login successful for admin " + a.getFirstName(),
+                "role", "admin"
+            ));
+        }
         return ResponseEntity.status(401).body(Map.of("message", "User not found."));
     }
 
+    // --- If found a customer ---
     Customer c = customerOpt.get();
-    StringCryptoConverter crypto = new StringCryptoConverter();
-    String decryptedPassword = crypto.convertToEntityAttribute(c.getPassword());
+    String decryptedPassword;
+
+    try {
+        decryptedPassword = crypto.convertToEntityAttribute(c.getPassword());
+    } catch (Exception e) {
+        // If decryption fails, assume password is stored as plain text
+        decryptedPassword = c.getPassword();
+    }
 
     if (!decryptedPassword.equals(password)) {
         return ResponseEntity.status(401).body(Map.of("message", "Incorrect password."));
@@ -144,8 +166,12 @@ public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String
         return ResponseEntity.status(403).body(Map.of("message", "Account suspended."));
     }
 
-    return ResponseEntity.ok(Map.of("message", "Login successful for " + c.getFirstName()));
+    return ResponseEntity.ok(Map.of(
+        "message", "Login successful for " + c.getFirstName(),
+        "role", "customer"
+    ));
 }
+
 
 // ---------------------- UPDATE PROFILE ----------------------
 @PutMapping(

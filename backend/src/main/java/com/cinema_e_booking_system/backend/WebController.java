@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+
 
 
 /**
@@ -113,8 +115,33 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Str
             null, null, null, null, null, null
     );
 
-    customerRepository.save(c);
+    String token = UUID.randomUUID().toString();
+    c.setVerificationToken(token);
+    c.setVerified(false);
+
+    Customer savedCustomer = customerRepository.save(c);
+    senderService.sendVerificationEmail(savedCustomer, token);
     return ResponseEntity.ok(Map.of("message", "Registration successful! Verify your email before login."));
+}
+
+@GetMapping("users/confirm")
+public ResponseEntity<String> confirmedUser(@RequestParam("token") String token) {
+  Optional<Customer> customerOptional = customerRepository.findByVerificationToken(token);
+
+  if (customerOptional.isEmpty()) {
+    return ResponseEntity.status(400).body(("Error: Invalid or expired token"));
+  }
+  Customer c = customerOptional.get();
+
+  if (c.isVerified()) {
+    return ResponseEntity.ok("Account is already confirmed");
+  }
+
+  c.setVerified(true);
+  c.setVerificationToken(null);
+  //c.setCustomerState("ACTIVE");
+  customerRepository.save(c);
+  return ResponseEntity.ok("Sucesss! Account confirmed.");
 }
 
 // ---------------------- LOGIN ----------------------

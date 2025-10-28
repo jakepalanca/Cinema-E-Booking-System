@@ -15,6 +15,20 @@ spring:
       hibernate:
         ddl-auto: create-drop
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ashvijhosdurg@gmail.com
+    password: jfmrkslluulbtecg
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
 logging:
   level:
     org.springframework.jdbc.core: DEBUG
@@ -23,3 +37,4 @@ jasypt:
   encryptor:
     algorithm: PBEWithMD5AndDES
     password: Ják3i$C0ōŁ
+

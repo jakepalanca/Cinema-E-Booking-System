@@ -19,8 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
-
 
 
 /**
@@ -115,34 +113,10 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Str
             null, null, null, null, null, null
     );
 
-    String token = UUID.randomUUID().toString();
-    c.setVerificationToken(token);
-    c.setVerified(false);
-
-    Customer savedCustomer = customerRepository.save(c);
-    senderService.sendVerificationEmail(savedCustomer, token);
+    customerRepository.save(c);
     return ResponseEntity.ok(Map.of("message", "Registration successful! Verify your email before login."));
 }
 
-@GetMapping("users/confirm")
-public ResponseEntity<String> confirmedUser(@RequestParam("token") String token) {
-  Optional<Customer> customerOptional = customerRepository.findByVerificationToken(token);
-
-  if (customerOptional.isEmpty()) {
-    return ResponseEntity.status(400).body(("Error: Invalid or expired token"));
-  }
-  Customer c = customerOptional.get();
-
-  if (c.isVerified()) {
-    return ResponseEntity.ok("Account is already confirmed");
-  }
-
-  c.setVerified(true);
-  c.setVerificationToken(null);
-  //c.setCustomerState("ACTIVE");
-  customerRepository.save(c);
-  return ResponseEntity.ok("Sucesss! Account confirmed.");
-}
 
 // ---------------------- LOGIN ----------------------
 @PostMapping(
@@ -155,13 +129,34 @@ public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String
     String password = credentials.get("password");
 
     Optional<Customer> customerOpt = customerRepository.findByEmail(email);
+    StringCryptoConverter crypto = new StringCryptoConverter();
+
+    // --- If no customer, check Admin ---
     if (customerOpt.isEmpty()) {
+        Optional<Admin> adminOpt = adminRepository.findByEmail(email);
+        if (adminOpt.isPresent()) {
+            Admin a = adminOpt.get();
+            if (!a.getPassword().equals(password)) {
+                return ResponseEntity.status(401).body(Map.of("message", "Incorrect password."));
+            }
+            return ResponseEntity.ok(Map.of(
+                "message", "Login successful for admin " + a.getFirstName(),
+                "role", "admin"
+            ));
+        }
         return ResponseEntity.status(401).body(Map.of("message", "User not found."));
     }
 
+    // --- If found a customer ---
     Customer c = customerOpt.get();
-    StringCryptoConverter crypto = new StringCryptoConverter();
-    String decryptedPassword = crypto.convertToEntityAttribute(c.getPassword());
+    String decryptedPassword;
+
+    try {
+        decryptedPassword = crypto.convertToEntityAttribute(c.getPassword());
+    } catch (Exception e) {
+        // If decryption fails, assume password is stored as plain text
+        decryptedPassword = c.getPassword();
+    }
 
     if (!decryptedPassword.equals(password)) {
         return ResponseEntity.status(401).body(Map.of("message", "Incorrect password."));
@@ -171,8 +166,12 @@ public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String
         return ResponseEntity.status(403).body(Map.of("message", "Account suspended."));
     }
 
-    return ResponseEntity.ok(Map.of("message", "Login successful for " + c.getFirstName()));
+    return ResponseEntity.ok(Map.of(
+        "message", "Login successful for " + c.getFirstName(),
+        "role", "customer"
+    ));
 }
+
 
 // ---------------------- UPDATE PROFILE ----------------------
 @PutMapping(

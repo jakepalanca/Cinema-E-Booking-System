@@ -38,7 +38,10 @@ public class Customer extends User {
     private String zipCode;
     private String country;
     private String verificationToken;
-    private boolean verified = false; //default false
+    
+    @Column(name = "verified", nullable = false)
+    private boolean verified = false; // default false
+
 
     protected Customer() {
         // JPA requirement
@@ -229,4 +232,15 @@ public class Customer extends User {
     public void setVerified(boolean verified) {
       this.verified = verified;
     }
+
+    private String resetToken;
+
+    public String getResetToken() {
+    return resetToken;
+    }
+
+    public void setResetToken(String resetToken) {
+    this.resetToken = resetToken;
+    }
+
 }

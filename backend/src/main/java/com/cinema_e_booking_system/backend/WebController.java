@@ -203,6 +203,68 @@ public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String
 }
 
 
+// ---------------------- FORGOT PASSWORD ----------------------
+@PostMapping(
+    value = "/forgot-password",
+    consumes = MediaType.APPLICATION_JSON_VALUE,
+    produces = MediaType.APPLICATION_JSON_VALUE
+)
+public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<String, String> request) {
+    String email = request.get("email");
+    Optional<Customer> customerOpt = customerRepository.findByEmail(email);
+
+    if (customerOpt.isEmpty()) {
+        return ResponseEntity.status(404).body(Map.of("message", "No account found with that email."));
+    }
+
+    Customer c = customerOpt.get();
+    if (!c.isVerified()) {
+        return ResponseEntity.status(401).body(Map.of("message", "Account not verified."));
+    }
+
+    // Generate reset token
+    String token = UUID.randomUUID().toString();
+    c.setResetToken(token);
+    customerRepository.save(c);
+
+    // Teammate handles email sending later
+    // senderService.sendPasswordResetEmail(c, token);
+
+    return ResponseEntity.ok(Map.of("message", "Password reset link sent to your email."));
+}
+
+
+// ---------------------- RESET PASSWORD ----------------------
+
+@PostMapping(
+    value = "/reset-password",
+    consumes = MediaType.APPLICATION_JSON_VALUE,
+    produces = MediaType.APPLICATION_JSON_VALUE
+)
+public ResponseEntity<Map<String, String>> resetPassword(
+        @RequestParam("token") String token,
+        @RequestBody Map<String, String> body
+) {
+    String newPassword = body.get("password");
+
+    if (newPassword == null || newPassword.isBlank()) {
+        return ResponseEntity.status(400).body(Map.of("message", "Password cannot be empty."));
+    }
+
+    Optional<Customer> customerOpt = customerRepository.findByResetToken(token);
+    if (customerOpt.isEmpty()) {
+        return ResponseEntity.status(400).body(Map.of("message", "Invalid or expired reset token."));
+    }
+
+    Customer c = customerOpt.get();
+    StringCryptoConverter crypto = new StringCryptoConverter();
+    c.setPassword(crypto.convertToDatabaseColumn(newPassword));
+    c.setResetToken(null); // clear token
+    customerRepository.save(c);
+
+    return ResponseEntity.ok(Map.of("message", "Password reset successful."));
+}
+
 // ---------------------- UPDATE PROFILE ----------------------
 @PutMapping(
     value = "/profile/{id}",
@@ -216,6 +278,8 @@ public ResponseEntity<Map<String, String>> updateProfile(
         @PathVariable Long id,
         @RequestBody Map<String, String> updatedFields
 ) {
+    System.out.println("Updated fields: " + updatedFields);
+
     Optional<Customer> opt = customerRepository.findById(id);
     if (opt.isEmpty()) {
         return ResponseEntity.status(404).body(Map.of("message", "User not found."));
@@ -230,6 +294,8 @@ public ResponseEntity<Map<String, String>> updateProfile(
     if (updatedFields.containsKey("zipCode")) c.setZipCode(updatedFields.get("zipCode"));
     if (updatedFields.containsKey("country")) c.setCountry(updatedFields.get("country"));
     if (updatedFields.containsKey("password") && !updatedFields.get("password").isBlank()) {
+    
+
         StringCryptoConverter crypto = new StringCryptoConverter();
         c.setPassword(crypto.convertToDatabaseColumn(updatedFields.get("password")));
     }
@@ -285,7 +351,7 @@ if (currentCustomer.getPaymentMethods().size() >= 3) {
 }
 
 
-//Works! :-)
+// ---------------------- REMOVE PROMOTION ----------------------
 @PutMapping("promotions/remove/{customerId}/{promotionId}")
 public ResponseEntity<Map<String, String>> removePromotion(
   @PathVariable Long promotionId,
@@ -308,11 +374,9 @@ public ResponseEntity<Map<String, String>> removePromotion(
   return ResponseEntity.ok(Map.of("message", "Promotion removed from " + currentCustomer.getFirstName()));
 }
 
-  /**
-   * Endpoint for adding promotions
-   */
-  @PutMapping("promotions/add/{customerId}/{promotionId")
-public ResponseEntity<Map<String, String>> removePromotion(
+// ---------------------- ADD PROMOTION ----------------------
+@PutMapping("promotions/add/{customerId}/{promotionId}")
+public ResponseEntity<Map<String, String>> addPromotion(
   @PathVariable Long promotionId,
   @PathVariable Long customerId
 ) {
@@ -330,7 +394,9 @@ public ResponseEntity<Map<String, String>> removePromotion(
 
   currentCustomer.addPromotion(p);
   customerRepository.save(currentCustomer);
-  return ResponseEntity.ok(Map.of("message", "Promotion removed from " + currentCustomer.getFirstName()));
+  return ResponseEntity.ok(Map.of("message", "Promotion added for " + currentCustomer.getFirstName()));
+}
+
 
 // ---------------------- LOGOUT ----------------------
 @PostMapping("/logout")

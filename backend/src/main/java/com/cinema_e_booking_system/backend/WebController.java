@@ -1,5 +1,7 @@
 package com.cinema_e_booking_system.backend;
 
+import com.cinema_e_booking_system.backend.EmailRequest;
+
 import com.cinema_e_booking_system.db.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -7,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.MediaType;
 
 import java.sql.Date;
 import java.sql.Time;
@@ -14,6 +17,10 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 
 /**
  * The controller for the web.
@@ -33,6 +40,9 @@ public class WebController {
      */
     @Autowired
     MovieService movieService;
+
+    @Autowired
+    EmailSenderService senderService;
 
     @Autowired
     ShowRepository showRepository;
@@ -73,12 +83,290 @@ public class WebController {
     @Autowired
     UserRepository userRepository;
 
+// ---------------------- USER AUTHENTICATION & PROFILE MANAGEMENT ----------------------
+
+// ---------------------- REGISTER ----------------------
+@PostMapping(
+    value = "/register",
+    consumes = MediaType.APPLICATION_JSON_VALUE,
+    produces = MediaType.APPLICATION_JSON_VALUE
+)
+public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, String> newUser) {
+    String email = newUser.get("email");
+    String username = newUser.get("username");
+    String firstName = newUser.get("firstName");
+    String lastName = newUser.get("lastName");
+    String password = newUser.get("password");
+
+    if (customerRepository.findByEmail(email).isPresent()) {
+        return ResponseEntity.badRequest().body(Map.of("message", "Email already registered."));
+    }
+
+    StringCryptoConverter crypto = new StringCryptoConverter();
+    Customer c = new Customer(
+            email,
+            username,
+            firstName,
+            lastName,
+            crypto.convertToDatabaseColumn(password),
+            Customer.CustomerState.INACTIVE,
+            null, null,
+            null, null, null, null, null, null
+    );
+
+    //customerRepository.save(c);
+    String token = UUID.randomUUID().toString();
+    c.setVerificationToken(token);
+    c.setVerified(false);
+
+    Customer savedCustomer = customerRepository.save(c);
+    senderService.sendVerificationEmail(savedCustomer, token);
+    return ResponseEntity.ok(Map.of("message", "Registration successful! Verify your email before login."));
+}
+
+  @GetMapping("users/confirm")
+  public ResponseEntity<String> confirmedUser(@RequestParam("token") String token) {
+    Optional<Customer> customerOptional = customerRepository.findByVerificationToken(token);
+
+    if (customerOptional.isEmpty()) {
+      return ResponseEntity.status(400).body(("Error: Invalid or expired token"));
+    }
+    Customer c = customerOptional.get();
+
+    if (c.isVerified()) {
+      return ResponseEntity.ok("Account is already confirmed");
+    }
+
+    c.setVerified(true);
+    c.setVerificationToken(null);
+    //c.setCustomerState("ACTIVE");
+    customerRepository.save(c);
+    return ResponseEntity.ok("Sucesss! Account confirmed.");
+  }
+
+// ---------------------- LOGIN ----------------------
+@PostMapping(
+    value = "/login",
+    consumes = MediaType.APPLICATION_JSON_VALUE,
+    produces = MediaType.APPLICATION_JSON_VALUE
+)
+public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String> credentials) {
+    String email = credentials.get("email");
+    String password = credentials.get("password");
+
+    Optional<Customer> customerOpt = customerRepository.findByEmail(email);
+    StringCryptoConverter crypto = new StringCryptoConverter();
+
+    // --- If no customer, check Admin ---
+    if (customerOpt.isEmpty()) {
+        Optional<Admin> adminOpt = adminRepository.findByEmail(email);
+        if (adminOpt.isPresent()) {
+            Admin a = adminOpt.get();
+            if (!a.getPassword().equals(password)) {
+                return ResponseEntity.status(401).body(Map.of("message", "Incorrect password."));
+            }
+            return ResponseEntity.ok(Map.of(
+                "message", "Login successful for admin " + a.getFirstName(),
+                "role", "admin"
+            ));
+        }
+        return ResponseEntity.status(401).body(Map.of("message", "User not found."));
+    }
+
+    // --- If found a customer ---
+    Customer c = customerOpt.get();
+    String decryptedPassword;
+
+    try {
+        decryptedPassword = crypto.convertToEntityAttribute(c.getPassword());
+    } catch (Exception e) {
+        // If decryption fails, assume password is stored as plain text
+        decryptedPassword = c.getPassword();
+    }
+
+    if (!decryptedPassword.equals(password)) {
+        return ResponseEntity.status(401).body(Map.of("message", "Incorrect password."));
+    }
+
+    if (c.getCustomerState() == Customer.CustomerState.SUSPENDED) {
+        return ResponseEntity.status(403).body(Map.of("message", "Account suspended."));
+    }
+
+    if (!c.isVerified()) {
+      return ResponseEntity.status(401).body(Map.of("message", "Account not verified."));
+    }
+
+    return ResponseEntity.ok(Map.of(
+        "message", "Login successful for " + c.getFirstName(),
+        "role", "customer"
+    ));
+}
+
+
+// ---------------------- UPDATE PROFILE ----------------------
+@PutMapping(
+    value = "/profile/{id}",
+    consumes = {
+        MediaType.APPLICATION_JSON_VALUE,
+        MediaType.ALL_VALUE
+    },
+    produces = MediaType.APPLICATION_JSON_VALUE
+)
+public ResponseEntity<Map<String, String>> updateProfile(
+        @PathVariable Long id,
+        @RequestBody Map<String, String> updatedFields
+) {
+    Optional<Customer> opt = customerRepository.findById(id);
+    if (opt.isEmpty()) {
+        return ResponseEntity.status(404).body(Map.of("message", "User not found."));
+    }
+
+    Customer c = opt.get();
+
+    if (updatedFields.containsKey("firstName")) c.setFirstName(updatedFields.get("firstName"));
+    if (updatedFields.containsKey("lastName")) c.setLastName(updatedFields.get("lastName"));
+    if (updatedFields.containsKey("city")) c.setCity(updatedFields.get("city"));
+    if (updatedFields.containsKey("address")) c.setAddress(updatedFields.get("address"));
+    if (updatedFields.containsKey("zipCode")) c.setZipCode(updatedFields.get("zipCode"));
+    if (updatedFields.containsKey("country")) c.setCountry(updatedFields.get("country"));
+    if (updatedFields.containsKey("password") && !updatedFields.get("password").isBlank()) {
+        StringCryptoConverter crypto = new StringCryptoConverter();
+        c.setPassword(crypto.convertToDatabaseColumn(updatedFields.get("password")));
+    }
+
+    customerRepository.save(c);
+    return ResponseEntity.ok(Map.of("message", "Profile updated successfully."));
+}
+
+@PutMapping(
+    value = "/setUserPayment/{id}",
+    consumes = MediaType.APPLICATION_JSON_VALUE,
+    produces = MediaType.APPLICATION_JSON_VALUE
+)
+public ResponseEntity<Map<String, String>> updatePayment(
+        @RequestBody Map<String, Object> newCard,
+        @PathVariable Long id
+) {
+    Optional<Customer> opt = customerRepository.findById(id);
+    if (opt.isEmpty()) {
+        return ResponseEntity.status(404).body(Map.of("message", "User not found."));
+    }
+    Customer currentCustomer = opt.get();
+
+
+    // Enforce 3-card limit
+if (currentCustomer.getPaymentMethods().size() >= 3) {
+    return ResponseEntity.badRequest().body(Map.of(
+        "message", "You cannot add more than 3 payment methods."
+    ));
+}
+
+    // Extract data from JSON and build the PaymentMethod object
+    PaymentMethod card = new PaymentMethod(
+            currentCustomer,
+            ((Number)newCard.get("cardNumber")).longValue(),
+            (String)newCard.get("firstName"),
+            (String)newCard.get("lastName"),
+            java.sql.Date.valueOf((String)newCard.get("expirationDate")),
+            ((Number)newCard.get("securityCode")).intValue(),
+            ((Number)newCard.get("zipCode")).intValue(),
+            (String)newCard.get("country"),
+            (String)newCard.get("state"),
+            (String)newCard.get("city"),
+            (String)newCard.get("address")
+    );
+
+    // Save it and link to the customer
+    paymentMethodRepository.save(card);
+    currentCustomer.addPaymentMethod(card);
+    customerRepository.save(currentCustomer);
+
+    return ResponseEntity.ok(Map.of("message", "New card added to user " + currentCustomer.getFirstName()));
+}
+
+
+//Works! :-)
+@PutMapping("promotions/remove/{customerId}/{promotionId}")
+public ResponseEntity<Map<String, String>> removePromotion(
+  @PathVariable Long promotionId,
+  @PathVariable Long customerId
+) {
+  Optional<Customer> opt = customerRepository.findById(customerId);
+  if (opt.isEmpty()) {
+    return ResponseEntity.status(404).body(Map.of("message", "User not found."));
+  }
+  Customer currentCustomer = opt.get();
+
+  Optional<Promotion> promotionOptional = promotionRepository.findById(promotionId);
+  if (promotionOptional.isEmpty()) {
+    return ResponseEntity.status(404).body(Map.of("message", "Promotion not found."));
+  }
+  Promotion p = promotionOptional.get();
+
+  currentCustomer.removePromotion(p);
+  customerRepository.save(currentCustomer);
+  return ResponseEntity.ok(Map.of("message", "Promotion removed from " + currentCustomer.getFirstName()));
+}
+
+  /**
+   * Endpoint for adding promotions
+   */
+  @PutMapping("promotions/add/{customerId}/{promotionId")
+public ResponseEntity<Map<String, String>> removePromotion(
+  @PathVariable Long promotionId,
+  @PathVariable Long customerId
+) {
+  Optional<Customer> opt = customerRepository.findById(customerId);
+  if (opt.isEmpty()) {
+    return ResponseEntity.status(404).body(Map.of("message", "User not found."));
+  }
+  Customer currentCustomer = opt.get();
+
+  Optional<Promotion> promotionOptional = promotionRepository.findById(promotionId);
+  if (promotionOptional.isEmpty()) {
+    return ResponseEntity.status(404).body(Map.of("message", "Promotion not found."));
+  }
+  Promotion p = promotionOptional.get();
+
+  currentCustomer.addPromotion(p);
+  customerRepository.save(currentCustomer);
+  return ResponseEntity.ok(Map.of("message", "Promotion removed from " + currentCustomer.getFirstName()));
+
+// ---------------------- LOGOUT ----------------------
+@PostMapping("/logout")
+public ResponseEntity<Map<String, String>> logout() {
+    return ResponseEntity.ok(Map.of("message", "Logout successful."));
+}
+
+// ---------------------- TEST ----------------------
+@GetMapping("/test")
+public String test() {
+    return "User controller connected to DB!";
+}
+
+// -----------------------------------------------------------
+
+
     /**
      * The endpoint to check if the backend is healthy.
      */
     @GetMapping("/health")
     public int getHealth() {
         return 200;
+    }
+  /**
+   * Endpoint to send Emails
+   */
+    @PostMapping("/sendEmail")
+    public ResponseEntity<Map<String, String>> sendEmail(
+      @RequestBody Map<String, String> emailRequest
+    ) {
+      String toEmail = emailRequest.get("toEmail");
+      String subject = emailRequest.get("subject");
+      String body = emailRequest.get("body");
+
+      senderService.sendEmail(toEmail, subject, body);
+      return ResponseEntity.ok(Map.of("message", "Email sent successfully."));
     }
 
   /**

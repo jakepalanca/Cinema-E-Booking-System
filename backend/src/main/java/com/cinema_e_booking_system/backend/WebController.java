@@ -279,11 +279,11 @@ public String test() {
    */
     @PostMapping("/sendEmail")
     public ResponseEntity<Map<String, String>> sendEmail(
-      @RequestBody EmailRequest request
+      @RequestBody Map<String, String> emailRequest
     ) {
-      String toEmail = emailRequest.getToEmail();
-      String subject = emailRequest.getSubject();
-      String body = emailRequest.getBody();
+      String toEmail = emailRequest.get("toEmail");
+      String subject = emailRequest.get("subject");
+      String body = emailRequest.get("body");
 
       senderService.sendEmail(toEmail, subject, body);
       return ResponseEntity.ok(Map.of("message", "Email sent successfully."));

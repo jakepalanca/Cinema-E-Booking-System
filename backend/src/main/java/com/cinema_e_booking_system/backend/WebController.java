@@ -288,7 +288,7 @@ if (currentCustomer.getPaymentMethods().size() >= 3) {
 //Works! :-)
 @PutMapping("promotions/remove/{customerId}/{promotionId}")
 public ResponseEntity<Map<String, String>> removePromotion(
-  @PathVariable Long promotionId,
+@PathVariable Long promotionId,
   @PathVariable Long customerId
 ) {
   Optional<Customer> opt = customerRepository.findById(customerId);
@@ -308,29 +308,30 @@ public ResponseEntity<Map<String, String>> removePromotion(
   return ResponseEntity.ok(Map.of("message", "Promotion removed from " + currentCustomer.getFirstName()));
 }
 
-  /**
-   * Endpoint for adding promotions
-   */
-  @PutMapping("promotions/add/{customerId}/{promotionId")
-public ResponseEntity<Map<String, String>> removePromotion(
-  @PathVariable Long promotionId,
-  @PathVariable Long customerId
-) {
-  Optional<Customer> opt = customerRepository.findById(customerId);
-  if (opt.isEmpty()) {
-    return ResponseEntity.status(404).body(Map.of("message", "User not found."));
-  }
-  Customer currentCustomer = opt.get();
+    /**
+     * Endpoint for adding promotions
+     */
+    @PutMapping("promotions/add/{customerId}/{promotionId}")
+    public ResponseEntity<Map<String, String>> addPromotion(
+        @PathVariable Long customerId,
+        @PathVariable Long promotionId
+    ) {
+        Optional<Customer> opt = customerRepository.findById(customerId);
+        if (opt.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("message", "User not found."));
+        }
+        Customer currentCustomer = opt.get();
 
-  Optional<Promotion> promotionOptional = promotionRepository.findById(promotionId);
-  if (promotionOptional.isEmpty()) {
-    return ResponseEntity.status(404).body(Map.of("message", "Promotion not found."));
-  }
-  Promotion p = promotionOptional.get();
+        Optional<Promotion> promotionOptional = promotionRepository.findById(promotionId);
+        if (promotionOptional.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("message", "Promotion not found."));
+        }
+        Promotion p = promotionOptional.get();
 
-  currentCustomer.addPromotion(p);
-  customerRepository.save(currentCustomer);
-  return ResponseEntity.ok(Map.of("message", "Promotion removed from " + currentCustomer.getFirstName()));
+        currentCustomer.addPromotion(p);
+        customerRepository.save(currentCustomer);
+        return ResponseEntity.ok(Map.of("message", "Promotion added to " + currentCustomer.getFirstName()));
+    }
 
 // ---------------------- LOGOUT ----------------------
 @PostMapping("/logout")

@@ -955,11 +955,17 @@ public String test() {
 
         List<Show> scheduledShows = new ArrayList<>();
         int roomIndex = 0;
+        int movieIndex = 0;
         for (Movie movie : savedMovies) {
+            if (movieIndex % 3 == 0){
+                movieIndex++;
+                continue;
+            }
             Showroom matineeRoom = showrooms.get(roomIndex % showrooms.size());
             Showroom afternoonRoom = showrooms.get((roomIndex + 1) % showrooms.size());
             Showroom eveningRoom = showrooms.get((roomIndex + 2) % showrooms.size());
             roomIndex++;
+            movieIndex++;
 
             int matineeDuration = 120 + (movie.getTitle().length() % 20);
             int afternoonDuration = 130 + (movie.getTitle().length() % 15);

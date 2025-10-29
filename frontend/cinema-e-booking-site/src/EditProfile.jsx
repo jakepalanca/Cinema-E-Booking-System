@@ -40,7 +40,7 @@ export default function Profile() {
                 setLocalOnly(true);
                 return;
             }
-            navigate('/signin');
+            navigate('/login');
             return;
         }
 
@@ -66,7 +66,7 @@ export default function Profile() {
                 setLocalOnly(true);
                 return;
             }
-            navigate('/signin');
+            navigate('/login');
             return;
         }
 
@@ -111,7 +111,7 @@ export default function Profile() {
                     return;
                 }
                 // otherwise redirect to signin
-                navigate('/signin');
+                navigate('/login');
             });
 
         // fetch all promotions

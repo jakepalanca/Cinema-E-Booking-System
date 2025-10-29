@@ -97,6 +97,11 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Str
     String firstName = newUser.get("firstName");
     String lastName = newUser.get("lastName");
     String password = newUser.get("password");
+    String phoneNumber = newUser.get("phoneNumber");
+    String customerState = newUser.get("customerState");
+    //List<PaymentMethods> paymentMethods = (List<PaymentMethod>) newUser.get("paymentMethods");
+    Boolean registeredForPromos = Boolean.parseBoolean(newUser.get("registeredForPromos"));
+
 
     if (customerRepository.findByEmail(email).isPresent()) {
         return ResponseEntity.badRequest().body(Map.of("message", "Email already registered."));
@@ -111,7 +116,7 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Str
             crypto.convertToDatabaseColumn(password),
             Customer.CustomerState.INACTIVE,
             null, null,
-            null, null, null, null, null, null
+            null, null, null, null, null
     );
 
     //customerRepository.save(c);
@@ -151,7 +156,7 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Str
     produces = MediaType.APPLICATION_JSON_VALUE
 )
 public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String> credentials) {
-    String email = credentials.get("email");
+    String email = credentials.get("emailOrUsername");
     String password = credentials.get("password");
 
     Optional<Customer> customerOpt = customerRepository.findByEmail(email);
@@ -985,7 +990,6 @@ public String test() {
                 Customer.CustomerState.ACTIVE,
                 new ArrayList<>(),
                 new ArrayList<>(),
-                "123456789",
                 "123 Main St",
                 "Anytown",
                 "CA",
@@ -1004,7 +1008,6 @@ public String test() {
                 Customer.CustomerState.ACTIVE,
                 new ArrayList<>(),
                 new ArrayList<>(),
-                "321456789",
                 "123 Main St",
                 "Anytown",
                 "CA",
@@ -1024,7 +1027,6 @@ public String test() {
                 Customer.CustomerState.SUSPENDED,
                 new ArrayList<>(),
                 new ArrayList<>(),
-                "321456879",
                 "123 Main St",
                 "Anytown",
                 "CA",

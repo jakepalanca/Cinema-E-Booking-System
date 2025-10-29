@@ -40,7 +40,7 @@ export default function Profile() {
                 setLocalOnly(true);
                 return;
             }
-            navigate('/signin');
+            navigate('/login');
             return;
         }
 
@@ -66,7 +66,7 @@ export default function Profile() {
                 setLocalOnly(true);
                 return;
             }
-            navigate('/signin');
+            navigate('/login');
             return;
         }
 
@@ -111,7 +111,7 @@ export default function Profile() {
                     return;
                 }
                 // otherwise redirect to signin
-                navigate('/signin');
+                navigate('/login');
             });
 
         // fetch all promotions
@@ -279,7 +279,11 @@ const handleSave = async (e) => {
 
     const togglePromotion = (promo) => {
     
-        if (!customer) return null;
+        if (!customer) {
+            return <div style={{ color: "white", textAlign: "center", marginTop: "100px" }}>
+                Loading your profile...
+            </div>;
+        }
     
         const registered = isPromoRegistered(promo);
         const url = `http://localhost:8080/customers/${customer.id}/promotions/${promo.id}`;

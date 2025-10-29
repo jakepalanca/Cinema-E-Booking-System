@@ -1,35 +1,51 @@
 import './Navbar.css';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
-function Navbar(){
+
+function Navbar() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const navigate = useNavigate();
+
     useEffect(() => {
-        const storedUser = localStorage.getItem("user");
+        // Check login status based on cinemaUser key
+        const storedUser = localStorage.getItem("cinemaUser");
         setIsLoggedIn(!!storedUser);
+
+        // Update automatically if login changes (e.g. in another tab)
+        const handleStorageChange = () => {
+            const updatedUser = localStorage.getItem("cinemaUser");
+            setIsLoggedIn(!!updatedUser);
+        };
+
+        window.addEventListener("storage", handleStorageChange);
+        return () => window.removeEventListener("storage", handleStorageChange);
     }, []);
-    //Logout
+
+    // Logout clears cinemaUser + cinemaAuth
     const handleLogout = () => {
-        localStorage.removeItem("user");
+        localStorage.removeItem("cinemaUser");
+        localStorage.removeItem("cinemaAuth");
         setIsLoggedIn(false);
         navigate("/");
     };
 
-    return(
+    return (
         <header>
             <nav>
                 <ul className="flex-list">
                     <div className="logo">
-                    <li>
-                        <a href="/">
-                        <img src="logo192.png" alt="Team 14"></img>
-                        </a>
-                    </li>
+                        <li>
+                            <a href="/">
+                                <img src="logo192.png" alt="Team 14" />
+                            </a>
+                        </li>
                     </div>
-                    <li><a href="#">Showtimes</a></li>
-                    <li><a href="#">Promotions</a></li>
-                    <li><a href="#">Contact Us</a></li>
+
+                    <li><Link to="/showtimes" className="nav-item">Showtimes</Link></li>
+                    <li><Link to="/promotions" className="nav-item">Promotions</Link></li>
+                    <li><Link to="/contact" className="nav-item">Contact Us</Link></li>
                     <li><Link to="/browse" className="nav-item">Browse</Link></li>
+
                     {isLoggedIn ? (
                         <>
                             <li><Link to="/edit-profile" className="nav-item">Edit Profile</Link></li>
@@ -51,9 +67,9 @@ function Navbar(){
                     )}
                 </ul>
             </nav>
-            <hr></hr>
+            <hr />
         </header>
     );
 }
 
-export default Navbar
+export default Navbar;

@@ -1,9 +1,9 @@
-import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
 import Navbar from './Navbar.jsx';
 
-function Login(){
+function Login() {
     const [credentials, setCredentials] = useState({
         emailOrUsername: "",
         password: "",
@@ -14,28 +14,42 @@ function Login(){
     
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setCredentials({...credentials, [name]: value});
+        setCredentials({ ...credentials, [name]: value });
     };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setMessage("");
+
         try {
+            // Send correct JSON format expected by backend
             const res = await fetch("http://localhost:8080/login", {
                 method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(credentials),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    emailOrUsername: credentials.emailOrUsername,
+                    password: credentials.password,
+                }),
             });
-            if (res.ok){
+
+            if (res.ok) {
                 const data = await res.json();
-                localStorage.setItem("user", JSON.stringify(data));
+
+                // Store data with correct keys that EditProfile.jsx expects
+                localStorage.setItem(
+                    "cinemaAuth",
+                    JSON.stringify({ email: credentials.emailOrUsername })
+                );
+                localStorage.setItem("cinemaUser", JSON.stringify(data));
+
                 setMessage("Login successful");
                 navigate("/");
-            }else {
+            } else {
                 const err = await res.json();
-                setMessage(err.message || "Invalid email, username, or password");
+                setMessage(err.message || "Invalid email or password");
             }
-        } catch(error) {
+        } catch (error) {
             console.error(error);
             setMessage("Error connecting to the server.");
         } finally {
@@ -45,40 +59,41 @@ function Login(){
 
     return (
         <>
-        <Navbar />
-        <div className="login-div">
-            <h2>Sign In</h2>
-            <form onSubmit={handleSubmit} className="login-form">
-                <label>
-                    Email or Username:
-                    <input
-                        type="text"
-                        name="emailOrUsername"
-                        value={credentials.emailOrUsername}
-                        onChange={handleChange}
-                        required
-                    />
-                </label>
-                <label>
-                    Password:
-                    <input
-                        type="password"
-                        name="password"
-                        value={credentials.password}
-                        onChange={handleChange}
-                        required
-                    />
-                </label>
-                <button type="submit" disabled={loading}>
-                    {loading ? "Logging in..." : "Login"}
-                </button>
-                {message && <p className="info-message">{message}</p>}
-            </form>
-            <p className="signup-redirect">
-                Don't have an account? <Link to="/register">Sign Up</Link>
-            </p>
-        </div>
+            <Navbar />
+            <div className="login-div">
+                <h2>Sign In</h2>
+                <form onSubmit={handleSubmit} className="login-form">
+                    <label>
+                        Email or Username:
+                        <input
+                            type="text"
+                            name="emailOrUsername"
+                            value={credentials.emailOrUsername}
+                            onChange={handleChange}
+                            required
+                        />
+                    </label>
+                    <label>
+                        Password:
+                        <input
+                            type="password"
+                            name="password"
+                            value={credentials.password}
+                            onChange={handleChange}
+                            required
+                        />
+                    </label>
+                    <button type="submit" disabled={loading}>
+                        {loading ? "Logging in..." : "Login"}
+                    </button>
+                    {message && <p className="info-message">{message}</p>}
+                </form>
+                <p className="signup-redirect">
+                    Don't have an account? <Link to="/register">Sign Up</Link>
+                </p>
+            </div>
         </>
     );
 }
-export default Login
+
+export default Login;

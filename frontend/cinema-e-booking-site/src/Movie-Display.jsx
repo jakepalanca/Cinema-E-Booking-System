@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-function MovieDisplay({ movie }){
+function MovieDisplay({ movie, dispShowtimes }){
     return (
         <div className="moviecard">
             <Link
@@ -20,19 +20,21 @@ function MovieDisplay({ movie }){
                 >
             <h2 className="movie-title">{movie.title || "Movie Title"}</h2>
             </Link>
-            <div className="showtimes">
-                <ul>
-                    <li>
-                        Monday, September 29, 2025 at 2:00 PM
-                    </li>
-                    <li>
-                        Tuesday, September 30, 2025 at 11:00 AM 
-                    </li>
-                    <li>
-                        Wednesday, October 1, 2025 at 1:00 PM
-                    </li>
-                </ul>
-            </div>
+            {dispShowtimes && (
+                <div className="showtimes">
+                    <ul>
+                        <li>
+                            Monday, September 29, 2025 at 2:00 PM
+                        </li>
+                        <li>
+                            Tuesday, September 30, 2025 at 11:00 AM 
+                        </li>
+                        <li>
+                            Wednesday, October 1, 2025 at 1:00 PM
+                        </li>
+                    </ul>
+                </div>
+            )}
 
         </div>
 

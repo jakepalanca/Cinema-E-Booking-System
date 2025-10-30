@@ -8,6 +8,7 @@ import RegistrationPage from "./RegistrationPage";
 import Login from "./Login";
 import Profile from "./EditProfile";
 import ForgotPassword from "./ForgotPassword";
+import ResetPassword from "./ResetPassword";
 import './App.css';
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/edit-profile" element={<Profile />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
     </Routes>
   );
 }

@@ -11,6 +11,7 @@
 | user.lastName | String | No | null | - |
 | user.password | String | No | null | Encrypted via `StringCryptoConverter` |
 
+
 ## admin
 
 | TABLE NAME | TYPE | REQUIRED | DEFAULT | NOTES |
@@ -23,6 +24,7 @@
 | --- | --- | --- | --- | --- |
 | customer.user_id | Long | Yes | Inherited from user.id | Primary key, foreign key to `user.id` |
 | customer.state | CustomerState (STRING) | No | null | Enum values: `ACTIVE`, `INACTIVE`, `SUSPENDED` |
+| customer.verified | boolean | Yes | False | Email verification state |
 
 ### customer_promotion (join table)
 

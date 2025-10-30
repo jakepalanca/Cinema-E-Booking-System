@@ -27,6 +27,7 @@ public class EmailSenderService {
     System.out.println("message sent");
   }
 
+  //change to copy and paste this token
   public void sendVerificationEmail(Customer customer, String token) {
     String baseUrl = "http://localhost:8080/users/confirm";
     String verificationLink = baseUrl + "?token=" + token;
@@ -51,7 +52,7 @@ public class EmailSenderService {
   }
 
   public void sendPasswordResetLink(Customer customer, String token) {
-    String baseUrl = "http://localhost:8080/reset-password";
+    String baseUrl = "http://localhost:3000/reset-password";
     String passwordResetLink = baseUrl + "?token=" + token;
 
     String subject = "Reset your Password";

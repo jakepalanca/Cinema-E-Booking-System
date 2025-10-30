@@ -283,10 +283,12 @@ public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<Strin
     produces = MediaType.APPLICATION_JSON_VALUE
 )
 public ResponseEntity<Map<String, String>> resetPassword(
-        @RequestParam("token") String token,
+        //@RequestParam("token") String token,
         @RequestBody Map<String, String> body
+
 ) {
     String newPassword = body.get("password");
+    String token = body.get("token");
 
     if (newPassword == null || newPassword.isBlank()) {
         return ResponseEntity.status(400).body(Map.of("message", "Password cannot be empty."));

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import "./RegistrationPage.css";
 import Navbar from './Navbar.jsx';
 
@@ -32,6 +33,7 @@ function RegistrationPage() {
     const [emailForVerification, setEmailForVerification] = useState("");
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
+    const navigate = useNavigate();
 
     // promotion fetching
     const [availablePromotions, setAvailablePromotions] = useState([]);
@@ -158,6 +160,7 @@ function RegistrationPage() {
             if (res.ok) {
                 setStep("success");
                 setMessage("Verification Confirmed");
+                setTimeout(() => navigate("/"), 3000);
             } else {
                 const err = await res.json();
                 setMessage(err.message || "Verification code expired or incorrect.");

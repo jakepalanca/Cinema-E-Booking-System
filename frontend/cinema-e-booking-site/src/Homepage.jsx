@@ -49,6 +49,7 @@ function Homepage() {
           <MovieDisplay
           key={movie.id}
           movie={movie}
+          dispShowtimes={selectedCategory === "nowShowing"}
           />
         ))}
       </div>

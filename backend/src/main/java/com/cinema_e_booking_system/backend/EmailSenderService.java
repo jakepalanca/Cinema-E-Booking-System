@@ -31,7 +31,7 @@ public class EmailSenderService {
     String baseUrl = "http://localhost:8080/users/confirm";
     String verificationLink = baseUrl + "?token=" + token;
 
-    String subject = "Confirm Your Cinema E-Booking Account";
+    String subject = "Confirm your Cinema E-Booking Account";
     String body = String.format(
         "Hello %s,\n\n" +
         "Thank you for registering. Please click the link below to confirm your account:\n\n" +

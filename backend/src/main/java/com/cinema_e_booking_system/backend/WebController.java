@@ -109,6 +109,16 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
     }
 
     StringCryptoConverter crypto = new StringCryptoConverter();
+    Customer c = new Customer(
+            email,
+            username,
+            firstName,
+            lastName,
+            crypto.convertToDatabaseColumn(password),
+            Customer.CustomerState.INACTIVE,
+            null, null,
+            null, null, null, null, null
+    );
 
    Customer c = new Customer(
     email,
@@ -166,7 +176,7 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
     produces = MediaType.APPLICATION_JSON_VALUE
 )
 public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String> credentials) {
-    String emailOrUsername = credentials.get("emailOrUsername");
+    String email = credentials.get("emailOrUsername");
     String password = credentials.get("password");
 
     StringCryptoConverter crypto = new StringCryptoConverter();
@@ -242,8 +252,9 @@ public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<Strin
     customerRepository.save(c);
 
     // Teammate handles email sending later
-    // senderService.sendPasswordResetEmail(c, token);
+    senderService.sendPasswordResetLink(c, token);
 
+    System.out.println(token);
     return ResponseEntity.ok(Map.of("message", "Password reset link sent to your email."));
 }
 
@@ -503,6 +514,7 @@ public String test() {
 
   /**
    * Endpoint to set new User
+   * Don't use this
    */
   // attempting postmapping for setUser (registration)
   // also adds to customer repo
@@ -1014,11 +1026,17 @@ public String test() {
 
         List<Show> scheduledShows = new ArrayList<>();
         int roomIndex = 0;
+        int movieIndex = 0;
         for (Movie movie : savedMovies) {
+            if (movieIndex % 3 == 0){
+                movieIndex++;
+                continue;
+            }
             Showroom matineeRoom = showrooms.get(roomIndex % showrooms.size());
             Showroom afternoonRoom = showrooms.get((roomIndex + 1) % showrooms.size());
             Showroom eveningRoom = showrooms.get((roomIndex + 2) % showrooms.size());
             roomIndex++;
+            movieIndex++;
 
             int matineeDuration = 120 + (movie.getTitle().length() % 20);
             int afternoonDuration = 130 + (movie.getTitle().length() % 15);
@@ -1049,7 +1067,6 @@ public String test() {
                 Customer.CustomerState.ACTIVE,
                 new ArrayList<>(),
                 new ArrayList<>(),
-                "123456789",
                 "123 Main St",
                 "Anytown",
                 "CA",
@@ -1068,7 +1085,6 @@ public String test() {
                 Customer.CustomerState.ACTIVE,
                 new ArrayList<>(),
                 new ArrayList<>(),
-                "321456789",
                 "123 Main St",
                 "Anytown",
                 "CA",
@@ -1088,7 +1104,6 @@ public String test() {
                 Customer.CustomerState.SUSPENDED,
                 new ArrayList<>(),
                 new ArrayList<>(),
-                "321456879",
                 "123 Main St",
                 "Anytown",
                 "CA",

@@ -31,13 +31,14 @@ public class Customer extends User {
     @Enumerated(EnumType.STRING)
     private CustomerState customerState;
 
-    private String phoneNumber;
+    //private String phoneNumber;
     private String address;
     private String city;
     private String state;
     private String zipCode;
     private String country;
     private String verificationToken;
+    private Boolean registeredForPromos;
     
     @Column(name = "verified", nullable = false)
     private boolean verified = false; // default false
@@ -50,12 +51,12 @@ public class Customer extends User {
     /**
      * The constructor for the user.
      */
-    public Customer(String email, String username, String firstName, String lastName, String password, CustomerState customerState, List<PaymentMethod> paymentMethods, List<Promotion> promotions, String phoneNumber, String address, String city, String state, String zipCode, String country) {
+    public Customer(String email, String username, String firstName, String lastName, String password, CustomerState customerState, List<PaymentMethod> paymentMethods, List<Promotion> promotions, String address, String city, String state, String zipCode, String country) {
         super(email, username, firstName, lastName, password);
         this.customerState = customerState;
         setPaymentMethods(paymentMethods);
         setPromotions(promotions);
-        this.phoneNumber = phoneNumber;
+        //this.phoneNumber = phoneNumber;
         this.address = address;
         this.city = city;
         this.state = state;
@@ -63,6 +64,7 @@ public class Customer extends User {
         this.country = country;
         this.verificationToken = null;
         this.verified = false;
+        this.registeredForPromos = false;
     }
 
     public CustomerState getCustomerState() {
@@ -91,7 +93,15 @@ public class Customer extends User {
         }
     }
 
-    public void removePromotion(Promotion promotion) {
+  public Boolean getRegisteredForPromos() {
+    return registeredForPromos;
+  }
+
+  public void setRegisteredForPromos(Boolean registeredForPromos) {
+    this.registeredForPromos = registeredForPromos;
+  }
+
+  public void removePromotion(Promotion promotion) {
         if (promotion == null) {
             return;
         }
@@ -173,6 +183,7 @@ public class Customer extends User {
         this.state = state;
     }
 
+    /**
     public String getPhoneNumber() {
         return phoneNumber;
     }
@@ -180,6 +191,8 @@ public class Customer extends User {
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
+     */
+
 
     public String getAddress() {
         return address;

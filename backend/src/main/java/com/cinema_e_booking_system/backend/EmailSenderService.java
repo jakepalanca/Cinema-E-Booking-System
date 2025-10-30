@@ -57,12 +57,12 @@ public class EmailSenderService {
     String subject = "Reset your Password";
 
     String body = String.format(
-            "Hello %s,\n\n" +
-                    "Please click the link to reset your password:\n\n" +
-                    "%s\n\n" +
-                    "This link will expire soon.\n\n" +
-                    "The Cinema Team",
-            customer.getFirstName(), passwordResetLink
+      "Hello %s,\n\n" +
+        "Please click the link to reset your password:\n\n" +
+        "%s\n\n" +
+        "This link will expire soon.\n\n" +
+        "The Cinema Team",
+      customer.getFirstName(), passwordResetLink
     );
 
     SimpleMailMessage message = new SimpleMailMessage();
@@ -76,3 +76,4 @@ public class EmailSenderService {
 
   }
 }
+

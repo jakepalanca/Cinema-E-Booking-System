@@ -16,6 +16,7 @@ import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -91,17 +92,17 @@ public class WebController {
     consumes = MediaType.APPLICATION_JSON_VALUE,
     produces = MediaType.APPLICATION_JSON_VALUE
 )
-public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, String> newUser) {
-    String email = newUser.get("email");
-    String username = newUser.get("username");
-    String firstName = newUser.get("firstName");
-    String lastName = newUser.get("lastName");
-    String password = newUser.get("password");
-    String phoneNumber = newUser.get("phoneNumber");
-    String customerState = newUser.get("customerState");
-    //List<PaymentMethods> paymentMethods = (List<PaymentMethod>) newUser.get("paymentMethods");
-    Boolean registeredForPromos = Boolean.parseBoolean(newUser.get("registeredForPromos"));
+public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Object> newUser)
+{
+    String email = (String) newUser.get("email");
+    String username = (String) newUser.get("username");
+    String firstName = (String) newUser.get("firstName");
+    String lastName = (String) newUser.get("lastName");
+    String password = (String) newUser.get("password");
 
+    if (email == null || password == null || username == null) {
+        return ResponseEntity.badRequest().body(Map.of("message", "Missing required fields."));
+    }
 
     if (customerRepository.findByEmail(email).isPresent()) {
         return ResponseEntity.badRequest().body(Map.of("message", "Email already registered."));
@@ -119,14 +120,33 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Str
             null, null, null, null, null
     );
 
-    //customerRepository.save(c);
+   Customer c = new Customer(
+    email,
+    username,
+    firstName,
+    lastName,
+    crypto.convertToDatabaseColumn(password),
+    Customer.CustomerState.ACTIVE,
+    null, null, // paymentMethods, promotions
+    null, null, null, null, null, null
+);
+    //c.setVerified(false);
+
+    c.setVerified(true);
+    //generate token
     String token = UUID.randomUUID().toString();
+    //senderService.sendVerificationEmail(c,token);
     c.setVerificationToken(token);
-    c.setVerified(false);
 
     Customer savedCustomer = customerRepository.save(c);
-    senderService.sendVerificationEmail(savedCustomer, token);
-    return ResponseEntity.ok(Map.of("message", "Registration successful! Verify your email before login."));
+
+    return ResponseEntity.ok(Map.of(
+        "message", "Registration successful.",
+        "email", savedCustomer.getEmail(),
+        "id", String.valueOf(savedCustomer.getId()),
+        "password",  "",
+        "phoneNumber",  savedCustomer.getPhoneNumber()
+    ));
 }
 
   @GetMapping("users/confirm")
@@ -144,10 +164,10 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Str
 
     c.setVerified(true);
     c.setVerificationToken(null);
-    //c.setCustomerState("ACTIVE");
     customerRepository.save(c);
     return ResponseEntity.ok("Sucesss! Account confirmed.");
   }
+
 
 // ---------------------- LOGIN ----------------------
 @PostMapping(
@@ -159,53 +179,52 @@ public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String
     String email = credentials.get("emailOrUsername");
     String password = credentials.get("password");
 
-    Optional<Customer> customerOpt = customerRepository.findByEmail(email);
     StringCryptoConverter crypto = new StringCryptoConverter();
 
-    // --- If no customer, check Admin ---
+    Optional<Customer> customerOpt = customerRepository.findByEmail(emailOrUsername);
     if (customerOpt.isEmpty()) {
-        Optional<Admin> adminOpt = adminRepository.findByEmail(email);
+        customerOpt = customerRepository.findByUsername(emailOrUsername);
+    }
+
+    // Check admin if not found as customer
+    if (customerOpt.isEmpty()) {
+        Optional<Admin> adminOpt = adminRepository.findByEmail(emailOrUsername);
         if (adminOpt.isPresent()) {
             Admin a = adminOpt.get();
             if (!a.getPassword().equals(password)) {
                 return ResponseEntity.status(401).body(Map.of("message", "Incorrect password."));
             }
-            return ResponseEntity.ok(Map.of(
-                "message", "Login successful for admin " + a.getFirstName(),
-                "role", "admin"
-            ));
+            return ResponseEntity.ok(Map.of("message", "Login successful for admin " + a.getFirstName(), "role", "admin"));
         }
         return ResponseEntity.status(401).body(Map.of("message", "User not found."));
     }
 
-    // --- If found a customer ---
     Customer c = customerOpt.get();
+    
     String decryptedPassword;
+try {
+    decryptedPassword = crypto.convertToEntityAttribute(c.getPassword());
+} catch (Exception e) {
+    decryptedPassword = c.getPassword(); // fallback if it’s plain text
+}
 
-    try {
-        decryptedPassword = crypto.convertToEntityAttribute(c.getPassword());
-    } catch (Exception e) {
-        // If decryption fails, assume password is stored as plain text
-        decryptedPassword = c.getPassword();
-    }
-
-    if (!decryptedPassword.equals(password)) {
-        return ResponseEntity.status(401).body(Map.of("message", "Incorrect password."));
-    }
-
-    if (c.getCustomerState() == Customer.CustomerState.SUSPENDED) {
-        return ResponseEntity.status(403).body(Map.of("message", "Account suspended."));
-    }
+// check both raw and decrypted just in case
+if (!(password.equals(c.getPassword()) || password.equals(decryptedPassword))) {
+    return ResponseEntity.status(401).body(Map.of("message", "Incorrect password."));
+}
 
     if (!c.isVerified()) {
-      return ResponseEntity.status(401).body(Map.of("message", "Account not verified."));
+        return ResponseEntity.status(401).body(Map.of("message", "Account not verified."));
     }
 
     return ResponseEntity.ok(Map.of(
         "message", "Login successful for " + c.getFirstName(),
-        "role", "customer"
+        "role", "customer",
+        "email", c.getEmail(),
+        "id", String.valueOf(c.getId())
     ));
 }
+
 
 
 // ---------------------- FORGOT PASSWORD ----------------------
@@ -271,47 +290,69 @@ public ResponseEntity<Map<String, String>> resetPassword(
     return ResponseEntity.ok(Map.of("message", "Password reset successful."));
 }
 
+
 // ---------------------- UPDATE PROFILE ----------------------
+@PutMapping("/customers/{id}")
+public ResponseEntity<Map<String, String>> updateCustomerProfile(
+        @PathVariable Long id,
+        @RequestBody Map<String, Object> body) {
+    updateProfileFlexible(id, body); 
+    return ResponseEntity.ok(Map.of("message", "Profile updated successfully."));
+}
+
+
 @PutMapping(
-    value = "/profile/{id}",
-    consumes = {
-        MediaType.APPLICATION_JSON_VALUE,
-        MediaType.ALL_VALUE
-    },
+    value = {"/profile/{id}", "/customers/{id}"},
+    consumes = MediaType.APPLICATION_JSON_VALUE,
     produces = MediaType.APPLICATION_JSON_VALUE
 )
-public ResponseEntity<Map<String, String>> updateProfile(
+public ResponseEntity<Map<String, Object>> updateProfileFlexible(
         @PathVariable Long id,
-        @RequestBody Map<String, String> updatedFields
-) {
-    System.out.println("Updated fields: " + updatedFields);
+        @RequestBody Map<String, Object> body) {
 
     Optional<Customer> opt = customerRepository.findById(id);
     if (opt.isEmpty()) {
-        return ResponseEntity.status(404).body(Map.of("message", "User not found."));
+        return ResponseEntity.status(404).build();
     }
 
     Customer c = opt.get();
 
-    if (updatedFields.containsKey("firstName")) c.setFirstName(updatedFields.get("firstName"));
-    if (updatedFields.containsKey("lastName")) c.setLastName(updatedFields.get("lastName"));
-    if (updatedFields.containsKey("city")) c.setCity(updatedFields.get("city"));
-    if (updatedFields.containsKey("address")) c.setAddress(updatedFields.get("address"));
-    if (updatedFields.containsKey("zipCode")) c.setZipCode(updatedFields.get("zipCode"));
-    if (updatedFields.containsKey("country")) c.setCountry(updatedFields.get("country"));
-    if (updatedFields.containsKey("password") && !updatedFields.get("password").isBlank()) {
-    
+    // 
+    if (body.get("firstName") != null) c.setFirstName(body.get("firstName").toString());
+    if (body.get("lastName") != null) c.setLastName(body.get("lastName").toString());
+    if (body.get("phoneNumber") != null) c.setPhoneNumber(body.get("phoneNumber").toString());
+    if (body.get("address") != null) c.setAddress(body.get("address").toString());
+    if (body.get("city") != null) c.setCity(body.get("city").toString());
+    if (body.get("zipCode") != null) c.setZipCode(body.get("zipCode").toString());
+    if (body.get("country") != null) c.setCountry(body.get("country").toString());
 
+    if (body.get("password") != null && !body.get("password").toString().isBlank()) {
         StringCryptoConverter crypto = new StringCryptoConverter();
-        c.setPassword(crypto.convertToDatabaseColumn(updatedFields.get("password")));
+        c.setPassword(crypto.convertToDatabaseColumn(body.get("password").toString()));
     }
 
     customerRepository.save(c);
-    return ResponseEntity.ok(Map.of("message", "Profile updated successfully."));
+
+    // 
+    Map<String, Object> response = new HashMap<>();
+    response.put("id", c.getId());
+    response.put("email", c.getEmail());
+    response.put("firstName", c.getFirstName());
+    response.put("lastName", c.getLastName());
+    response.put("phoneNumber", c.getPhoneNumber());
+    response.put("address", c.getAddress());
+    response.put("city", c.getCity());
+    response.put("state", c.getState());
+    response.put("zipCode", c.getZipCode());
+    response.put("country", c.getCountry());
+
+    return ResponseEntity.ok(response);
 }
 
+  // ---------------------- ADD PAYMENT ----------------------
 @PutMapping(
-    value = "/setUserPayment/{id}",
+    //changed from /setUserPayment/{id} to match front end
+    value = "/customers/{id}/payment-methods",
     consumes = MediaType.APPLICATION_JSON_VALUE,
     produces = MediaType.APPLICATION_JSON_VALUE
 )
@@ -319,6 +360,7 @@ public ResponseEntity<Map<String, String>> updatePayment(
         @RequestBody Map<String, Object> newCard,
         @PathVariable Long id
 ) {
+    System.out.println("adding payment method to customer " + id);
     Optional<Customer> opt = customerRepository.findById(id);
     if (opt.isEmpty()) {
         return ResponseEntity.status(404).body(Map.of("message", "User not found."));
@@ -337,8 +379,8 @@ if (currentCustomer.getPaymentMethods().size() >= 3) {
     PaymentMethod card = new PaymentMethod(
             currentCustomer,
             ((Number)newCard.get("cardNumber")).longValue(),
-            (String)newCard.get("firstName"),
-            (String)newCard.get("lastName"),
+            (String)newCard.get("cardHolderFirstName"),
+            (String)newCard.get("cardHolderLastName"),
             java.sql.Date.valueOf((String)newCard.get("expirationDate")),
             ((Number)newCard.get("securityCode")).intValue(),
             ((Number)newCard.get("zipCode")).intValue(),
@@ -354,6 +396,35 @@ if (currentCustomer.getPaymentMethods().size() >= 3) {
     customerRepository.save(currentCustomer);
 
     return ResponseEntity.ok(Map.of("message", "New card added to user " + currentCustomer.getFirstName()));
+}
+
+// ---------------------- FRONTEND COMPATIBILITY HELPERS ----------------------
+
+
+@GetMapping("/customers/by-email")
+public ResponseEntity<Map<String, Object>> getCustomerByEmail(@RequestParam String email) {
+    Optional<Customer> opt = customerRepository.findByEmail(email);
+    if (opt.isEmpty()) {
+        return ResponseEntity.status(404).body(Map.of("message", "Customer not found"));
+    }
+
+    Customer c = opt.get();
+
+    Map<String, Object> response = new HashMap<>();
+    response.put("id", c.getId());
+    response.put("email", c.getEmail());
+    response.put("firstName", c.getFirstName());
+    response.put("lastName", c.getLastName());
+    response.put("phoneNumber", c.getPhoneNumber());
+    response.put("address", c.getAddress());
+    response.put("city", c.getCity());
+    response.put("state", c.getState());
+    response.put("zipCode", c.getZipCode());
+    response.put("country", c.getCountry());
+    response.put("paymentMethods", c.getPaymentMethods());
+    response.put("promotions", c.getPromotions());
+
+    return ResponseEntity.ok(response);
 }
 
 

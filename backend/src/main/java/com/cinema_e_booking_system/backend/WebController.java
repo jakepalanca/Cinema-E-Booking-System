@@ -99,6 +99,7 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
     String firstName = (String) newUser.get("firstName");
     String lastName = (String) newUser.get("lastName");
     String password = (String) newUser.get("password");
+    String phoneNumber = (String) newUser.get("phoneNumber");
 
     if (email == null || password == null || username == null) {
         return ResponseEntity.badRequest().body(Map.of("message", "Missing required fields."));
@@ -118,7 +119,7 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
     crypto.convertToDatabaseColumn(password),
     Customer.CustomerState.ACTIVE,
     null, null, // paymentMethods, promotions
-    null, null, null, null, null, null
+    phoneNumber, null, null, null, null, null
 );
     //c.setVerified(false);
 

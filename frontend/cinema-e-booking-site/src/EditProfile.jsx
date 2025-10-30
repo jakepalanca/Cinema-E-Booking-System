@@ -457,7 +457,7 @@ export default function Profile() {
                     </fieldset>
                 </form>
             </section>
-            const handleSave = async (e)
+            
             <section style={{ marginTop: 24 }}>
                 <h3>Promotions</h3>
 
@@ -470,9 +470,8 @@ export default function Profile() {
                         if (!customer) return;
 
                         const selectingAll = promotions.length !== allPromotions.length;
-                        const requestList = selectingAll
-                        ? allPromotions
-                        : promotions;
+                        setPromotions(selectingAll ? allPromotions : []);
+                        const requestList = selectingAll? allPromotions: promotions;
 
                         Promise.all(
                         requestList.map(promo =>

@@ -126,80 +126,71 @@ export default function Profile() {
         setForm(prev => ({ ...prev, [name]: value }));
     };
 
-const handleSave = async (e) => {
-    e.preventDefault();
-    if (!customer) return;
-
-    // Validate current password
-    if (!currentPasswordInput) {
-        setMsg('Please enter your current password');
-        return;
-    }
-    if (customer.password && customer.password !== currentPasswordInput) {
-        setMsg('Current password is incorrect');
-        return;
-    }
-
-    // If user entered a new password, require old password
-    if (password && !oldPassword) {
-        setMsg("Please enter your current password to change password");
-        return;
-    }
-
-    if (password && oldPassword && !localOnly && customer?.id) {
-        // Validate current password with backend
-        const res = await fetch(`http://localhost:8080/customers/validate-password`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: customer.email, password: oldPassword })
-        });
-
-        if (!res.ok) {
-            setMsg("Current password is incorrect");
+    const handleSave = async (e) => {
+        e.preventDefault();
+        if (!customer) return;
+    
+        // Require current password to save anything
+        if (!currentPasswordInput) {
+            setMsg('Please enter your current password');
             return;
         }
-    }
-
-    // if password correct or not changing password — proceed to save profile
-    const payload = { 
-        ...customer, 
-        firstName: form.firstName,
-        lastName: form.lastName,
-        phoneNumber: form.phoneNumber,
-        address: form.address,
-        city: form.city,
-        state: form.state,
-        zipCode: form.zipCode,
-        country: form.country
+    
+        // Verify current password (simple local check)
+        if (customer.password && customer.password !== currentPasswordInput) {
+            setMsg('Current password is incorrect');
+            return;
+        }
+    
+        // Build payload with updated profile info
+        const payload = { 
+            ...customer, 
+            firstName: form.firstName,
+            lastName: form.lastName,
+            phoneNumber: form.phoneNumber,
+            address: form.address,
+            city: form.city,
+            state: form.state,
+            zipCode: form.zipCode,
+            country: form.country
+        };
+    
+        // Include new password only if provided
+        if (password) {
+            payload.password = password;
+        }
+    
+        // Local save (no backend user)
+        if (localOnly || !customer?.id) {
+            const stored = JSON.parse(localStorage.getItem('cinemaUser') || '{}');
+            Object.assign(stored, payload);
+            localStorage.setItem('cinemaUser', JSON.stringify(stored));
+            setCustomer(stored);
+            setMsg(password ? 'Password and profile updated successfully' : 'Profile updated successfully');
+            setPassword('');
+            setCurrentPasswordInput('');
+            return;
+        }
+    
+        // Backend save
+        fetch(`http://localhost:8080/customers/${customer.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(r => {
+                if (!r.ok) throw new Error('Save failed');
+                return r.json();
+            })
+            .then(updated => {
+                setCustomer(updated);
+                setMsg(password ? 'Password and profile updated successfully' : 'Profile updated successfully');
+                setPassword('');
+                setCurrentPasswordInput('');
+            })
+            .catch(() => setMsg('Failed to save profile'));
     };
-    if (password) payload.password = password;
-
-    // Local save
-    if (localOnly || !customer?.id) {
-        const stored = JSON.parse(localStorage.getItem('cinemaUser') || '{}');
-        Object.assign(stored, payload);
-        localStorage.setItem('cinemaUser', JSON.stringify(stored));
-        setCustomer(stored);
-        setMsg('Profile saved');
-        return;
-    }
-
-    // Backend save
-    fetch(`http://localhost:8080/customers/${customer.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    })
-        .then(r => {
-            if (!r.ok) throw new Error('Save failed');
-            return r.json();
-        })
-        .then(updated => {
-            setCustomer(updated);
-            setMsg('Profile updated successfully');
-        })
-        .catch(() => setMsg('Failed to save profile'));
-};
+    
 
 
     const handleAddCard = (e) => {
@@ -446,7 +437,7 @@ const handleSave = async (e) => {
                     </fieldset>
                 </form>
             </section>
-
+            const handleSave = async (e)
             <section style={{ marginTop: 24 }}>
                 <h3>Promotions</h3>
 

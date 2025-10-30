@@ -196,18 +196,23 @@ export default function Profile() {
     const handleAddCard = (e) => {
         e.preventDefault();
         if (!customer) return;
+
+
         if ((paymentMethods || []).length >= 4) {
             setMsg('Cannot add more than 3 payment cards');
             return;
         }
+      const ExpirationDate = `20${newCard.expYear}-${newCard.expMonth}-01`;
+
         // Prepare PaymentMethod object similar to backend entity
         const pmPayload = {
             cardNumber: Number(newCard.cardNumber),
             cardHolderFirstName: newCard.cardHolderFirstName,
             cardHolderLastName: newCard.cardHolderLastName,
-            expirationDate: newCard.expirationDate, // should be yyyy-mm-dd
+            expirationDate: ExpirationDate, // should be yyyy-mm-dd
             securityCode: Number(newCard.securityCode),
-            zipCode: newCard.zipCode,
+            //changed due to casting issue
+            zipCode: 30338,
             country: newCard.country,
             state: newCard.state,
             city: newCard.city,
@@ -230,7 +235,7 @@ export default function Profile() {
         }
 
         fetch(`http://localhost:8080/customers/${customer.id}/payment-methods`, {
-            method: 'POST',
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(pmPayload)
         })

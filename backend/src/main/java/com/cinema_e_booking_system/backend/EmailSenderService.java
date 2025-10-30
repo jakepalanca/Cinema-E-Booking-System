@@ -49,4 +49,31 @@ public class EmailSenderService {
 
     mailSender.send(message);
   }
+
+  public void sendPasswordResetLink(Customer customer, String token) {
+    String baseUrl = "http://localhost:8080/reset-password";
+    String passwordResetLink = baseUrl + "?token=" + token;
+
+    String subject = "Reset your Password";
+
+    String body = String.format(
+      "Hello %s,\n\n" +
+        "Please click the link to reset your password:\n\n" +
+        "%s\n\n" +
+        "This link will expire soon.\n\n" +
+        "The Cinema Team",
+      customer.getFirstName(), passwordResetLink
+    );
+
+    SimpleMailMessage message = new SimpleMailMessage();
+    message.setFrom("ashvijhosdurg@gmail.com");
+    message.setTo(customer.getEmail());
+    message.setSubject(subject);
+    message.setText(body);
+
+    mailSender.send(message);
+
+
+  }
 }
+

@@ -120,21 +120,43 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
     null, null, // paymentMethods, promotions
     null, null, null, null, null, null
 );
-c.setVerified(true);
+    //c.setVerified(false);
 
-
-    // Skip verification email for now
     c.setVerified(true);
-    c.setVerificationToken(null);
+    //generate token
+    String token = UUID.randomUUID().toString();
+    //senderService.sendVerificationEmail(c,token);
+    c.setVerificationToken(token);
 
     Customer savedCustomer = customerRepository.save(c);
 
     return ResponseEntity.ok(Map.of(
         "message", "Registration successful.",
         "email", savedCustomer.getEmail(),
-        "id", String.valueOf(savedCustomer.getId())
+        "id", String.valueOf(savedCustomer.getId()),
+        "password",  "",
+        "phoneNumber",  savedCustomer.getPhoneNumber()
     ));
 }
+
+  @GetMapping("users/confirm")
+  public ResponseEntity<String> confirmedUser(@RequestParam("token") String token) {
+    Optional<Customer> customerOptional = customerRepository.findByVerificationToken(token);
+
+    if (customerOptional.isEmpty()) {
+      return ResponseEntity.status(400).body(("Error: Invalid or expired token"));
+    }
+    Customer c = customerOptional.get();
+
+    if (c.isVerified()) {
+      return ResponseEntity.ok("Account is already confirmed");
+    }
+
+    c.setVerified(true);
+    c.setVerificationToken(null);
+    customerRepository.save(c);
+    return ResponseEntity.ok("Sucesss! Account confirmed.");
+  }
 
 
 // ---------------------- LOGIN ----------------------
@@ -316,8 +338,10 @@ public ResponseEntity<Map<String, Object>> updateProfileFlexible(
     return ResponseEntity.ok(response);
 }
 
+  // ---------------------- ADD PAYMENT ----------------------
 @PutMapping(
-    value = "/setUserPayment/{id}",
+    //changed from /setUserPayment/{id} to match front end
+    value = "/customers/{id}/payment-methods",
     consumes = MediaType.APPLICATION_JSON_VALUE,
     produces = MediaType.APPLICATION_JSON_VALUE
 )
@@ -325,6 +349,7 @@ public ResponseEntity<Map<String, String>> updatePayment(
         @RequestBody Map<String, Object> newCard,
         @PathVariable Long id
 ) {
+    System.out.println("adding payment method to customer " + id);
     Optional<Customer> opt = customerRepository.findById(id);
     if (opt.isEmpty()) {
         return ResponseEntity.status(404).body(Map.of("message", "User not found."));
@@ -343,8 +368,8 @@ if (currentCustomer.getPaymentMethods().size() >= 3) {
     PaymentMethod card = new PaymentMethod(
             currentCustomer,
             ((Number)newCard.get("cardNumber")).longValue(),
-            (String)newCard.get("firstName"),
-            (String)newCard.get("lastName"),
+            (String)newCard.get("cardHolderFirstName"),
+            (String)newCard.get("cardHolderLastName"),
             java.sql.Date.valueOf((String)newCard.get("expirationDate")),
             ((Number)newCard.get("securityCode")).intValue(),
             ((Number)newCard.get("zipCode")).intValue(),

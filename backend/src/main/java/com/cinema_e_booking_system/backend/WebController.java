@@ -134,8 +134,7 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
         "message", "Registration successful.",
         "email", savedCustomer.getEmail(),
         "id", String.valueOf(savedCustomer.getId()),
-        "password",  "",
-        "phoneNumber",  savedCustomer.getPhoneNumber()
+        "password",  ""
     ));
 }
 
@@ -224,7 +223,7 @@ if (!(password.equals(c.getPassword()) || password.equals(decryptedPassword))) {
     produces = MediaType.APPLICATION_JSON_VALUE
 )
 public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<String, String> request) {
-    String email = request.get("email");
+    String email = request.get("emailOrUsername");
     Optional<Customer> customerOpt = customerRepository.findByEmail(email);
 
     if (customerOpt.isEmpty()) {
@@ -242,7 +241,7 @@ public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<Strin
     customerRepository.save(c);
 
     // Teammate handles email sending later
-    // senderService.sendPasswordResetEmail(c, token);
+    senderService.sendPasswordResetLink(c, token);
 
     return ResponseEntity.ok(Map.of("message", "Password reset link sent to your email."));
 }

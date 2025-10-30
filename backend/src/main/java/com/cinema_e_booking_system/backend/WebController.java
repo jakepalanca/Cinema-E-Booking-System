@@ -110,16 +110,6 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
     }
 
     StringCryptoConverter crypto = new StringCryptoConverter();
-    Customer c = new Customer(
-            email,
-            username,
-            firstName,
-            lastName,
-            crypto.convertToDatabaseColumn(password),
-            Customer.CustomerState.INACTIVE,
-            null, null,
-            null, null, null, null, null
-    );
 
    Customer c = new Customer(
     email,
@@ -129,7 +119,7 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
     crypto.convertToDatabaseColumn(password),
     Customer.CustomerState.ACTIVE,
     null, null, // paymentMethods, promotions
-    phoneNumber, null, null, null, null, null
+    null, null, null, null, null
 );
     //c.setVerified(false);
 
@@ -202,7 +192,7 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
     produces = MediaType.APPLICATION_JSON_VALUE
 )
 public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String> credentials) {
-    String email = credentials.get("emailOrUsername");
+    String emailOrUsername = credentials.get("emailOrUsername");
     String password = credentials.get("password");
 
     StringCryptoConverter crypto = new StringCryptoConverter();

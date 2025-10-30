@@ -133,9 +133,7 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
     return ResponseEntity.ok(Map.of(
         "message", "Registration successful.",
         "email", savedCustomer.getEmail(),
-        "id", String.valueOf(savedCustomer.getId()),
-        "password",  "",
-        "phoneNumber",  savedCustomer.getPhoneNumber()
+        "id", String.valueOf(savedCustomer.getId())
     ));
 }
 
@@ -153,6 +151,10 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
     }
 
     c.setVerified(true);
+    //c.setVerified(false);
+    token = UUID.randomUUID().toString();
+    //c.setVerificationToken(token);
+    //senderService.sendVerificationEmail(c,token);
     c.setVerificationToken(null);
     customerRepository.save(c);
     return ResponseEntity.ok("Sucesss! Account confirmed.");
@@ -462,6 +464,10 @@ public ResponseEntity<Map<String, String>> addPromotion(
   customerRepository.save(currentCustomer);
   return ResponseEntity.ok(Map.of("message", "Promotion added for " + currentCustomer.getFirstName()));
 }
+
+// ---------------------- VIEW PROMOTION -------------------
+  @PostMapping("customers/{customerId}/promotions/{promotionId}")
+
 
 
 // ---------------------- LOGOUT ----------------------

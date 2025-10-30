@@ -219,6 +219,7 @@ function RegistrationPage() {
                             onChange={handleChange}
                             required
                         />
+                        <span className="required-note">* required</span>
                     </label>
                     <label>
                         Username:
@@ -229,6 +230,7 @@ function RegistrationPage() {
                             onChange={handleChange}
                             required
                         />
+                        <span className="required-note">* required</span>
                     </label>
                     <label>
                         Password:
@@ -239,6 +241,7 @@ function RegistrationPage() {
                             onChange={handleChange}
                             required
                         />
+                        <span className="required-note">* required</span>
                     </label>
                     <h3>Personal Information</h3>
                     <div className="naming-section">
@@ -251,6 +254,7 @@ function RegistrationPage() {
                                 onChange={handleChange}
                                 required
                             />
+                            <span className="required-note">* required</span>
                         </label>
                         <label>
                             Last Name:
@@ -261,6 +265,7 @@ function RegistrationPage() {
                                 onChange={handleChange}
                                 required
                             />
+                            <span className="required-note">* required</span>
                         </label>
                     </div>
                     <label>
@@ -272,6 +277,7 @@ function RegistrationPage() {
                             onChange={handleChange}
                             required
                         />
+                        <span className="required-note">* required</span>
                     </label>
                     <h3>Address</h3>
                     <label>

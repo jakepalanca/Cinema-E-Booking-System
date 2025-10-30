@@ -34,3 +34,10 @@
   color: white;
   box-sizing: border-box;
 }
+.required-note {
+  font-size: 0.8rem;
+  color: #ff6b6b; /* light red for visibility */
+  margin-top: 2px;
+  display: block;
+  opacity: 0.85;
+}

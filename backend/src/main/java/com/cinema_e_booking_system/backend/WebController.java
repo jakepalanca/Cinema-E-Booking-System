@@ -311,6 +311,7 @@ public ResponseEntity<Map<String, Object>> updateProfileFlexible(
     if (body.get("phoneNumber") != null) c.setPhoneNumber(body.get("phoneNumber").toString());
     if (body.get("address") != null) c.setAddress(body.get("address").toString());
     if (body.get("city") != null) c.setCity(body.get("city").toString());
+    if (body.get("state") != null) c.setState(body.get("state").toString());
     if (body.get("zipCode") != null) c.setZipCode(body.get("zipCode").toString());
     if (body.get("country") != null) c.setCountry(body.get("country").toString());
 

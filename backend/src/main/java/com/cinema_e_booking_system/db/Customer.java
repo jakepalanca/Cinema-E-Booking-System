@@ -201,6 +201,10 @@ public class Customer extends User {
         return state;
     }
 
+    public void setState(String state) {
+        this.state = state;
+    }
+
     public String getZipCode() {
         return zipCode;
     }

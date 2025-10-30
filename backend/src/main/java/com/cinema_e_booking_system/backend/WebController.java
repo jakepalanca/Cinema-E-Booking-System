@@ -122,13 +122,15 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
 );
     //c.setVerified(false);
 
-    c.setVerified(true);
-    //generate token
-    String token = UUID.randomUUID().toString();
-    //senderService.sendVerificationEmail(c,token);
-    c.setVerificationToken(token);
+  // Ensure you are using the token you generated!
+  String generatedToken = UUID.randomUUID().toString();
+  c.setVerificationToken(generatedToken);
+  c.setVerified(false); // Use 'false' for initial state
 
-    Customer savedCustomer = customerRepository.save(c);
+  Customer savedCustomer = customerRepository.save(c);
+
+// Pass the saved customer AND the token variable you know was saved
+  senderService.sendVerificationEmail(savedCustomer, generatedToken);
 
     return ResponseEntity.ok(Map.of(
         "message", "Registration successful.",
@@ -137,6 +139,30 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
         "password",  ""
     ));
 }
+
+  @PostMapping("verify")
+  public ResponseEntity<String> sendVerificationEmail(@RequestBody Map<String, String> verification) {
+    String email = verification.get("emailforVerification");
+    String token = verification.get("verificationCode");
+
+    Optional<Customer> customerOptional = customerRepository.findByVerificationToken(token);
+
+    if (customerOptional.isEmpty()) {
+      return ResponseEntity.status(400).body(("Error: Invalid or expired token"));
+    }
+    Customer c = customerOptional.get();
+
+    if (c.isVerified()) {
+      return ResponseEntity.ok("Account is already confirmed");
+    }
+    //senderService.sendVerificationEmail(c,code);
+
+
+    c.setVerified(true);
+    c.setVerificationToken(null);
+    customerRepository.save(c);
+    return ResponseEntity.ok("Sucesss! Account confirmed.");
+  }
 
   @GetMapping("users/confirm")
   public ResponseEntity<String> confirmedUser(@RequestParam("token") String token) {
@@ -418,7 +444,7 @@ public ResponseEntity<Map<String, Object>> getCustomerByEmail(@RequestParam Stri
 
 
 // ---------------------- REMOVE PROMOTION ----------------------
-@PutMapping("promotions/remove/{customerId}/{promotionId}")
+@DeleteMapping("customers/{customerId}/promotions/{promotionId}")
 public ResponseEntity<Map<String, String>> removePromotion(
   @PathVariable Long promotionId,
   @PathVariable Long customerId
@@ -441,7 +467,7 @@ public ResponseEntity<Map<String, String>> removePromotion(
 }
 
 // ---------------------- ADD PROMOTION ----------------------
-@PutMapping("promotions/add/{customerId}/{promotionId}")
+@PostMapping("customers/{customerId}/promotions/{promotionId}")
 public ResponseEntity<Map<String, String>> addPromotion(
   @PathVariable Long promotionId,
   @PathVariable Long customerId
@@ -462,6 +488,12 @@ public ResponseEntity<Map<String, String>> addPromotion(
   customerRepository.save(currentCustomer);
   return ResponseEntity.ok(Map.of("message", "Promotion added for " + currentCustomer.getFirstName()));
 }
+
+/**
+// --------------------- MORE PROMOTION STUFF ----------------
+  @PostMapping("/customers/{customerID}/promotion/{promotionId}")
+public ResponseEntity<Map<>>
+  */
 
 
 // ---------------------- LOGOUT ----------------------

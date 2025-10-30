@@ -25,6 +25,8 @@ public class User {
 
     private String lastName;
 
+    private String phoneNumber;
+
     @Convert(converter = StringCryptoConverter.class)
     private String password;
 
@@ -41,6 +43,7 @@ public class User {
         this.firstName = firstName;
         this.lastName = lastName;
         this.password = password;
+        this.phoneNumber = phoneNumber;
     }
 
     /**
@@ -113,4 +116,11 @@ public class User {
     public void setPassword(String password) {
         this.password = password;
     }
+
+  /**
+   * getter for phone number
+   */
+  public String getPhoneNumber() {return phoneNumber;}
+
+  public void setPhoneNumber(String phoneNumber) {this.phoneNumber = phoneNumber;}
 }

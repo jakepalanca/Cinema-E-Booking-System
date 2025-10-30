@@ -130,19 +130,7 @@ export default function Profile() {
         e.preventDefault();
         if (!customer) return;
     
-        // Require current password to save anything
-        if (!currentPasswordInput) {
-            setMsg('Please enter your current password');
-            return;
-        }
-    
-        // Verify current password (simple local check)
-        if (customer.password && customer.password !== currentPasswordInput) {
-            setMsg('Current password is incorrect');
-            return;
-        }
-    
-        // Build payload with updated profile info
+        // Prepare base payload with profile info (excluding password)
         const payload = { 
             ...customer, 
             firstName: form.firstName,
@@ -155,11 +143,38 @@ export default function Profile() {
             country: form.country
         };
     
-        // Include new password only if provided
+        // Handle password update logic
         if (password) {
-            payload.password = password;
+            // If trying to change password, current password is required
+            if (!currentPasswordInput) {
+                setMsg('Please enter your current password to change password');
+                return;
+            }
+            
+            // Verify current password against backend before allowing update
+            try {
+                const verifyResponse = await fetch('http://localhost:8080/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        emailOrUsername: customer.email,
+                        password: currentPasswordInput
+                    })
+                });
+                
+                if (!verifyResponse.ok) {
+                    setMsg('Current password is incorrect');
+                    return;
+                }
+                
+                // Only add new password to payload if current password was correct
+                payload.password = password;
+            } catch (error) {
+                setMsg('Failed to verify current password');
+                return;
+            }
         }
-    
+        
         // Local save (no backend user)
         if (localOnly || !customer?.id) {
             const stored = JSON.parse(localStorage.getItem('cinemaUser') || '{}');
@@ -442,7 +457,7 @@ export default function Profile() {
                     </fieldset>
                 </form>
             </section>
-            const handleSave = async (e)
+            
             <section style={{ marginTop: 24 }}>
                 <h3>Promotions</h3>
 
@@ -455,9 +470,8 @@ export default function Profile() {
                         if (!customer) return;
 
                         const selectingAll = promotions.length !== allPromotions.length;
-                        const requestList = selectingAll
-                        ? allPromotions
-                        : promotions;
+                        setPromotions(selectingAll ? allPromotions : []);
+                        const requestList = selectingAll? allPromotions: promotions;
 
                         Promise.all(
                         requestList.map(promo =>

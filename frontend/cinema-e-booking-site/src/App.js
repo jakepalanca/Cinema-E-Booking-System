@@ -9,6 +9,7 @@ import logo from './logo.svg';
 import RegistrationPage from "./RegistrationPage";
 import Login from "./Login";
 import Profile from "./EditProfile";
+import ForgotPassword from "./ForgotPassword";
 import './App.css';
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
         <Route path="/register" element={<RegistrationPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/edit-profile" element={<Profile />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
       </Routes>
   );
 }

@@ -365,6 +365,8 @@ public ResponseEntity<Map<String, Object>> updateProfileFlexible(
     response.put("zipCode", c.getZipCode());
     response.put("country", c.getCountry());
 
+    senderService.sendEditEmail(c);
+
     return ResponseEntity.ok(response);
 }
 
@@ -397,7 +399,7 @@ if (currentCustomer.getPaymentMethods().size() >= 3) {
     // Extract data from JSON and build the PaymentMethod object
     PaymentMethod card = new PaymentMethod(
             currentCustomer,
-            ((Number)newCard.get("cardNumber")).longValue(),
+            (String)newCard.get("cardNumber"),
             (String)newCard.get("cardHolderFirstName"),
             (String)newCard.get("cardHolderLastName"),
             java.sql.Date.valueOf((String)newCard.get("expirationDate")),
@@ -1141,7 +1143,7 @@ public String test() {
         PaymentMethod aliceCard = paymentMethodRepository.save(
                 new PaymentMethod(
                         alice,
-                        4111111111111111L,
+                        "4111111111111111",
                         "Alice",
                         "Johnson",
                         Date.valueOf(LocalDate.now().plusYears(3)),
@@ -1158,7 +1160,7 @@ public String test() {
         PaymentMethod bobCard = paymentMethodRepository.save(
                 new PaymentMethod(
                         bob,
-                        5500000000000004L,
+                        "5500000000000004",
                         "Bob",
                         "Miller",
                         Date.valueOf(LocalDate.now().plusYears(4)),
@@ -1175,7 +1177,7 @@ public String test() {
         PaymentMethod carolCard = paymentMethodRepository.save(
                 new PaymentMethod(
                         carol,
-                        6011000990139424L,
+                        "6011000990139424",
                         "Carol",
                         "Nguyen",
                         Date.valueOf(LocalDate.now().plusYears(2)),

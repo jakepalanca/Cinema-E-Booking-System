@@ -34,12 +34,12 @@ public class EmailSenderService {
 
     String subject = "Confirm your Cinema E-Booking Account";
     String body = String.format(
-        "Hello %s,\n\n" +
-        "Thank you for registering. Please click the link below to confirm your account:\n\n" +
+      "Hello %s,\n\n" +
+        "Thank you for registering. Please copy this token and insert into the verification page:\n\n" +
         "%s\n\n" +
         "This link will expire soon.\n\n" +
         "The Cinema Team",
-      customer.getFirstName(), verificationLink
+      customer.getFirstName(), token
     );
 
     SimpleMailMessage message = new SimpleMailMessage();
@@ -73,7 +73,27 @@ public class EmailSenderService {
     message.setText(body);
 
     mailSender.send(message);
+  }
 
+  public void sendEditEmail(Customer customer) {
+
+
+    String subject = "Info Changed";
+
+    String body = String.format(
+      "Hello %s,\n\n" +
+        "Your information has changed on our website:\n\n" +
+        "The Cinema Team",
+      customer.getFirstName()
+    );
+
+    SimpleMailMessage message = new SimpleMailMessage();
+    message.setFrom("ashvijhosdurg@gmail.com");
+    message.setTo(customer.getEmail());
+    message.setSubject(subject);
+    message.setText(body);
+
+    mailSender.send(message);
 
   }
 }

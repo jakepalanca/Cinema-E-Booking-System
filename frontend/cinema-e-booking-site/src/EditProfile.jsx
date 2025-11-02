@@ -221,7 +221,7 @@ export default function Profile() {
 
         // Prepare PaymentMethod object similar to backend entity
         const pmPayload = {
-            cardNumber: Number(newCard.cardNumber),
+            cardNumber: newCard.cardNumber,
             cardHolderFirstName: newCard.cardHolderFirstName,
             cardHolderLastName: newCard.cardHolderLastName,
             expirationDate: ExpirationDate, // should be yyyy-mm-dd

@@ -28,7 +28,8 @@ public class PaymentMethod {
     @JsonBackReference("customer-paymentMethods")
     private Customer customer;
 
-    private Long cardNumber;
+    @Convert(converter = StringCryptoConverter.class)
+    private String cardNumber;
 
     private String cardHolderFirstName;
 
@@ -51,7 +52,7 @@ public class PaymentMethod {
         // JPA requirement
     }
 
-    public PaymentMethod(Customer customer, Long cardNumber, String cardHolderFirstName, String cardHolderLastName, Date expirationDate, int securityCode, int zipCode, String country, String state, String city, String address) {
+    public PaymentMethod(Customer customer, String cardNumber, String cardHolderFirstName, String cardHolderLastName, Date expirationDate, int securityCode, int zipCode, String country, String state, String city, String address) {
         this.customer = customer;
         this.cardNumber = cardNumber;
         this.cardHolderFirstName = cardHolderFirstName;
@@ -81,11 +82,11 @@ public class PaymentMethod {
         this.customer = customer;
     }
 
-    public Long getCardNumber() {
+    public String getCardNumber() {
         return cardNumber;
     }
 
-    public void setCardNumber(Long cardNumber) {
+    public void setCardNumber(String cardNumber) {
         this.cardNumber = cardNumber;
     }
 

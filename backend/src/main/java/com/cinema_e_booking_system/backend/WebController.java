@@ -109,6 +109,10 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
         return ResponseEntity.badRequest().body(Map.of("message", "Email already registered."));
     }
 
+    if (customerRepository.findByUsername(username).isPresent()) {
+        return ResponseEntity.badRequest().body(Map.of("message", "Username already registered."));
+    }
+
     StringCryptoConverter crypto = new StringCryptoConverter();
 
    Customer c = new Customer(

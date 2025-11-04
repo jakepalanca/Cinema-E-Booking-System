@@ -20,6 +20,9 @@ public class Promotion {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+
+    private boolean hasBeenApplied = false;
+
     @Column(nullable = false, unique = true)
     private String code;
     // 0.00 - 1.00
@@ -51,5 +54,13 @@ public class Promotion {
 
     public List<Customer> getCustomers() {
         return customers;
+    }
+
+    public void setHasBeenApplied(boolean hasBeenApplied) {
+        this.hasBeenApplied = hasBeenApplied;
+    }
+
+    public boolean getHasBeenApplied() {
+        return hasBeenApplied;
     }
 }

@@ -63,7 +63,7 @@ public class PaymentMethod {
         // JPA requirement
     }
 
-    public PaymentMethod(Customer customer, String cardNumber, String cardHolderFirstName, String cardHolderLastName, Date expirationDate, int securityCode, int zipCode, String country, String state, String city, String address) {
+    public PaymentMethod(Customer customer, String cardNumber, String cardHolderFirstName, String cardHolderLastName, Date expirationDate, int securityCode, String zipCode, String country, String state, String city, String address) {
         this.customer = customer;
         this.cardNumber = cardNumber;
         this.cardHolderFirstName = cardHolderFirstName;

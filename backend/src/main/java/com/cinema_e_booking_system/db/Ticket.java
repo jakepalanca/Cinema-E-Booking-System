@@ -34,16 +34,22 @@ public class Ticket {
     @JsonBackReference("booking-tickets")
     private Booking booking;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "paymenty_method_id")
+    @JsonBackReference("payment_method-tickets")
+    private PaymentMethod paymentMethod;
+
     protected Ticket() {
         // JPA requirement
     }
 
-    public Ticket(int seatRow, int seatCol, TicketCategory ticketCategory, Show show, Showroom showroom) {
+    public Ticket(int seatRow, int seatCol, TicketCategory ticketCategory, Show show, Showroom showroom, PaymentMethod paymentMethod) {
         this.seatRow = seatRow;
         this.seatCol = seatCol;
         this.ticketCategory = ticketCategory;
         this.show = show;
         this.showroom = showroom;
+        this.paymentMethod = paymentMethod;
     }
 
     public Long getId() {
@@ -96,5 +102,13 @@ public class Ticket {
 
     public void setBooking(Booking booking) {
         this.booking = booking;
+    }
+
+    public PaymentMethod getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(PaymentMethod paymentMethod) {
+        this.paymentMethod = paymentMethod;
     }
 }

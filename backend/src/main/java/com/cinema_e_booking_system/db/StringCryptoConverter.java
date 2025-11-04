@@ -16,6 +16,7 @@ import java.util.Optional;
  * "jasypt.encryptor.password" property.
  *
  * @author rahul.chauhan
+ * @modifiedby Jake Palanca
  */
 @Converter
 public class StringCryptoConverter implements AttributeConverter<String, String> {

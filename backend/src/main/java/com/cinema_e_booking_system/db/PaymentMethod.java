@@ -31,17 +31,28 @@ public class PaymentMethod {
     @Convert(converter = StringCryptoConverter.class)
     private String cardNumber;
 
+    @Convert(converter = StringCryptoConverter.class)
     private String cardHolderFirstName;
 
+    @Convert(converter = StringCryptoConverter.class)
     private String cardHolderLastName;
 
     // java.sql not java.util
     private Date expirationDate;
 
+    @Convert(converter = StringCryptoConverter.class)
     private String address;
+
+    @Convert(converter = StringCryptoConverter.class)
     private String city;
+
+    @Convert(converter = StringCryptoConverter.class)
     private String state;
-    private int zipCode;
+
+    @Convert(converter = StringCryptoConverter.class)
+    private String zipCode;
+
+    @Convert(converter = StringCryptoConverter.class)
     private String country;
 
 

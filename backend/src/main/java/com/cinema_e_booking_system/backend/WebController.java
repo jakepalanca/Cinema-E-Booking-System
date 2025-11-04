@@ -1205,33 +1205,33 @@ public String test() {
             Booking carolLate = bookingRepository.save(new Booking(new ArrayList<>(), carol));
             carol.addBooking(carolLate);
 
-            issueTicket(aliceMatinee, scheduledShows.get(0), adultCategory, 1, 4);
-            issueTicket(aliceMatinee, scheduledShows.get(0), childCategory, 1, 5);
+            issueTicket(aliceMatinee, scheduledShows.get(0), adultCategory, 1, 4, aliceCard);
+            issueTicket(aliceMatinee, scheduledShows.get(0), childCategory, 1, 5, aliceCard);
             bookingRepository.save(aliceMatinee);
 
             if (scheduledShows.size() > 1) {
-                issueTicket(bobEvening, scheduledShows.get(1), adultCategory, 2, 3);
-                issueTicket(bobEvening, scheduledShows.get(1), seniorCategory, 2, 4);
+                issueTicket(bobEvening, scheduledShows.get(1), adultCategory, 2, 3, bobCard);
+                issueTicket(bobEvening, scheduledShows.get(1), seniorCategory, 2, 4, bobCard);
                 bookingRepository.save(bobEvening);
             }
 
             if (scheduledShows.size() > 2) {
-                issueTicket(carolLate, scheduledShows.get(2), adultCategory, 0, 2);
+                issueTicket(carolLate, scheduledShows.get(2), adultCategory, 0, 2, carolCard);
                 bookingRepository.save(carolLate);
             }
 
             if (scheduledShows.size() > 3) {
                 Booking aliceWeekend = bookingRepository.save(new Booking(new ArrayList<>(), alice));
                 alice.addBooking(aliceWeekend);
-                issueTicket(aliceWeekend, scheduledShows.get(3), adultCategory, 3, 3);
+                issueTicket(aliceWeekend, scheduledShows.get(3), adultCategory, 3, 3, aliceCard);
                 bookingRepository.save(aliceWeekend);
             }
 
             if (scheduledShows.size() > 4) {
                 Booking bobFamily = bookingRepository.save(new Booking(new ArrayList<>(), bob));
                 bob.addBooking(bobFamily);
-                issueTicket(bobFamily, scheduledShows.get(4), childCategory, 4, 1);
-                issueTicket(bobFamily, scheduledShows.get(4), childCategory, 4, 2);
+                issueTicket(bobFamily, scheduledShows.get(4), childCategory, 4, 1, bobCard);
+                issueTicket(bobFamily, scheduledShows.get(4), childCategory, 4, 2, bobCard);
                 bookingRepository.save(bobFamily);
             }
         }
@@ -1268,8 +1268,8 @@ public String test() {
         return Time.valueOf(startTime.toLocalTime().plusMinutes(minutes));
     }
 
-    private void issueTicket(Booking booking, Show show, TicketCategory category, int seatRow, int seatCol) {
-        Ticket ticket = new Ticket(seatRow, seatCol, category, show, show.getShowroom());
+    private void issueTicket(Booking booking, Show show, TicketCategory category, int seatRow, int seatCol, PaymentMethod paymentMethod) {
+        Ticket ticket = new Ticket(seatRow, seatCol, category, show, show.getShowroom(), paymentMethod);
         booking.addTicket(ticket);
         show.getShowroom().occupySeat(seatRow, seatCol);
         ticketRepository.save(ticket);

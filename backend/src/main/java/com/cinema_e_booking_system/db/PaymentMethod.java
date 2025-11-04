@@ -3,6 +3,7 @@ package com.cinema_e_booking_system.db;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 
+import java.math.BigInteger;
 import java.sql.Date;
 
 /**
@@ -49,21 +50,20 @@ public class PaymentMethod {
     @Convert(converter = StringCryptoConverter.class)
     private String state;
 
-    @Convert(converter = StringCryptoConverter.class)
-    private String zipCode;
+    @Convert(converter = IntegerCryptoConverter.class)
+    private Integer zipCode;
 
     @Convert(converter = StringCryptoConverter.class)
     private String country;
 
-
-    // 3 or 4 digits
-    private int securityCode;
+    @Convert(converter = IntegerCryptoConverter.class)
+    private Integer securityCode;
 
     protected PaymentMethod() {
         // JPA requirement
     }
 
-    public PaymentMethod(Customer customer, String cardNumber, String cardHolderFirstName, String cardHolderLastName, Date expirationDate, int securityCode, String zipCode, String country, String state, String city, String address) {
+    public PaymentMethod(Customer customer, String cardNumber, String cardHolderFirstName, String cardHolderLastName, Date expirationDate, Integer securityCode, Integer zipCode, String country, String state, String city, String address) {
         this.customer = customer;
         this.cardNumber = cardNumber;
         this.cardHolderFirstName = cardHolderFirstName;

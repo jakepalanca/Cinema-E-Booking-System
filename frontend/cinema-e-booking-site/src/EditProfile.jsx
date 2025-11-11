@@ -25,16 +25,6 @@ export default function Profile() {
         if (!authRaw) {
             if (storedUser) {
                 setCustomer(storedUser);
-                setForm({
-                    firstName: storedUser.firstName || '',
-                    lastName: storedUser.lastName || '',
-                    phoneNumber: storedUser.phoneNumber || '',
-                    address: storedUser.address || '',
-                    city: storedUser.city || '',
-                    state: storedUser.state || '',
-                    zipCode: storedUser.zipCode || '',
-                    country: storedUser.country || ''
-                });
                 setPaymentMethods(storedUser.paymentMethods || []);
                 setPromotions(storedUser.promotions || []);
                 setLocalOnly(true);
@@ -51,16 +41,6 @@ export default function Profile() {
         if (!email) {
             if (storedUser) {
                 setCustomer(storedUser);
-                setForm({
-                    firstName: storedUser.firstName || '',
-                    lastName: storedUser.lastName || '',
-                    phoneNumber: storedUser.phoneNumber || '',
-                    address: storedUser.address || '',
-                    city: storedUser.city || '',
-                    state: storedUser.state || '',
-                    zipCode: storedUser.zipCode || '',
-                    country: storedUser.country || ''
-                });
                 setPaymentMethods(storedUser.paymentMethods || []);
                 setPromotions(storedUser.promotions || []);
                 setLocalOnly(true);
@@ -78,16 +58,6 @@ export default function Profile() {
             })
             .then(data => {
                 setCustomer(data);
-                setForm({
-                    firstName: data.firstName || '',
-                    lastName: data.lastName || '',
-                    phoneNumber: data.phoneNumber || '',
-                    address: data.address || '',
-                    city: data.city || '',
-                    state: data.state || '',
-                    zipCode: data.zipCode || '',
-                    country: data.country || ''
-                });
                 setPaymentMethods(data.paymentMethods || []);
                 setPromotions(data.promotions || []);
             })
@@ -95,16 +65,6 @@ export default function Profile() {
                 // fallback: if backend didn't find user but local stored user exists, use it
                 if (storedUser && storedUser.email === email) {
                     setCustomer(storedUser);
-                    setForm({
-                        firstName: storedUser.firstName || '',
-                        lastName: storedUser.lastName || '',
-                        phoneNumber: storedUser.phoneNumber || '',
-                        address: storedUser.address || '',
-                        city: storedUser.city || '',
-                        state: storedUser.state || '',
-                        zipCode: storedUser.zipCode || '',
-                        country: storedUser.country || ''
-                    });
                     setPaymentMethods(storedUser.paymentMethods || []);
                     setPromotions(storedUser.promotions || []);
                     setLocalOnly(true);
@@ -131,16 +91,17 @@ export default function Profile() {
         if (!customer) return;
     
         // Prepare base payload with profile info (excluding password)
+        // Use form values if provided, otherwise keep existing customer data
         const payload = { 
             ...customer, 
-            firstName: form.firstName,
-            lastName: form.lastName,
-            phoneNumber: form.phoneNumber,
-            address: form.address,
-            city: form.city,
-            state: form.state,
-            zipCode: form.zipCode,
-            country: form.country
+            firstName: form.firstName || customer.firstName,
+            lastName: form.lastName || customer.lastName,
+            phoneNumber: form.phoneNumber || customer.phoneNumber,
+            address: form.address || customer.address,
+            city: form.city || customer.city,
+            state: form.state || customer.state,
+            zipCode: form.zipCode || customer.zipCode,
+            country: form.country || customer.country
         };
     
         // Handle password update logic
@@ -184,6 +145,17 @@ export default function Profile() {
             setMsg(password ? 'Password and profile updated successfully' : 'Profile updated successfully');
             setPassword('');
             setCurrentPasswordInput('');
+            // Keep the form populated with the saved values (don't clear)
+            setForm({
+                firstName: stored.firstName || '',
+                lastName: stored.lastName || '',
+                phoneNumber: stored.phoneNumber || '',
+                address: stored.address || '',
+                city: stored.city || '',
+                state: stored.state || '',
+                zipCode: stored.zipCode || '',
+                country: stored.country || ''
+            });
             return;
         }
     
@@ -202,6 +174,17 @@ export default function Profile() {
                 setMsg(password ? 'Password and profile updated successfully' : 'Profile updated successfully');
                 setPassword('');
                 setCurrentPasswordInput('');
+                // Keep the form populated with the saved values (don't clear)
+                setForm({
+                    firstName: updated.firstName || '',
+                    lastName: updated.lastName || '',
+                    phoneNumber: updated.phoneNumber || '',
+                    address: updated.address || '',
+                    city: updated.city || '',
+                    state: updated.state || '',
+                    zipCode: updated.zipCode || '',
+                    country: updated.country || ''
+                });
             })
             .catch(() => setMsg('Failed to save profile'));
     };
@@ -329,25 +312,75 @@ export default function Profile() {
                 </label>
                 <label>
                     First name
-                    <input name="firstName" value={form.firstName} onChange={handleChange} style={{ marginLeft: 8 }} />
+                    <input 
+                        name="firstName" 
+                        value={form.firstName} 
+                        onChange={handleChange} 
+                        style={{ marginLeft: 8 }} 
+                    />
                 </label>
                 <label>
                     Last name
-                    <input name="lastName" value={form.lastName} onChange={handleChange} style={{ marginLeft: 8 }} />
+                    <input 
+                        name="lastName" 
+                        value={form.lastName} 
+                        onChange={handleChange} 
+                        style={{ marginLeft: 8 }} 
+                    />
                 </label>
                 <label>
                     Phone number
-                    <input name="phoneNumber" value={form.phoneNumber} onChange={handleChange} style={{ marginLeft: 8 }} />
+                    <input 
+                        name="phoneNumber" 
+                        value={form.phoneNumber} 
+                        onChange={handleChange} 
+                        style={{ marginLeft: 8 }} 
+                    />
                 </label>
                 </fieldset>
 
                 <fieldset style={{ border: '1px solid #444', padding: 12 }}>
                     <legend>Billing address</legend>
-                    <label>Address <input name="address" value={form.address} onChange={handleChange} /></label>
-                    <label>City <input name="city" value={form.city} onChange={handleChange} /></label>
-                    <label>State <input name="state" value={form.state} onChange={handleChange} /></label>
-                    <label>Zip <input name="zipCode" value={form.zipCode} onChange={handleChange} /></label>
-                    <label>Country <input name="country" value={form.country} onChange={handleChange} /></label>
+                    <label>
+                        Address 
+                        <input 
+                            name="address" 
+                            value={form.address} 
+                            onChange={handleChange} 
+                        />
+                    </label>
+                    <label>
+                        City 
+                        <input 
+                            name="city" 
+                            value={form.city} 
+                            onChange={handleChange} 
+                        />
+                    </label>
+                    <label>
+                        State 
+                        <input 
+                            name="state" 
+                            value={form.state} 
+                            onChange={handleChange} 
+                        />
+                    </label>
+                    <label>
+                        Zip 
+                        <input 
+                            name="zipCode" 
+                            value={form.zipCode} 
+                            onChange={handleChange} 
+                        />
+                    </label>
+                    <label>
+                        Country 
+                        <input 
+                            name="country" 
+                            value={form.country} 
+                            onChange={handleChange} 
+                        />
+                    </label>
                 </fieldset>
 
                 <label>

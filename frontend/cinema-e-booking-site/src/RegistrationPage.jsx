@@ -153,14 +153,39 @@ function RegistrationPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json"},
                 body: JSON.stringify({
-                    email: emailForVerification,
+                    emailforVerification: emailForVerification,
                     verificationCode,
                 }),
             });
             if (res.ok) {
-                setStep("success");
-                setMessage("Verification Confirmed");
-                setTimeout(() => navigate("/"), 3000);
+                // After verification, log the user in automatically
+                const loginRes = await fetch("http://localhost:8080/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        emailOrUsername: emailForVerification,
+                        password: formData.password,
+                    }),
+                });
+
+                if (loginRes.ok) {
+                    const userData = await loginRes.json();
+                    
+                    // Store authentication data
+                    localStorage.setItem(
+                        "cinemaAuth",
+                        JSON.stringify({ email: userData.email })
+                    );
+                    localStorage.setItem("cinemaUser", JSON.stringify(userData));
+                    
+                    setStep("success");
+                    setMessage("Verification Confirmed! Logging you in...");
+                    setTimeout(() => navigate("/"), 2000);
+                } else {
+                    setStep("success");
+                    setMessage("Verification Confirmed! Please log in.");
+                    setTimeout(() => navigate("/login"), 2000);
+                }
             } else {
                 const err = await res.json();
                 setMessage(err.message || "Verification code expired or incorrect.");

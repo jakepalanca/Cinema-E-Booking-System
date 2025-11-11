@@ -100,6 +100,11 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
     String lastName = (String) newUser.get("lastName");
     String password = (String) newUser.get("password");
     String phoneNumber = (String) newUser.get("phoneNumber");
+    String address = (String) newUser.get("address");
+    String city = (String) newUser.get("city");
+    String state = (String) newUser.get("state");
+    String zipCode = (String) newUser.get("zipCode");
+    String country = (String) newUser.get("country");
 
     if (email == null || password == null || username == null) {
         return ResponseEntity.badRequest().body(Map.of("message", "Missing required fields."));
@@ -123,9 +128,13 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
     crypto.convertToDatabaseColumn(password),
     Customer.CustomerState.ACTIVE,
     null, null, // paymentMethods, promotions
-    null, null, null, null, null
+    address, city, state, zipCode, country
 );
-    //c.setVerified(false);
+    
+    // Set phone number if provided
+    if (phoneNumber != null) {
+        c.setPhoneNumber(phoneNumber);
+    }
 
   // Ensure you are using the token you generated!
   String generatedToken = UUID.randomUUID().toString();

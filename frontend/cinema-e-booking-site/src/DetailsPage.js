@@ -1,5 +1,6 @@
-// src/Pages/DetailsPage.js
+// src/DetailsPage.js
 import { useParams, useLocation, useNavigate } from "react-router-dom";
+import Navbar from './Navbar.jsx';
 
 export default function DetailsPage() {
   const { movieId } = useParams();
@@ -50,13 +51,15 @@ export default function DetailsPage() {
   const embedUrl = getYouTubeEmbedUrl(movie.trailerLink);
 
   return (
-    <div style={{ padding: 20, maxWidth: 960, margin: "0 auto", color: "white" }}>
-      <h2>Movie Details</h2>
+    <>
+      <Navbar />
+      <div style={{ padding: 20, maxWidth: 960, margin: "0 auto", color: "white" }}>
+        <h2>Movie Details</h2>
 
-      <div
-        style={{
-          border: "1px solid #ddd",
-          borderRadius: 8,
+        <div
+          style={{
+            border: "1px solid #ddd",
+            borderRadius: 8,
           padding: 16,
           marginBottom: 16,
           display: "flex",
@@ -159,6 +162,7 @@ export default function DetailsPage() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

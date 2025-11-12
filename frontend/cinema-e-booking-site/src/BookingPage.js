@@ -1,6 +1,7 @@
-// src/Pages/BookingPage.js
+// src/BookingPage.js
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import Navbar from './Navbar.jsx';
 
 
 export default function BookingPage() {
@@ -125,13 +126,15 @@ export default function BookingPage() {
   }, 0);
 
   return (
-    <div style={{ padding: 20, maxWidth: 900, margin: "0 auto", color: "white" }}>
-      <h2>Booking Page</h2>
+    <>
+      <Navbar />
+      <div style={{ padding: 20, maxWidth: 900, margin: "0 auto", color: "white" }}>
+        <h2>Booking Page</h2>
 
-      <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, marginBottom: 20 }}>
-        <p><strong>Movie:</strong> {title}</p>
-        <p><strong>Showtime:</strong> {showtime}</p>
-      </div>
+        <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, marginBottom: 20 }}>
+          <p><strong>Movie:</strong> {title}</p>
+          <p><strong>Showtime:</strong> {showtime}</p>
+        </div>
 
       <form onSubmit={handleSubmit} style={{ display: "grid", gap: 20 }}>
         {/* Customer Info */}
@@ -303,6 +306,7 @@ export default function BookingPage() {
           Continue to Payment
         </button>
       </form>
-    </div>
+      </div>
+    </>
   );
 }

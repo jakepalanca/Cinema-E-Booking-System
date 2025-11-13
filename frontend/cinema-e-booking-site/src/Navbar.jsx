@@ -25,6 +25,7 @@ function Navbar() {
     const handleLogout = () => {
         localStorage.removeItem("cinemaUser");
         localStorage.removeItem("cinemaAuth");
+        localStorage.removeItem("isAdmin");
         setIsLoggedIn(false);
         navigate("/");
     };

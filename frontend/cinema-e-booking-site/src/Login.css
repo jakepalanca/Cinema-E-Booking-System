@@ -43,3 +43,10 @@
 .forgotPass-redirect a:hover {
   text-decoration: underline;
 }
+.admin-redirect a {
+  color: whitesmoke;
+  text-decoration: none;
+}
+.admin-redirect a:hover {
+  text-decoration: underline;
+}

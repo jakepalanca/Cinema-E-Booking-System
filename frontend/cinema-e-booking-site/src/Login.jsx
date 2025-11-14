@@ -36,10 +36,13 @@ function Login() {
             if (res.ok) {
                 const data = await res.json();
 
+                // Prefer the email returned by the backend (works when user logged in by username)
+                const resolvedEmail = data.email || credentials.emailOrUsername;
+
                 // Store data with correct keys that EditProfile.jsx expects
                 localStorage.setItem(
                     "cinemaAuth",
-                    JSON.stringify({ email: credentials.emailOrUsername })
+                    JSON.stringify({ email: resolvedEmail })
                 );
                 localStorage.setItem("cinemaUser", JSON.stringify(data));
 

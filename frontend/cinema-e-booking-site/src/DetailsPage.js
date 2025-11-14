@@ -1,5 +1,6 @@
-// src/Pages/DetailsPage.js
+// src/DetailsPage.js
 import { useParams, useLocation, useNavigate } from "react-router-dom";
+import Navbar from './Navbar.jsx';
 
 export default function DetailsPage() {
   const { movieId } = useParams();
@@ -50,13 +51,15 @@ export default function DetailsPage() {
   const embedUrl = getYouTubeEmbedUrl(movie.trailerLink);
 
   return (
-    <div style={{ padding: 20, maxWidth: 960, margin: "0 auto", color: "white" }}>
-      <h2>Movie Details</h2>
+    <>
+      <Navbar />
+      <div style={{ padding: 20, maxWidth: 960, margin: "0 auto", color: "white" }}>
+        <h2>Movie Details</h2>
 
-      <div
-        style={{
-          border: "1px solid #ddd",
-          borderRadius: 8,
+        <div
+          style={{
+            border: "1px solid #ddd",
+            borderRadius: 8,
           padding: 16,
           marginBottom: 16,
           display: "flex",
@@ -81,34 +84,42 @@ export default function DetailsPage() {
 
           <div style={{ marginBottom: 12 }}>
             <strong>Book Now:</strong>
-            {movie.showtimes?.length > 0 ? (
-              <ul style={{ marginTop: 4, paddingLeft: 20 }}>
-                {movie.showtimes.map((showtime) => (
-                  <li key={showtime.id} style={{ marginBottom: 4 }}>
-                    <a
-                      onClick={() => navigate(`/booking/${movieId}`, {
-                        state: {
-                          movie,
-                          showtime: `${formatDate(showtime.date)} at ${formatTime(showtime.time)}`
-                        }
-                      })}
-                      style={{
-                        color: "#dc3545",
-                        cursor: "pointer",
-                        textDecoration: "underline"
-                      }}
-                    >
-                      {formatDate(showtime.date)} at {formatTime(showtime.time)}
-                    </a>
-                  </li>
+            {movie.shows?.length > 0 ? (
+              <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 10 }}>
+                {movie.shows.map((show) => (
+                  <button
+                    key={show.id}
+                    onClick={() => navigate(`/booking/${movieId}`, {
+                      state: {
+                        movie,
+                        show,
+                        showtime: `${formatDate(show.date)} at ${formatTime(show.startTime)}`
+                      }
+                    })}
+                    style={{
+                      backgroundColor: "#dc3545",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 6,
+                      padding: "10px 16px",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      transition: "background-color 0.2s",
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = "#c82333"}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = "#dc3545"}
+                  >
+                    {formatDate(show.date)} at {formatTime(show.startTime)}
+                  </button>
                 ))}
-              </ul>
+              </div>
             ) : (
               <span> No showtimes available</span>
             )}
           </div>
 
-          <p><strong>Genre:</strong> {formatGenre(movie.movieCategory)}</p>
+          <p><strong>Genre:</strong> {formatGenre(movie.movieGenre)}</p>
           <p><strong>Director:</strong> {movie.director || "Not available"}</p>
           <p><strong>Producer:</strong> {movie.producer || "Not available"}</p>
           <p><strong>Cast:</strong> {movie.cast?.join(", ") || "Not available"}</p>
@@ -151,6 +162,7 @@ export default function DetailsPage() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

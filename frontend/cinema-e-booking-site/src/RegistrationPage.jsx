@@ -26,7 +26,14 @@ function RegistrationPage() {
         cardHolderLastName: "",
         expirationDate: "",
         securityCode: "",
-        billingAddress: "",
+        billingAddress: {
+            address: "",
+            city: "",
+            state: "",
+            zipCode: "",
+            country: "",
+        },
+        useDefaultAddress: false,
     });
     const [step, setStep] = useState("register"); // register | verify | success
     const [verificationCode, setVerificationCode] = useState("");
@@ -60,8 +67,36 @@ function RegistrationPage() {
     };
 
     const handleCardChange =  (e) => {
-        const { name, value } = e.target;
-        setCurrentCard({...currentCard, [name]: value });
+        const { name, value, type, checked } = e.target;
+
+        if ( name === "useDefaultAddress") {
+            setCurrentCard({
+                ...currentCard,
+                useDefaultAddress: checked,
+                billingAddress: checked
+                    ? {
+                        address: formData.address,
+                        city: formData.city,
+                        state: formData.state,
+                        zipCode: formData.zipCode,
+                        country: formData.country,
+                    }
+                    : { address: "", city: "", state: "", zipCode: "", country: "" },
+            });
+            return;
+        }
+        if (name.startsWith("billingAddress.")) {
+            const field = name.split(".")[1];
+            setCurrentCard({
+                ...currentCard,
+                billingAddress: {
+                    ...currentCard.billingAddress,
+                    [field]: value,
+                },
+            });
+        } else {
+            setCurrentCard({...currentCard, [name]: value });
+        }
     };
 
     const addCard = () => {
@@ -79,6 +114,18 @@ function RegistrationPage() {
             alert("Missing payment info. Please fill out all required fields.");
             return;
         }
+        const newCard = {
+            ...currentCard,
+            billingAddress: currentCard.useDefaultAddress
+                ? {
+                    address: formData.address,
+                    city: formData.city,
+                    state: formData.state,
+                    zipCode: formData.zipCode,
+                    country: formData.country
+                }
+                : currentCard.billingAddress,
+        };
         setFormData({
             ...formData,
             paymentMethods: [...formData.paymentMethods, currentCard],
@@ -89,7 +136,14 @@ function RegistrationPage() {
             cardHolderLastName: "",
             expirationDate: "",
             securityCode: "",
-            billingAddress: "",
+            billingAddress: {
+                address: "",
+                city: "",
+                state: "",
+                zipCode: "",
+                country: "",
+            },
+            useDefaultAddress: false,
         });
     }; // addCard
 
@@ -383,15 +437,69 @@ function RegistrationPage() {
                                 />
                             </label>
                         </div>
-                        <label>
-                            Billing Address:
+                        <h4>Billing Address</h4>
+                        <label className="use-main-address">
                             <input
-                                type="text"
-                                name="billingAddress"
-                                value={currentCard.billingAddress}
+                                type="checkbox"
+                                name="useDefaultAddress"
+                                checked={currentCard.useDefaultAddress}
                                 onChange={handleCardChange}
                             />
+                            Use my main address as billing address
                         </label>
+                        {!currentCard.useDefaultAddress && (
+                            <>
+                                <label>
+                                    Address:
+                                    <input
+                                        type="text"
+                                        name="billingAddress.address"
+                                        value={currentCard.billingAddress.address}
+                                        onChange={handleCardChange}
+                                    />
+                                </label>
+                                <div className="address-row">
+                                    <label>
+                                        City:
+                                        <input
+                                            type="text"
+                                            name="billingAddress.city"
+                                            value={currentCard.billingAddress.city}
+                                            onChange={handleCardChange}
+                                        />
+                                    </label>
+                                    <label>
+                                        State/Province:
+                                        <input
+                                            type="text"
+                                            name="billingAddress.state"
+                                            value={currentCard.billingAddress.state}
+                                            onChange={handleCardChange}
+                                        />
+                                    </label>
+                                </div>
+                                <div className="address-row">
+                                    <label>
+                                        ZIP Code:
+                                        <input
+                                            type="text"
+                                            name="billingAddress.zipCode"
+                                            value={currentCard.billingAddress.zipCode}
+                                            onChange={handleCardChange}
+                                        />
+                                    </label>
+                                    <label>
+                                        Country:
+                                        <input
+                                            type="text"
+                                            name="billingAddress.country"
+                                            value={currentCard.billingAddress.country}
+                                            onChange={handleCardChange}
+                                        />
+                                    </label>
+                                </div>
+                            </>
+                        )}
                         <button type="button" onClick={addCard}>Add Card</button>
                     </div>
                     {formData.paymentMethods.length > 0 && (

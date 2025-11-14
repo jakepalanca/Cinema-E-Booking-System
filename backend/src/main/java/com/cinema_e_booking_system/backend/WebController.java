@@ -499,6 +499,54 @@ public ResponseEntity<Map<String, String>> addPromotion(
   return ResponseEntity.ok(Map.of("message", "Promotion added for " + currentCustomer.getFirstName()));
 }
 
+//-------------------------------ADMIN-------------------------------
+  /*
+@PostMapping("/admin/addMovie")
+public ResponseEntity<Map<String, String>> addMovie(
+  @RequestBody Map<String, Object> newMovie
+) {
+  //Optional<Movie> movieOptional = movieRepository.findById(newMovie.id);
+  //if statement here
+
+  Movie addThisMovie = newMovie(
+    (String)newMovie.get("title"),
+    newMovie.get("movieGenre"),
+    newMovie.get("cast"),
+    (String)newMovie.get("director"),
+    (String)newMovie.get("producer"),
+    (String)newMovie.get("synopsis"),
+    (String)newMovie.get("trailerLink"),
+    newMovie.get("mpaaRating"),
+    null,
+    (String)newMovie.get("posterLink"),
+    null
+  );
+  movieRepository.save(addThisMovie);
+  return ResponseEntity.ok(Map.of("message", "Movie added" + addThisMovie.getTitle()));
+}
+  */ //Figure out how to map cast, mpaaRatting and genre
+  
+  //works, current issue is registeredForPromo isn't getting set to true on frontend side, i think.
+  @PostMapping("/admin/sendPromotion/{promotionId}")
+  public ResponseEntity<Map<String, String>> sendPromotion(
+    @PathVariable Long promotionId
+  ) {
+    //for every user, check if they signed up for promotions, then send email
+    List<Customer> promoEmailList = customerRepository.findAllByRegisteredForPromosTrue();
+
+    Optional<Promotion> p = promotionRepository.findById(promotionId);
+    if (p.isEmpty()) {
+      return ResponseEntity.status(404).body(Map.of("message", "Promotion not found."));
+    }
+    Promotion promo = p.get();
+
+
+    for (Customer c : promoEmailList) {
+      senderService.sendPromo(c, promo);
+    }
+    return ResponseEntity.ok(Map.of("message", "Promotion mail sent to " + promoEmailList.size() + " customers"));
+  }
+
 /**
 // --------------------- MORE PROMOTION STUFF ----------------
   @PostMapping("/customers/{customerID}/promotion/{promotionId}")
@@ -1127,7 +1175,7 @@ public String test() {
         bob = customerRepository.save(bob);
 
         Customer carol = new Customer(
-                "carol@example.com",
+                "ashvijhosdurg@gmail.com",
                 "carolc",
                 "Carol",
                 "Nguyen",

@@ -64,7 +64,7 @@ public class Customer extends User {
         this.country = country;
         this.verificationToken = null;
         this.verified = false;
-        this.registeredForPromos = false;
+        this.registeredForPromos = true;
     }
 
     public CustomerState getCustomerState() {

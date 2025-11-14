@@ -1,32 +1,15 @@
 import './Navbar.css';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from './contexts/AuthContext';
 
 function Navbar() {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const navigate = useNavigate();
+    const { isAuthenticated, logout, isAdmin } = useAuth();
 
-    useEffect(() => {
-        // Check login status based on cinemaUser key
-        const storedUser = localStorage.getItem("cinemaUser");
-        setIsLoggedIn(!!storedUser);
-
-        // Update automatically if login changes (e.g. in another tab)
-        const handleStorageChange = () => {
-            const updatedUser = localStorage.getItem("cinemaUser");
-            setIsLoggedIn(!!updatedUser);
-        };
-
-        window.addEventListener("storage", handleStorageChange);
-        return () => window.removeEventListener("storage", handleStorageChange);
-    }, []);
-
-    // Logout clears cinemaUser + cinemaAuth
+    // Logout clears all auth data
     const handleLogout = () => {
-        localStorage.removeItem("cinemaUser");
-        localStorage.removeItem("cinemaAuth");
-        localStorage.removeItem("isAdmin");
-        setIsLoggedIn(false);
+        logout();
         navigate("/");
     };
 
@@ -47,9 +30,14 @@ function Navbar() {
                     <li><Link to="/contact" className="nav-item">Contact Us</Link></li>
                     <li><Link to="/browse" className="nav-item">Browse</Link></li>
 
-                    {isLoggedIn ? (
+                    {isAuthenticated ? (
                         <>
-                            <li><Link to="/edit-profile" className="nav-item">Edit Profile</Link></li>
+                            {isAdmin && (
+                                <li><Link to="/admin-homepage" className="nav-item">Admin</Link></li>
+                            )}
+                            {!isAdmin && (
+                                <li><Link to="/edit-profile" className="nav-item">Edit Profile</Link></li>
+                            )}
                             <li>
                                 <Link
                                     to="/"

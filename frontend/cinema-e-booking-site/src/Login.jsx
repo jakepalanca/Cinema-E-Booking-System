@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
 import Navbar from './Navbar.jsx';
+import authService from './services/authService';
+import { useAuth } from './contexts/AuthContext';
 
 function Login() {
     const [credentials, setCredentials] = useState({
@@ -11,6 +13,7 @@ function Login() {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
     const navigate = useNavigate();
+    const { login } = useAuth();
     
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -36,18 +39,38 @@ function Login() {
             if (res.ok) {
                 const data = await res.json();
 
-                // Prefer the email returned by the backend (works when user logged in by username)
-                const resolvedEmail = data.email || credentials.emailOrUsername;
+                // Store JWT token and user data
+                if (data.token) {
+                    const userData = {
+                        email: data.email,
+                        id: data.id,
+                        role: data.role,
+                        username: data.username,
+                        firstName: data.firstName,
+                        lastName: data.lastName,
+                    };
+                    
+                    authService.setAuth(data.token, userData);
+                    login(data.token, userData);
 
-                // Store data with correct keys that EditProfile.jsx expects
-                localStorage.setItem(
-                    "cinemaAuth",
-                    JSON.stringify({ email: resolvedEmail })
-                );
-                localStorage.setItem("cinemaUser", JSON.stringify(data));
+                    // Also store for backward compatibility with existing code
+                    localStorage.setItem(
+                        "cinemaAuth",
+                        JSON.stringify({ email: data.email })
+                    );
+                    localStorage.setItem("cinemaUser", JSON.stringify(userData));
 
-                setMessage("Login successful");
-                navigate("/");
+                    setMessage("Login successful");
+                    
+                    // Redirect based on role
+                    if (data.role === 'admin') {
+                        navigate("/admin-homepage");
+                    } else {
+                        navigate("/");
+                    }
+                } else {
+                    setMessage("Login failed: No token received");
+                }
             } else {
                 const err = await res.json();
                 setMessage(err.message || "Invalid email or password");

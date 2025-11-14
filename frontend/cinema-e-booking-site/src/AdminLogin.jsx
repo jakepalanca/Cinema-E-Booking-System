@@ -2,15 +2,18 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "./Login.css";
 import Navbar from "./Navbar.jsx";
+import authService from './services/authService';
+import { useAuth } from './contexts/AuthContext';
 
 function AdminLogin(){
     const [credentials, setCredentials] = useState({
-        username: "",
+        emailOrUsername: "",
         password: "",
     });
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
     const navigate = useNavigate();
+    const { login } = useAuth();
 
     const handleChange = (e) => {
         const {name, value} = e.target;
@@ -21,19 +24,44 @@ function AdminLogin(){
         setLoading(true);
         setMessage("");
         try {
-            const res = await fetch("http://localhost:8080/admin-login", {
+            // Use the same login endpoint
+            const res = await fetch("http://localhost:8080/login", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
-                    username: credentials.username,
+                    emailOrUsername: credentials.emailOrUsername,
                     password: credentials.password,
                 }),
             });
             if (res.ok) {
                 const data = await res.json();
-                localStorage.setItem("isAdmin", "true");
-                setMessage("Admin login successful");
-                navigate("/admin-home");
+                
+                // Verify it's an admin
+                if (data.role !== 'admin') {
+                    setMessage("Access denied. Admin credentials required.");
+                    return;
+                }
+
+                // Store JWT token and user data
+                if (data.token) {
+                    const userData = {
+                        email: data.email,
+                        id: data.id,
+                        role: data.role,
+                        username: data.username,
+                        firstName: data.firstName,
+                        lastName: data.lastName,
+                    };
+                    
+                    authService.setAuth(data.token, userData);
+                    login(data.token, userData);
+                    localStorage.setItem("isAdmin", "true");
+                    
+                    setMessage("Admin login successful");
+                    navigate("/admin-homepage");
+                } else {
+                    setMessage("Login failed: No token received");
+                }
             } else {
                 const err = await res.json();
                 setMessage(err.message || "Invalid admin credentials");
@@ -52,11 +80,11 @@ function AdminLogin(){
                 <h2>Admin Sign In</h2>
                 <form onSubmit={handleSubmit} className="login-form">
                     <label>
-                        Username:
+                        Email or Username:
                         <input
                             type="text"
-                            name="username"
-                            value={credentials.username}
+                            name="emailOrUsername"
+                            value={credentials.emailOrUsername}
                             onChange={handleChange}
                             required
                         />

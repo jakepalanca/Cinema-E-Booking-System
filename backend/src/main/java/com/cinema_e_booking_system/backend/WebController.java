@@ -199,60 +199,7 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
 
 
 // ---------------------- LOGIN ----------------------
-@PostMapping(
-    value = "/login",
-    consumes = MediaType.APPLICATION_JSON_VALUE,
-    produces = MediaType.APPLICATION_JSON_VALUE
-)
-public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String> credentials) {
-    String emailOrUsername = credentials.get("emailOrUsername");
-    String password = credentials.get("password");
-
-    StringCryptoConverter crypto = new StringCryptoConverter();
-
-    Optional<Customer> customerOpt = customerRepository.findByEmail(emailOrUsername);
-    if (customerOpt.isEmpty()) {
-        customerOpt = customerRepository.findByUsername(emailOrUsername);
-    }
-
-    // Check admin if not found as customer
-    if (customerOpt.isEmpty()) {
-        Optional<Admin> adminOpt = adminRepository.findByEmail(emailOrUsername);
-        if (adminOpt.isPresent()) {
-            Admin a = adminOpt.get();
-            if (!a.getPassword().equals(password)) {
-                return ResponseEntity.status(401).body(Map.of("message", "Incorrect password."));
-            }
-            return ResponseEntity.ok(Map.of("message", "Login successful for admin " + a.getFirstName(), "role", "admin"));
-        }
-        return ResponseEntity.status(401).body(Map.of("message", "User not found."));
-    }
-
-    Customer c = customerOpt.get();
-    
-    String decryptedPassword;
-try {
-    decryptedPassword = crypto.convertToEntityAttribute(c.getPassword());
-} catch (Exception e) {
-    decryptedPassword = c.getPassword(); // fallback if it’s plain text
-}
-
-// check both raw and decrypted just in case
-if (!(password.equals(c.getPassword()) || password.equals(decryptedPassword))) {
-    return ResponseEntity.status(401).body(Map.of("message", "Incorrect password."));
-}
-
-    if (!c.isVerified()) {
-        return ResponseEntity.status(401).body(Map.of("message", "Account not verified."));
-    }
-
-    return ResponseEntity.ok(Map.of(
-        "message", "Login successful for " + c.getFirstName(),
-        "role", "customer",
-        "email", c.getEmail(),
-        "id", String.valueOf(c.getId())
-    ));
-}
+// Login endpoint moved to AuthController for JWT token generation!!!!
 
 
 

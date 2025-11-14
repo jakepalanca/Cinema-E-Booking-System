@@ -1,4 +1,3 @@
-```powershell
 #Requires -Version 5.1
 # start.ps1
 
@@ -80,7 +79,7 @@ if (Test-Path -LiteralPath $DB_FILE) {
 Write-Host "Starting backend…"
 Push-Location $BACKEND_DIR
 try {
-    $backProc = Start-Process -FilePath "mvn.cmd" -ArgumentList "-q","spring-boot:run" -PassThru -WindowStyle Hidden
+    $backProc = Start-Process -FilePath ".\mvnw.cmd" -ArgumentList "-q","spring-boot:run" -PassThru -WindowStyle Hidden
 } finally {
     Pop-Location
 }
@@ -125,4 +124,3 @@ try {
     Pop-Location
     & $cleanup
 }
-```

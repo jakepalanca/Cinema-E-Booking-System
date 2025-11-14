@@ -120,6 +120,10 @@ function Login() {
                 <p className="signup-redirect">
                     Don't have an account? <Link to="/register">Sign Up</Link>
                 </p>
+                <hr/>
+                <p className="admin-redirect">
+                    <Link to="/admin-login">Admin Sign In</Link>
+                </p>
             </div>
         </>
     );

@@ -1,20 +1,19 @@
 import { Routes, Route } from "react-router-dom";
-import BookingPage from "./BookingPage";
-import DetailsPage from "./DetailsPage";
-import Homepage from "./Homepage";
-import Browse from "./Browse";
-import logo from './logo.svg';
-import RegistrationPage from "./RegistrationPage";
-import Login from "./Login";
-import Profile from "./EditProfile";
-import ForgotPassword from "./ForgotPassword";
-import ResetPassword from "./ResetPassword";
-import AdminLogin from "./AdminLogin";
-import AdminHomepage from "./AdminHomepage";
-import ManageMovies from "./ManageMovies";
-import ManageShowtimes from "./ManageShowtimes";
-import ManagePromotions from "./ManagePromotions";
-import './App.css';
+import BookingPage from "./pages/BookingPage";
+import DetailsPage from "./pages/DetailsPage";
+import Homepage from "./pages/Homepage";
+import Browse from "./pages/Browse";
+import RegistrationPage from "./pages/RegistrationPage";
+import Login from "./pages/Login";
+import Profile from "./pages/EditProfile";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import AdminLogin from "./pages/AdminLogin";
+import AdminHomepage from "./pages/AdminHomepage";
+import ManageMovies from "./pages/ManageMovies";
+import ManageShowtimes from "./pages/ManageShowtimes";
+import ManagePromotions from "./pages/ManagePromotions";
+import './css/App.css';
 
 function App() {
   return (

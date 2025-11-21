@@ -1,7 +1,7 @@
-import './Navbar.css';
+import '../css/Navbar.css';
 import React from 'react';
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from './contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 
 function Navbar() {
     const navigate = useNavigate();
@@ -20,7 +20,7 @@ function Navbar() {
                     <div className="logo">
                         <li>
                             <a href="/">
-                                <img src="logo192.png" alt="Team 14" />
+                                <img src="logo.png" alt="Team 14"/>
                             </a>
                         </li>
                     </div>

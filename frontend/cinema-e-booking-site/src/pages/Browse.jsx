@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react';
-import "./Homepage.css";
+import "../css/Homepage.css";
 import Navbar from './Navbar.jsx';
 import MovieDisplay from './Movie-Display.jsx';
-import './Browse.css';
+import '../css/Browse.css';
 
 function Browse() {
     const [movies, setMovies] = useState([]);

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from './Navbar.jsx';
-import "./EditProfile.css";
-import api from './services/api';
-import authService from './services/authService';
+import "../css/EditProfile.css";
+import api from '../services/api.js';
+import authService from '../services/authService.js';
 
 export default function Profile() {
     const [customer, setCustomer] = useState(null);

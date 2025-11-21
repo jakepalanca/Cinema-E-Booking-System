@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "./Navbar.jsx"
 import MovieDisplay from "./Movie-Display.jsx";
-import './Homepage.css';
+import '../css/Homepage.css';
 
 function Homepage() {
   const [selectedCategory, setSelectedCategory] = useState("nowShowing");

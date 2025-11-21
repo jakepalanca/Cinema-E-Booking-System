@@ -1,6 +1,6 @@
 import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import "./RegistrationPage.css";
+import "../css/RegistrationPage.css";
 import Navbar from './Navbar.jsx';
 
 function RegistrationPage() {

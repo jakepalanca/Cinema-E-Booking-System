@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
-import "./Login.css";
+import "../css/Login.css";
 import Navbar from './Navbar.jsx';
-import authService from './services/authService';
-import { useAuth } from './contexts/AuthContext';
+import authService from '../services/authService.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 function Login() {
     const [credentials, setCredentials] = useState({

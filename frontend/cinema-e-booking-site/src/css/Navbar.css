@@ -1,35 +1,108 @@
-nav {
-    flex-direction: column;
-    list-style-type: none;
+.navbar-header {
+    width: 100%;
     background-color: rgba(152, 2, 2, 0.826);
-    padding-top: .25rem;
-    padding-bottom: .25rem;
     border-bottom: 3px solid #6e0202d3;
-    color: whitesmoke;
 }
-nav a {
+
+.navbar {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+.navbar-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0.75rem 1.5rem;
+    gap: 2rem;
+}
+
+.logo-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.navbar-logo {
+    height: 45px;
+    width: auto;
+    object-fit: contain;
+    display: block;
+}
+
+.nav-list {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.nav-list li {
+    margin: 0;
+    padding: 0;
+}
+
+.nav-item {
     color: whitesmoke;
     text-decoration: none;
-}
-nav a:hover{
-    color: rgb(160, 160, 160)
-}
-.flex-list{
-    display: flex;
-    justify-content: space-evenly;
-    list-style-type: none;
-    padding: 4px;
-    gap: 20px;
-}
-.logo {
-    display: flex;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: block;
+    white-space: nowrap;
 }
 
-.logo img{
-    height: 50px;
-    width: auto;
+.nav-item:hover {
+    color: rgb(255, 255, 255);
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
-.title{
-    margin-left: 10px;
+.nav-item:active {
+    transform: scale(0.98);
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+    .navbar-container {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 0.75rem 1rem;
+    }
+
+    .navbar-logo {
+        height: 40px;
+    }
+
+    .nav-list {
+        gap: 1rem;
+        width: 100%;
+        justify-content: space-around;
+    }
+
+    .nav-item {
+        font-size: 0.9rem;
+        padding: 0.4rem 0.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-list {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .nav-item {
+        width: 100%;
+        text-align: center;
+    }
 }

@@ -62,7 +62,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
-                .requestMatchers("/health", "/register", "/login", "/verify", "/users/confirm",
+                .requestMatchers("/health", "/register", "/login", "/logout", "/verify", "/users/confirm",
                         "/forgot-password", "/reset-password", "/initialize-db", "/clear-db",
                         "/movies", "/movies/**", "/shows", "/shows/**", "/cinemas", "/cinemas/**",
                         "/theaters", "/theaters/**", "/showrooms", "/showrooms/**",
@@ -74,7 +74,7 @@ public class SecurityConfig {
                     .hasRole("ADMIN")
                 // Customer endpoints (authenticated users)
                 .requestMatchers("/customers/**", "/bookings/**", "/tickets/**", "/payment-methods/**",
-                        "/profile/**", "/logout")
+                        "/profile/**")
                     .hasAnyRole("CUSTOMER", "ADMIN")
                 // All other requests require authentication
                 .anyRequest().authenticated()

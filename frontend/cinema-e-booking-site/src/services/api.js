@@ -4,6 +4,7 @@ const API_BASE_URL = 'http://localhost:8080';
 
 /**
  * API utility for making authenticated requests.
+ * JWT tokens are now in HTTP-only cookies, so they're sent automatically.
  */
 class ApiService {
   /**
@@ -11,21 +12,16 @@ class ApiService {
    */
   async request(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
-    const token = authService.getToken();
 
     const headers = {
       'Content-Type': 'application/json',
       ...options.headers,
     };
 
-    // Add authorization header if token exists
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-
     const config = {
       ...options,
       headers,
+      credentials: 'include', // Include cookies in request
     };
 
     try {
@@ -33,7 +29,7 @@ class ApiService {
       
       // Handle 401 Unauthorized - token might be expired
       if (response.status === 401) {
-        authService.clearAuth();
+        await authService.clearAuth();
         // Redirect to login if not already there
         if (window.location.pathname !== '/login' && window.location.pathname !== '/admin-login') {
           window.location.href = '/login';

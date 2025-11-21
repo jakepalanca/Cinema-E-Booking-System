@@ -30,6 +30,7 @@ function Login() {
             const res = await fetch("http://localhost:8080/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: 'include', // Include cookies
                 body: JSON.stringify({
                     emailOrUsername: credentials.emailOrUsername,
                     password: credentials.password,
@@ -39,37 +40,33 @@ function Login() {
             if (res.ok) {
                 const data = await res.json();
 
-                // Store JWT token and user data
-                if (data.token) {
-                    const userData = {
-                        email: data.email,
-                        id: data.id,
-                        role: data.role,
-                        username: data.username,
-                        firstName: data.firstName,
-                        lastName: data.lastName,
-                    };
-                    
-                    authService.setAuth(data.token, userData);
-                    login(data.token, userData);
+                // Token is now in HTTP-only cookie, so we only store user data
+                const userData = {
+                    email: data.email,
+                    id: data.id,
+                    role: data.role,
+                    username: data.username,
+                    firstName: data.firstName,
+                    lastName: data.lastName,
+                };
+                
+                authService.setAuth(userData);
+                login(userData);
 
-                    // Also store for backward compatibility with existing code
-                    localStorage.setItem(
-                        "cinemaAuth",
-                        JSON.stringify({ email: data.email })
-                    );
-                    localStorage.setItem("cinemaUser", JSON.stringify(userData));
+                // Also store for backward compatibility with existing code
+                localStorage.setItem(
+                    "cinemaAuth",
+                    JSON.stringify({ email: data.email })
+                );
+                localStorage.setItem("cinemaUser", JSON.stringify(userData));
 
-                    setMessage("Login successful");
-                    
-                    // Redirect based on role
-                    if (data.role === 'admin') {
-                        navigate("/admin-homepage");
-                    } else {
-                        navigate("/");
-                    }
+                setMessage("Login successful");
+                
+                // Redirect based on role
+                if (data.role === 'admin') {
+                    navigate("/admin-homepage");
                 } else {
-                    setMessage("Login failed: No token received");
+                    navigate("/");
                 }
             } else {
                 const err = await res.json();

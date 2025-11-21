@@ -1,24 +1,16 @@
 /**
- * Authentication service for managing JWT tokens and user authentication state.
+ * Authentication service for managing user authentication state.
+ * JWT tokens are now stored in HTTP-only cookies, so we only manage user data in localStorage.
  */
 
-const TOKEN_KEY = 'jwt_token';
 const USER_KEY = 'user_data';
 
 class AuthService {
   /**
-   * Store JWT token and user data in localStorage.
+   * Store user data in localStorage (token is in HTTP-only cookie).
    */
-  setAuth(token, userData) {
-    localStorage.setItem(TOKEN_KEY, token);
+  setAuth(userData) {
     localStorage.setItem(USER_KEY, JSON.stringify(userData));
-  }
-
-  /**
-   * Get the stored JWT token.
-   */
-  getToken() {
-    return localStorage.getItem(TOKEN_KEY);
   }
 
   /**
@@ -30,10 +22,19 @@ class AuthService {
   }
 
   /**
-   * Check if user is authenticated.
+   * Check if user is authenticated by verifying with backend.
+   * This is async because we need to check the cookie on the server.
    */
-  isAuthenticated() {
-    return !!this.getToken();
+  async isAuthenticated() {
+    try {
+      const response = await fetch('http://localhost:8080/auth/me', {
+        method: 'GET',
+        credentials: 'include', // Include cookies
+      });
+      return response.ok;
+    } catch (error) {
+      return false;
+    }
   }
 
   /**
@@ -54,21 +55,25 @@ class AuthService {
 
   /**
    * Clear authentication data (logout).
+   * Also calls backend to clear the cookie.
    */
-  clearAuth() {
-    localStorage.removeItem(TOKEN_KEY);
+  async clearAuth() {
+    // Call backend logout endpoint to clear cookie
+    try {
+      await fetch('http://localhost:8080/logout', {
+        method: 'POST',
+        credentials: 'include', // Include cookies
+      });
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+    
+    // Clear local storage
     localStorage.removeItem(USER_KEY);
     // Also clear old auth data if it exists
     localStorage.removeItem('cinemaAuth');
     localStorage.removeItem('cinemaUser');
-  }
-
-  /**
-   * Get authorization header for API requests.
-   */
-  getAuthHeader() {
-    const token = this.getToken();
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    localStorage.removeItem('isAdmin');
   }
 }
 

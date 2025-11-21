@@ -28,6 +28,7 @@ function AdminLogin(){
             const res = await fetch("http://localhost:8080/login", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
+                credentials: 'include', // Include cookies
                 body: JSON.stringify({
                     emailOrUsername: credentials.emailOrUsername,
                     password: credentials.password,
@@ -42,26 +43,22 @@ function AdminLogin(){
                     return;
                 }
 
-                // Store JWT token and user data
-                if (data.token) {
-                    const userData = {
-                        email: data.email,
-                        id: data.id,
-                        role: data.role,
-                        username: data.username,
-                        firstName: data.firstName,
-                        lastName: data.lastName,
-                    };
-                    
-                    authService.setAuth(data.token, userData);
-                    login(data.token, userData);
-                    localStorage.setItem("isAdmin", "true");
-                    
-                    setMessage("Admin login successful");
-                    navigate("/admin-homepage");
-                } else {
-                    setMessage("Login failed: No token received");
-                }
+                // Token is now in HTTP-only cookie, so we only store user data
+                const userData = {
+                    email: data.email,
+                    id: data.id,
+                    role: data.role,
+                    username: data.username,
+                    firstName: data.firstName,
+                    lastName: data.lastName,
+                };
+                
+                authService.setAuth(userData);
+                login(userData);
+                localStorage.setItem("isAdmin", "true");
+                
+                setMessage("Admin login successful");
+                navigate("/admin-homepage");
             } else {
                 const err = await res.json();
                 setMessage(err.message || "Invalid admin credentials");

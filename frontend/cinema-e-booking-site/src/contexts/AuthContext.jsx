@@ -14,28 +14,63 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Load user from localStorage on mount
-    const userData = authService.getUser();
-    if (userData && authService.isAuthenticated()) {
-      setUser(userData);
-    }
-    setLoading(false);
+    // Check authentication status on mount
+    const checkAuth = async () => {
+      try {
+        // First try to get user from localStorage
+        const userData = authService.getUser();
+        
+        // Then verify with backend that cookie is valid
+        const response = await fetch('http://localhost:8080/auth/me', {
+          method: 'GET',
+          credentials: 'include', // Include cookies
+        });
+
+        if (response.ok) {
+          const serverUserData = await response.json();
+          // Update user data from server (more reliable)
+          const updatedUserData = {
+            email: serverUserData.email,
+            id: serverUserData.id,
+            role: serverUserData.role.toLowerCase(),
+            ...userData, // Keep any additional fields from localStorage
+          };
+          setUser(updatedUserData);
+          setIsAuthenticated(true);
+          authService.setAuth(updatedUserData);
+        } else {
+          // Cookie invalid or expired, clear local data
+          setUser(null);
+          setIsAuthenticated(false);
+          localStorage.removeItem('user_data');
+          localStorage.removeItem('cinemaAuth');
+          localStorage.removeItem('cinemaUser');
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        setUser(null);
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
   }, []);
 
-  const login = (token, userData) => {
-    authService.setAuth(token, userData);
+  const login = (userData) => {
+    authService.setAuth(userData);
     setUser(userData);
+    setIsAuthenticated(true);
   };
 
-  const logout = () => {
-    authService.clearAuth();
+  const logout = async () => {
+    await authService.clearAuth();
     setUser(null);
-  };
-
-  const isAuthenticated = () => {
-    return authService.isAuthenticated() && user !== null;
+    setIsAuthenticated(false);
   };
 
   const isAdmin = () => {
@@ -50,7 +85,7 @@ export const AuthProvider = ({ children }) => {
     user,
     login,
     logout,
-    isAuthenticated: isAuthenticated(),
+    isAuthenticated,
     isAdmin: isAdmin(),
     isCustomer: isCustomer(),
     loading,

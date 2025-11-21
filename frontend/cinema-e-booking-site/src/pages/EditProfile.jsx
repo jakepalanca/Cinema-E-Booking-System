@@ -64,15 +64,7 @@ export default function Profile() {
                 setPromotions(data.promotions || []);
             })
             .catch(() => {
-                // fallback: if backend didn't find user but local stored user exists, use it
-                if (storedUser && storedUser.email === email) {
-                    setCustomer(storedUser);
-                    setPaymentMethods(storedUser.paymentMethods || []);
-                    setPromotions(storedUser.promotions || []);
-                    setLocalOnly(true);
-                    return;
-                }
-                // otherwise redirect to signin
+
                 navigate('/login');
             });
 
@@ -119,6 +111,7 @@ export default function Profile() {
                 const verifyResponse = await fetch('http://localhost:8080/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include', // Include cookies
                     body: JSON.stringify({
                         emailOrUsername: customer.email,
                         password: currentPasswordInput
@@ -507,7 +500,8 @@ export default function Profile() {
                         Promise.all(
                         requestList.map(promo =>
                         fetch(`http://localhost:8080/customers/${customer.id}/promotions/${promo.id}`, {
-                            method: selectingAll ? "POST" : "DELETE"
+                            method: selectingAll ? "POST" : "DELETE",
+                            credentials: 'include' // Include cookies
                             })
                         )
                     )

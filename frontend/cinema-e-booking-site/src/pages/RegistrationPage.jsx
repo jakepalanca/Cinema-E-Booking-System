@@ -216,6 +216,7 @@ function RegistrationPage() {
                 const loginRes = await fetch("http://localhost:8080/login", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
+                    credentials: 'include', // Include cookies
                     body: JSON.stringify({
                         emailOrUsername: emailForVerification,
                         password: formData.password,
@@ -225,12 +226,22 @@ function RegistrationPage() {
                 if (loginRes.ok) {
                     const userData = await loginRes.json();
                     
+                    // Token is now in HTTP-only cookie, so we only store user data
+                    const userDataObj = {
+                        email: userData.email,
+                        id: userData.id,
+                        role: userData.role,
+                        username: userData.username,
+                        firstName: userData.firstName,
+                        lastName: userData.lastName,
+                    };
+                    
                     // Store authentication data
                     localStorage.setItem(
                         "cinemaAuth",
                         JSON.stringify({ email: userData.email })
                     );
-                    localStorage.setItem("cinemaUser", JSON.stringify(userData));
+                    localStorage.setItem("cinemaUser", JSON.stringify(userDataObj));
                     
                     setStep("success");
                     setMessage("Verification Confirmed! Logging you in...");

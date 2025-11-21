@@ -50,6 +50,14 @@ public class CustomUserDetailsService implements UserDetailsService {
         Optional<Admin> adminOpt = adminRepository.findByEmail(emailOrUsername);
         if (adminOpt.isPresent()) {
             Admin admin = adminOpt.get();
+            // Decrypt password if needed (admin passwords are now encrypted in production)
+            StringCryptoConverter crypto = new StringCryptoConverter();
+            try {
+                String decryptedPassword = crypto.convertToEntityAttribute(admin.getPassword());
+                admin.setPassword(decryptedPassword);
+            } catch (Exception e) {
+                // Password might already be plain text, keep as is
+            }
             return new CustomUserDetails(admin, "ADMIN");
         }
 

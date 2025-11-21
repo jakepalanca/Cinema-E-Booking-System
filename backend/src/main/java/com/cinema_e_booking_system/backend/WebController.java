@@ -873,8 +873,12 @@ public String test() {
         Promotion loyaltyPromo = promotionRepository.save(new Promotion("LOYAL15", 0.15));
         Promotion blockbusterPromo = promotionRepository.save(new Promotion("BLOCKBUSTER20", 0.20));
 
-        adminRepository.save(new Admin("admin@cinemae.com", "sysadmin", "System", "Admin", "admin123"));
-        adminRepository.save(new Admin("manager@cinemae.com", "cinemamgr", "Morgan", "Reeves", "managersafe"));
+        // Encrypt admin passwords before saving
+        StringCryptoConverter crypto = new StringCryptoConverter();
+        adminRepository.save(new Admin("admin@cinemae.com", "sysadmin", "System", "Admin", 
+            crypto.convertToDatabaseColumn("admin123")));
+        adminRepository.save(new Admin("manager@cinemae.com", "cinemamgr", "Morgan", "Reeves", 
+            crypto.convertToDatabaseColumn("managersafe")));
 
         Cinema downtown = cinemaRepository.save(new Cinema("Downtown Cinema"));
         Cinema uptown = cinemaRepository.save(new Cinema("Uptown Screens"));

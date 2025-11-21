@@ -462,12 +462,6 @@ public ResponseEntity<Map<>>
   */
 
 
-// ---------------------- LOGOUT ----------------------
-@PostMapping("/logout")
-public ResponseEntity<Map<String, String>> logout() {
-    return ResponseEntity.ok(Map.of("message", "Logout successful."));
-}
-
 // ---------------------- TEST ----------------------
 @GetMapping("/test")
 public String test() {

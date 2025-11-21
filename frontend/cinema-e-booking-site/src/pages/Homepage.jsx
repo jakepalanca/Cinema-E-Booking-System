@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from "react";
-import Navbar from "./Navbar.jsx"
+import { Link } from "react-router-dom";
+import Navbar from "./Navbar.jsx";
 import MovieDisplay from "./Movie-Display.jsx";
-import '../css/Homepage.css';
+import "../css/Homepage.css";
 
 function Homepage() {
   const [selectedCategory, setSelectedCategory] = useState("nowShowing");
   const [movies, setMovies] = useState({ nowShowing: [], upcoming: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const storedName =
+    typeof window !== "undefined" ? localStorage.getItem("userName") : null;
+  const greetingName = storedName || "Guest";
   // Fetch data
   useEffect(() => {
     const fetchMovies = async () => {
@@ -36,13 +40,32 @@ function Homepage() {
   return(
     <>
       <Navbar/>
-      <div className='buttons'>
-        <button onClick={() => setSelectedCategory("nowShowing")}>
-          Currently Running
-        </button>
-        <button onClick={() => setSelectedCategory("upcoming")}>
-          Coming Soon
-        </button>
+      <div className="home-header">
+        <div className="welcome-blurb">
+          {storedName ? (
+            <h3>Welcome back, {greetingName}!</h3>
+          ) : (
+            <h3>
+              Welcome! <Link to="/register" className="signup-link">Sign up today</Link>
+            </h3>
+          )}
+        </div>
+        <div className="buttons">
+          <button
+            type="button"
+            className={`category-button ${selectedCategory === "nowShowing" ? "is-active" : ""}`}
+            onClick={() => setSelectedCategory("nowShowing")}
+          >
+            Currently Running
+          </button>
+          <button
+            type="button"
+            className={`category-button ${selectedCategory === "upcoming" ? "is-active" : ""}`}
+            onClick={() => setSelectedCategory("upcoming")}
+          >
+            Coming Soon
+          </button>
+        </div>
       </div>
       <div className='movie-grid'>
         {displayedMovies.map((movie) => (

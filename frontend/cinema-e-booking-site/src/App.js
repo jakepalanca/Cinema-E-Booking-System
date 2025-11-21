@@ -13,6 +13,7 @@ import AdminHomepage from "./pages/AdminHomepage";
 import ManageMovies from "./pages/ManageMovies";
 import ManageShowtimes from "./pages/ManageShowtimes";
 import ManagePromotions from "./pages/ManagePromotions";
+import VerificationPage from "./pages/VerificationPage";
 import './css/App.css';
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
       <Route path="/browse" element={<Browse />} />
       <Route path="/register" element={<RegistrationPage />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/verify" element={<VerificationPage />} />
       <Route path="/edit-profile" element={<Profile />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />

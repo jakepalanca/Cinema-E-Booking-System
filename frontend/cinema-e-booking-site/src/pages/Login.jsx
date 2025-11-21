@@ -6,6 +6,7 @@ import authService from '../services/authService.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 
 function Login() {
+    const NOT_VERIFIED_MSG = "Account not verified. Please verify your email.";
     const [credentials, setCredentials] = useState({
         emailOrUsername: "",
         password: "",
@@ -132,7 +133,24 @@ function Login() {
                     <button type="submit" disabled={loading}>
                         {loading ? "Logging in..." : "Login"}
                     </button>
-                    {message && <p className="info-message">{message}</p>}
+                    {message && (
+                        <p className="info-message">
+                            {message === NOT_VERIFIED_MSG ? (
+                                <>
+                                    Account not verified.{" "}
+                                    <Link
+                                        to="/verify"
+                                        state={{ email: credentials.emailOrUsername }}
+                                        className="verify-link"
+                                    >
+                                        Verify your email
+                                    </Link>
+                                </>
+                            ) : (
+                                message
+                            )}
+                        </p>
+                    )}
                 </form>
                 <p className="forgotPass-redirect">
                     Forgot your password? <Link to="/forgot-password">Click Here</Link>

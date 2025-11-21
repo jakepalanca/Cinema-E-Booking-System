@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from './Navbar.jsx';
-import "./EditProfile.css";
+import "../css/EditProfile.css";
+import api from '../services/api.js';
+import authService from '../services/authService.js';
 
 export default function Profile() {
     const [customer, setCustomer] = useState(null);
@@ -50,8 +52,8 @@ export default function Profile() {
             return;
         }
 
-        // fetch customer by email from backend
-        fetch(`http://localhost:8080/customers/by-email?email=${encodeURIComponent(email)}`)
+        // fetch customer by email from backend using authenticated API
+        api.get(`/customers/by-email?email=${encodeURIComponent(email)}`)
             .then(r => {
                 if (!r.ok) throw new Error('Customer not found');
                 return r.json();
@@ -62,15 +64,7 @@ export default function Profile() {
                 setPromotions(data.promotions || []);
             })
             .catch(() => {
-                // fallback: if backend didn't find user but local stored user exists, use it
-                if (storedUser && storedUser.email === email) {
-                    setCustomer(storedUser);
-                    setPaymentMethods(storedUser.paymentMethods || []);
-                    setPromotions(storedUser.promotions || []);
-                    setLocalOnly(true);
-                    return;
-                }
-                // otherwise redirect to signin
+
                 navigate('/login');
             });
 
@@ -117,6 +111,7 @@ export default function Profile() {
                 const verifyResponse = await fetch('http://localhost:8080/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include', // Include cookies
                     body: JSON.stringify({
                         emailOrUsername: customer.email,
                         password: currentPasswordInput
@@ -160,11 +155,7 @@ export default function Profile() {
         }
     
         // Backend save
-        fetch(`http://localhost:8080/customers/${customer.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        })
+        api.put(`/customers/${customer.id}`, payload)
             .then(r => {
                 if (!r.ok) throw new Error('Save failed');
                 return r.json();
@@ -232,11 +223,7 @@ export default function Profile() {
             return;
         }
 
-        fetch(`http://localhost:8080/customers/${customer.id}/payment-methods`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(pmPayload)
-        })
+        api.put(`/customers/${customer.id}/payment-methods`, pmPayload)
             .then(r => r.json())
             .then(saved => {
                 setPaymentMethods(prev => [...prev, saved]);
@@ -258,7 +245,7 @@ export default function Profile() {
             return;
         }
 
-        fetch(`http://localhost:8080/payment-methods/${id}`, { method: 'DELETE' })
+        api.delete(`/payment-methods/${id}`)
             .then(r => {
                 if (!r.ok) throw new Error('Delete failed');
                 setPaymentMethods(prev => prev.filter(p => p.id !== id));
@@ -280,18 +267,22 @@ export default function Profile() {
         }
     
         const registered = isPromoRegistered(promo);
-        const url = `http://localhost:8080/customers/${customer.id}/promotions/${promo.id}`;
-        const method = registered ? 'DELETE' : 'POST';
-        fetch(url, { method })
-            .then(r => {
-                if (!r.ok) throw new Error('Promo toggle failed');
-                if (registered) {
+        const url = `/customers/${customer.id}/promotions/${promo.id}`;
+        if (registered) {
+            api.delete(url)
+                .then(r => {
+                    if (!r.ok) throw new Error('Promo toggle failed');
                     setPromotions(prev => prev.filter(p => p.id !== promo.id));
-                } else {
+                })
+                .catch(() => setMsg('Failed to update promotions'));
+        } else {
+            api.post(url, {})
+                .then(r => {
+                    if (!r.ok) throw new Error('Promo toggle failed');
                     setPromotions(prev => [...prev, promo]);
-                }
-            })
-            .catch(() => setMsg('Failed to update promotions'));
+                })
+                .catch(() => setMsg('Failed to update promotions'));
+        }
     };
 
     if (!customer) return null;
@@ -509,7 +500,8 @@ export default function Profile() {
                         Promise.all(
                         requestList.map(promo =>
                         fetch(`http://localhost:8080/customers/${customer.id}/promotions/${promo.id}`, {
-                            method: selectingAll ? "POST" : "DELETE"
+                            method: selectingAll ? "POST" : "DELETE",
+                            credentials: 'include' // Include cookies
                             })
                         )
                     )

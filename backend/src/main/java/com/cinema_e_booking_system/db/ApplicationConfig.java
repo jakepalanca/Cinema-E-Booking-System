@@ -1,6 +1,7 @@
 package com.cinema_e_booking_system.db;
 
 import jakarta.persistence.EntityManagerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -15,20 +16,28 @@ import javax.sql.DataSource;
 /**
  * Configuration class for setting up the application's database connection,
  * JPA entity manager, and transaction management using SQLite as the database.
+ * 
+ * DataSource configuration reads from application.yml properties.
  */
 @Configuration
 @EnableTransactionManagement
 class ApplicationConfig {
 
+    @Value("${spring.datasource.url}")
+    private String datasourceUrl;
+
+    @Value("${spring.datasource.driver-class-name}")
+    private String driverClassName;
+
     /**
-     * Configures database connection, JPA entity manager, and transaction management for the app.
-     * Uses SQLite as the database.
+     * Configures DataSource from application.yml properties.
+     * This is required because Spring Boot doesn't auto-configure SQLite.
      */
     @Bean
     public DataSource dataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setDriverClassName("org.sqlite.JDBC");
-        dataSource.setUrl("jdbc:sqlite:cinema.db");
+        dataSource.setDriverClassName(driverClassName);
+        dataSource.setUrl(datasourceUrl);
         return dataSource;
     }
 
@@ -36,7 +45,7 @@ class ApplicationConfig {
      * Creates and configures the JPA entity manager factory bean.
      */
     @Bean
-    public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         vendorAdapter.setGenerateDdl(true);
         vendorAdapter.setDatabasePlatform("org.hibernate.community.dialect.SQLiteDialect");
@@ -44,7 +53,7 @@ class ApplicationConfig {
         LocalContainerEntityManagerFactoryBean factory = new LocalContainerEntityManagerFactoryBean();
         factory.setJpaVendorAdapter(vendorAdapter);
         factory.setPackagesToScan("com.cinema_e_booking_system");
-        factory.setDataSource(dataSource());
+        factory.setDataSource(dataSource);
         return factory;
     }
 

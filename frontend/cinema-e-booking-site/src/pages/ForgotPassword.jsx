@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import "./ForgotPassword.css"
+import "../css/ForgotPassword.css"
 import Navbar from "./Navbar.jsx";
 
 function ForgotPassword() {

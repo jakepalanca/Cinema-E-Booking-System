@@ -461,6 +461,28 @@ public ResponseEntity<Map<String, String>> addPromotion(
 public ResponseEntity<Map<>>
   */
 
+// ----------------------SEND PROMOTION EMAIL ----------------------
+//works, current issue is registeredForPromo isn't getting set to true on frontend side, i think.
+@PostMapping("/admin/sendPromotion/{promotionId}")
+public ResponseEntity<Map<String, String>> sendPromotion(
+  @PathVariable Long promotionId
+) {
+  //for every user, check if they signed up for promotions, then send email
+  List<Customer> promoEmailList = customerRepository.findAllByRegisteredForPromosTrue();
+
+  Optional<Promotion> p = promotionRepository.findById(promotionId);
+  if (p.isEmpty()) {
+    return ResponseEntity.status(404).body(Map.of("message", "Promotion not found."));
+  }
+  Promotion promo = p.get();
+
+
+  for (Customer c : promoEmailList) {
+    senderService.sendPromo(c, promo);
+  }
+  return ResponseEntity.ok(Map.of("message", "Promotion mail sent to " + promoEmailList.size() + " customers"));
+}
+
 
 // ---------------------- TEST ----------------------
 @GetMapping("/test")

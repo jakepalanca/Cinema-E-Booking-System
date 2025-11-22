@@ -408,6 +408,11 @@ public ResponseEntity<Map<String, Object>> getCustomerByEmail(@RequestParam Stri
     return ResponseEntity.ok(response);
 }
 
+// --------------------- ADD MOVIE ---------------------
+
+
+  // -------------------- SCHEDULE MOVIE ---------------
+
 
 // ---------------------- REMOVE PROMOTION ----------------------
 @DeleteMapping("customers/{customerId}/promotions/{promotionId}")

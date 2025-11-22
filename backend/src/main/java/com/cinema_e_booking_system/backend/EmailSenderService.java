@@ -1,6 +1,7 @@
 package com.cinema_e_booking_system.backend;
 
 import com.cinema_e_booking_system.db.Customer;
+import com.cinema_e_booking_system.db.Promotion;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;

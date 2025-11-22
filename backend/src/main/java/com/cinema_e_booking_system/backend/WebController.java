@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.lang.Integer;
 
 
 /**
@@ -437,7 +438,7 @@ public ResponseEntity<Map<String, String>> removePromotion(
   return ResponseEntity.ok(Map.of("message", "Promotion removed from " + currentCustomer.getFirstName()));
 }
 
-// ---------------------- ADD PROMOTION ----------------------
+// ---------------------- ADD PROMOTION TO CUSTOMER----------------------
 @PostMapping("customers/{customerId}/promotions/{promotionId}")
 public ResponseEntity<Map<String, String>> addPromotion(
   @PathVariable Long promotionId,
@@ -465,6 +466,24 @@ public ResponseEntity<Map<String, String>> addPromotion(
   @PostMapping("/customers/{customerID}/promotion/{promotionId}")
 public ResponseEntity<Map<>>
   */
+
+// ----------------------ADD PROMO TO PROMO_REPO ------------------
+@PostMapping("/promotions")
+public ResponseEntity<Map<String, String>> addPromo(
+  @RequestBody Map<String, Object> newPromo
+) {
+  String promoCode = (String)newPromo.get("code");
+  Double promoDiscountPercentage = ((Number) newPromo.get("discountPercentage")).doubleValue();
+  String promoEndDate = (String)newPromo.get("endDate");
+  Boolean promoHasBeenApplied = (Boolean)newPromo.get("hasBeenApplied");
+  String promoStartDate = (String)newPromo.get("startDate");
+
+  Promotion addThisPromo = new Promotion(promoCode, promoDiscountPercentage);
+  promotionRepository.save(addThisPromo);
+  return ResponseEntity.ok(Map.of("message", "Promo added successfully."));
+  }
+
+
 
 // ----------------------SEND PROMOTION EMAIL ----------------------
 //works, current issue is registeredForPromo isn't getting set to true on frontend side, i think.

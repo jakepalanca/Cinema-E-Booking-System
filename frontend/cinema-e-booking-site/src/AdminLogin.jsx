@@ -33,7 +33,7 @@ function AdminLogin(){
                 const data = await res.json();
                 localStorage.setItem("isAdmin", "true");
                 setMessage("Admin login successful");
-                navigate("/admin-home");
+                navigate("/admin-homepage");
             } else {
                 const err = await res.json();
                 setMessage(err.message || "Invalid admin credentials");

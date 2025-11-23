@@ -74,7 +74,7 @@ function ManageMovies(){
     return (
         <>
             <Navbar/>
-            <div className="movie-form" onSubmit={handleSubmit}>
+            <form className="movie-form" onSubmit={handleSubmit}>
                 <input name="title" value={movie.title} onChange={handleChange} placeholder="Title" required />
                 <input name="director" value={movie.director} onChange={handleChange} placeholder="Director" required />
                 <input name="producer" value={movie.producer} onChange={handleChange} placeholder="Producer" required />
@@ -106,7 +106,7 @@ function ManageMovies(){
                     Add Movie
                 </button>
                 {message && <p className="info-message">{message}</p>}
-            </div>
+            </form>
         </>
     );
 }

@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.lang.Integer;
+import java.time.Duration;
+
 
 
 /**
@@ -203,6 +205,46 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
 // ---------------------- LOGIN ----------------------
 // Login endpoint moved to AuthController for JWT token generation!!!!
 
+// ---------------------- ADMIN LOGIN (Sprint 3) ----------------------
+@PostMapping(
+    value = "/admin-login",
+    consumes = MediaType.APPLICATION_JSON_VALUE,
+    produces = MediaType.APPLICATION_JSON_VALUE
+)
+public ResponseEntity<Map<String, Object>> adminLogin(@RequestBody Map<String, String> body) {
+    String username = body.get("username");
+    String password = body.get("password");
+
+    if (username == null || password == null) {
+        return ResponseEntity
+                .badRequest()
+                .body(Map.of("message", "Missing username or password"));
+    }
+
+    Optional<Admin> adminOpt = adminRepository.findByUsername(username);
+
+    if (adminOpt.isEmpty()) {
+        return ResponseEntity
+                .status(401)
+                .body(Map.of("message", "Invalid admin credentials"));
+    }
+
+    Admin admin = adminOpt.get();
+
+    if (!admin.getPassword().equals(password)) {
+        return ResponseEntity
+                .status(401)
+                .body(Map.of("message", "Invalid admin credentials"));
+    }
+
+    return ResponseEntity.ok(Map.of(
+            "message", "Admin login successful",
+            "role", "admin",
+            "id", admin.getId(),
+            "username", admin.getUsername()
+    ));
+
+}
 
 
 // ---------------------- FORGOT PASSWORD ----------------------
@@ -602,6 +644,147 @@ public ResponseEntity<Map<String, String>> bookSeats(
    * //Post Mapping to receive new values for Name, address, etc
    * //similar to setProfile but cannot allowed for email change
    */
+
+    // ---------------------- ADMIN: ADD MOVIE (Sprint 3) ----------------------
+@PostMapping(
+        value = "/movies",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE
+)
+public ResponseEntity<?> addMovie(@RequestBody Map<String, Object> body) {
+    try {
+        String title = (String) body.get("title");
+        String director = (String) body.get("director");
+        String producer = (String) body.get("producer");
+        String synopsis = (String) body.get("synopsis");
+        String posterLink = (String) body.get("posterLink");
+        String trailerLink = (String) body.get("trailerLink");
+
+        // Enum normalization (handles "Action", "action", "SCI FI", "pg-13", etc.)
+        String genreStr = ((String) body.get("movieGenre")).trim()
+                .toUpperCase().replace(" ", "_");
+        Movie.Genre genre = Movie.Genre.valueOf(genreStr);
+
+        String ratingStr = ((String) body.get("mpaaRating")).trim()
+                .toUpperCase().replace("-", "_").replace(" ", "_");
+        Movie.MPAA_Rating rating = Movie.MPAA_Rating.valueOf(ratingStr);
+
+      List<String> cast = (List<String>) body.get("castList");
+if (cast == null) cast = new ArrayList<>();
+
+Movie movie = new Movie(
+        title,
+        genre,
+        cast,
+        director,
+        producer,
+        synopsis,
+        trailerLink,
+        posterLink,
+        new ArrayList<>(),   // shows
+        new ArrayList<>(),   // reviews
+        rating
+);
+
+
+        Movie saved = movieRepository.save(movie);
+        return ResponseEntity.ok(saved);
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.badRequest().body(
+                Map.of("message", "Failed to add movie: " + e.getMessage())
+        );
+    }
+}
+
+
+    // ---------------------- ADMIN: ADD CAST MEMBER ----------------------
+@PostMapping(
+        value = "/movie_cast",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE
+)
+public ResponseEntity<?> addCastMember(@RequestBody Map<String, Object> body) {
+    try {
+        Long movieId = Long.valueOf(body.get("Movie_id").toString()); // frontend sends "Movie_id"
+        String cast = (String) body.get("cast");
+
+        if (cast == null || cast.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Cast name required."));
+        }
+
+        Optional<Movie> opt = movieRepository.findById(movieId);
+        if (opt.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("message", "Movie not found."));
+        }
+
+        Movie movie = opt.get();
+
+        // assuming Movie has getCast() / setCast(List<String>)
+        List<String> castList = movie.getCast();
+        if (castList == null) castList = new ArrayList<>();
+        castList.add(cast);
+
+        movie.setCast(castList);
+        movieRepository.save(movie);
+
+        return ResponseEntity.ok(Map.of("message", "Cast added."));
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.status(500).body(Map.of("message", "Failed to add cast."));
+    }
+}
+
+    // ---------------------- ADMIN: ADD SHOWTIME ----------------------
+@PostMapping(
+        value = "/shows",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE
+)
+public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
+    try {
+        Long movieId = Long.valueOf(body.get("movie_id").toString());
+        Long showroomId = Long.valueOf(body.get("showroom_id").toString());
+
+        String dateStr = (String) body.get("date");          // "YYYY-MM-DD"
+        String startStr = (String) body.get("startTime");   // "HH:mm"
+        String endStr = (String) body.get("endTime");       // "HH:mm"
+
+        if (dateStr == null || startStr == null || endStr == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Missing date/time."));
+        }
+
+        LocalDate date = LocalDate.parse(dateStr);
+        LocalTime start = LocalTime.parse(startStr);
+        LocalTime end = LocalTime.parse(endStr);
+
+        int duration = (int) Duration.between(start, end).toMinutes();
+        if (duration <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("message", "End time must be after start time."));
+        }
+
+        Show show = new Show(
+                duration,
+                Date.valueOf(date),
+                Time.valueOf(start),
+                Time.valueOf(end)
+        );
+
+        Showroom showroom = showroomRepository.findById(showroomId)
+                .orElseThrow(() -> new RuntimeException("Showroom not found"));
+
+        show.setShowroom(showroom);
+
+        Show savedShow = movieService.addShow(movieId, show);
+        return ResponseEntity.ok(savedShow);
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.status(500).body(Map.of("message", "Failed to add showtime."));
+    }
+}
 
   /**
      * The endpoint to filter movies by genre.

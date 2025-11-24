@@ -32,15 +32,28 @@ function ManageMovies(){
     const handleSubmit = async (e) => {
         e.preventDefault();
         setMessage("");
+        
+        // Client-side validation
+        if (!movie.movieGenre || movie.movieGenre === "") {
+            setMessage("Please select a genre");
+            return;
+        }
+        if (!movie.mpaaRating || movie.mpaaRating === "") {
+            setMessage("Please select an MPAA rating");
+            return;
+        }
+        
         try{
             const movieRes = await fetch("http://localhost:8080/movies", {
                 method: "POST",
                 headers: { "Content-Type": "application/json"},
+                credentials: 'include',
                 body: JSON.stringify(movie),
             });
             if (!movieRes.ok){
                 const err = await movieRes.json();
-                throw new Error(err.message || "Failed to add movie");
+                setMessage(err.message || "Failed to add movie");
+                return;
             }
             const movieData = await movieRes.json();
             for (const cast of castList){
@@ -48,6 +61,7 @@ function ManageMovies(){
                 await fetch("http://localhost:8080/movie_cast",{
                     method: "POST",
                     headers: {"Content-Type": "application/json"},
+                    credentials: 'include',
                     body: JSON.stringify({
                         Movie_id: movieData.id,
                         cast,
@@ -68,18 +82,38 @@ function ManageMovies(){
             setCastList([""]);
         } catch (err) {
             console.error(err);
-            setMessage("Error adding movie.");
+            setMessage(err.message || "Error connecting to the server.");
         }
     };
     return (
         <>
             <Navbar/>
-            <div className="movie-form" onSubmit={handleSubmit}>
+            <form className="movie-form" onSubmit={handleSubmit}>
                 <input name="title" value={movie.title} onChange={handleChange} placeholder="Title" required />
                 <input name="director" value={movie.director} onChange={handleChange} placeholder="Director" required />
                 <input name="producer" value={movie.producer} onChange={handleChange} placeholder="Producer" required />
-                <input name="movieGenre" value={movie.movieGenre} onChange={handleChange} placeholder="Genre" required />
-                <input name="mpaaRating" value={movie.mpaaRating} onChange={handleChange} placeholder="MPAA Rating" required />
+                <select name="movieGenre" value={movie.movieGenre} onChange={handleChange} required>
+                    <option value="">Select Genre</option>
+                    <option value="ACTION">Action</option>
+                    <option value="ANIMATION">Animation</option>
+                    <option value="COMEDY">Comedy</option>
+                    <option value="CRIME">Crime</option>
+                    <option value="DRAMA">Drama</option>
+                    <option value="FANTASY">Fantasy</option>
+                    <option value="HORROR">Horror</option>
+                    <option value="ROMANCE">Romance</option>
+                    <option value="SCI_FI">Sci-Fi</option>
+                    <option value="THRILLER">Thriller</option>
+                    <option value="WESTERN">Western</option>
+                </select>
+                <select name="mpaaRating" value={movie.mpaaRating} onChange={handleChange} required>
+                    <option value="">Select MPAA Rating</option>
+                    <option value="G">G</option>
+                    <option value="PG">PG</option>
+                    <option value="PG_13">PG-13</option>
+                    <option value="R">R</option>
+                    <option value="NC_17">NC-17</option>
+                </select>
                 <input name="posterLink" value={movie.posterLink} onChange={handleChange} placeholder="Poster Link URL" />
                 <input name="trailerLink" value={movie.trailerLink} onChange={handleChange} placeholder="Trailer Link URL" />
                 <textarea name="synopsis" value={movie.synopsis} onChange={handleChange} placeholder="Synopsis" required />
@@ -106,7 +140,7 @@ function ManageMovies(){
                     Add Movie
                 </button>
                 {message && <p className="info-message">{message}</p>}
-            </div>
+            </form>
         </>
     );
 }

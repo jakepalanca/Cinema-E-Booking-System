@@ -1,6 +1,7 @@
 package com.cinema_e_booking_system.backend;
 
 import com.cinema_e_booking_system.backend.EmailRequest;
+import com.cinema_e_booking_system.backend.TicketRequest;
 
 import com.cinema_e_booking_system.db.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.lang.Integer;
+import java.time.Duration;
+
 
 
 /**
@@ -201,6 +205,46 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
 // ---------------------- LOGIN ----------------------
 // Login endpoint moved to AuthController for JWT token generation!!!!
 
+// ---------------------- ADMIN LOGIN (Sprint 3) ----------------------
+@PostMapping(
+    value = "/admin-login",
+    consumes = MediaType.APPLICATION_JSON_VALUE,
+    produces = MediaType.APPLICATION_JSON_VALUE
+)
+public ResponseEntity<Map<String, Object>> adminLogin(@RequestBody Map<String, String> body) {
+    String username = body.get("username");
+    String password = body.get("password");
+
+    if (username == null || password == null) {
+        return ResponseEntity
+                .badRequest()
+                .body(Map.of("message", "Missing username or password"));
+    }
+
+    Optional<Admin> adminOpt = adminRepository.findByUsername(username);
+
+    if (adminOpt.isEmpty()) {
+        return ResponseEntity
+                .status(401)
+                .body(Map.of("message", "Invalid admin credentials"));
+    }
+
+    Admin admin = adminOpt.get();
+
+    if (!admin.getPassword().equals(password)) {
+        return ResponseEntity
+                .status(401)
+                .body(Map.of("message", "Invalid admin credentials"));
+    }
+
+    return ResponseEntity.ok(Map.of(
+            "message", "Admin login successful",
+            "role", "admin",
+            "id", admin.getId(),
+            "username", admin.getUsername()
+    ));
+
+}
 
 
 // ---------------------- FORGOT PASSWORD ----------------------
@@ -408,6 +452,11 @@ public ResponseEntity<Map<String, Object>> getCustomerByEmail(@RequestParam Stri
     return ResponseEntity.ok(response);
 }
 
+// --------------------- ADD MOVIE ---------------------
+
+
+  // -------------------- SCHEDULE MOVIE ---------------
+
 
 // ---------------------- REMOVE PROMOTION ----------------------
 @DeleteMapping("customers/{customerId}/promotions/{promotionId}")
@@ -432,7 +481,7 @@ public ResponseEntity<Map<String, String>> removePromotion(
   return ResponseEntity.ok(Map.of("message", "Promotion removed from " + currentCustomer.getFirstName()));
 }
 
-// ---------------------- ADD PROMOTION ----------------------
+// ---------------------- ADD PROMOTION TO CUSTOMER----------------------
 @PostMapping("customers/{customerId}/promotions/{promotionId}")
 public ResponseEntity<Map<String, String>> addPromotion(
   @PathVariable Long promotionId,
@@ -461,12 +510,81 @@ public ResponseEntity<Map<String, String>> addPromotion(
 public ResponseEntity<Map<>>
   */
 
+// ----------------------ADD PROMO TO PROMO_REPO ------------------
+@PostMapping("/promotions")
+public ResponseEntity<Map<String, String>> addPromo(
+  @RequestBody Map<String, Object> newPromo
+) {
+  String promoCode = (String)newPromo.get("code");
+  double percentageValue = ((Number) newPromo.get("discountPercentage")).doubleValue();
+  percentageValue = percentageValue / 100;
+  Double promoDiscountPercentage = percentageValue;
+  String promoEndDate = (String)newPromo.get("endDate");
+  Boolean promoHasBeenApplied = (Boolean)newPromo.get("hasBeenApplied");
+  String promoStartDate = (String)newPromo.get("startDate");
+
+  Promotion addThisPromo = new Promotion(promoCode, promoDiscountPercentage);
+  promotionRepository.save(addThisPromo);
+  return ResponseEntity.ok(Map.of("message", "Promo added successfully."));
+  }
+
+
+
+// ----------------------SEND PROMOTION EMAIL ----------------------
+//works, current issue is registeredForPromo isn't getting set to true on frontend side, i think.
+@PostMapping("/admin/sendPromotion/{promotionId}")
+public ResponseEntity<Map<String, String>> sendPromotion(
+  @PathVariable Long promotionId
+) {
+  //for every user, check if they signed up for promotions, then send email
+  List<Customer> promoEmailList = customerRepository.findAllByRegisteredForPromosTrue();
+
+  Optional<Promotion> p = promotionRepository.findById(promotionId);
+  if (p.isEmpty()) {
+    return ResponseEntity.status(404).body(Map.of("message", "Promotion not found."));
+  }
+  Promotion promo = p.get();
+
+
+  for (Customer c : promoEmailList) {
+    senderService.sendPromo(c, promo);
+  }
+  return ResponseEntity.ok(Map.of("message", "Promotion mail sent to " + promoEmailList.size() + " customers"));
+}
+
 
 // ---------------------- TEST ----------------------
 @GetMapping("/test")
 public String test() {
     return "User controller connected to DB!";
 }
+
+
+
+//-----------------------BOOK SEAT--------------------------
+  //only locks off seat, no payment yet
+@PutMapping("/bookseat/{showroomId}")
+public ResponseEntity<Map<String, String>> bookSeats(
+  @PathVariable Long showroomId,
+  @RequestBody TicketRequest tix
+  ) {
+  Optional<Showroom> sr = showroomRepository.findById(showroomId);
+  if (sr.isEmpty()) {
+    return ResponseEntity.status(404).body(Map.of("message", "Showroom not found."));
+  }
+  Showroom room = sr.get();
+
+  for (Ticket ticket : tix.getTickets()) {
+    int ticketRow = ticket.getSeatRow();
+    int ticketCol = ticket.getSeatCol();
+    boolean[][] roomMap = room.getSeats();
+
+    roomMap[ticketRow][ticketCol] = true;
+  }
+  int tixSize = tix.getTickets().size();
+
+  return ResponseEntity.ok(Map.of("message", tixSize + " tickets added"));
+  }
 
 // -----------------------------------------------------------
 
@@ -528,6 +646,169 @@ public String test() {
    * //Post Mapping to receive new values for Name, address, etc
    * //similar to setProfile but cannot allowed for email change
    */
+
+    // ---------------------- ADMIN: ADD MOVIE (Sprint 3) ----------------------
+@PostMapping(
+        value = "/movies",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE
+)
+public ResponseEntity<?> addMovie(@RequestBody Map<String, Object> body) {
+    try {
+        String title = (String) body.get("title");
+        String director = (String) body.get("director");
+        String producer = (String) body.get("producer");
+        String synopsis = (String) body.get("synopsis");
+        String posterLink = (String) body.get("posterLink");
+        String trailerLink = (String) body.get("trailerLink");
+
+        // Enum normalization (handles "Action", "action", "SCI FI", "pg-13", etc.)
+        Object genreObj = body.get("movieGenre");
+        if (genreObj == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "movieGenre is required"));
+        }
+        String genreStr = genreObj.toString().trim().toUpperCase().replace(" ", "_");
+        if (genreStr.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "movieGenre cannot be empty"));
+        }
+        Movie.Genre genre;
+        try {
+            genre = Movie.Genre.valueOf(genreStr);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid genre: " + genreStr));
+        }
+
+        Object ratingObj = body.get("mpaaRating");
+        if (ratingObj == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "mpaaRating is required"));
+        }
+        String ratingStr = ratingObj.toString().trim().toUpperCase().replace("-", "_").replace(" ", "_");
+        if (ratingStr.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "mpaaRating cannot be empty"));
+        }
+        Movie.MPAA_Rating rating;
+        try {
+            rating = Movie.MPAA_Rating.valueOf(ratingStr);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid MPAA rating: " + ratingStr + ". Valid values are: G, PG, PG_13, R, NC_17"));
+        }
+
+      List<String> cast = (List<String>) body.get("castList");
+if (cast == null) cast = new ArrayList<>();
+
+Movie movie = new Movie(
+        title,
+        genre,
+        cast,
+        director,
+        producer,
+        synopsis,
+        trailerLink,
+        posterLink,
+        new ArrayList<>(),   // shows
+        new ArrayList<>(),   // reviews
+        rating
+);
+
+
+        Movie saved = movieRepository.save(movie);
+        return ResponseEntity.ok(saved);
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.badRequest().body(
+                Map.of("message", "Failed to add movie: " + e.getMessage())
+        );
+    }
+}
+
+
+    // ---------------------- ADMIN: ADD CAST MEMBER ----------------------
+@PostMapping(
+        value = "/movie_cast",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE
+)
+public ResponseEntity<?> addCastMember(@RequestBody Map<String, Object> body) {
+    try {
+        Long movieId = Long.valueOf(body.get("Movie_id").toString()); // frontend sends "Movie_id"
+        String cast = (String) body.get("cast");
+
+        if (cast == null || cast.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Cast name required."));
+        }
+
+        Optional<Movie> opt = movieRepository.findById(movieId);
+        if (opt.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("message", "Movie not found."));
+        }
+
+        Movie movie = opt.get();
+
+        // assuming Movie has getCast() / setCast(List<String>)
+        List<String> castList = movie.getCast();
+        if (castList == null) castList = new ArrayList<>();
+        castList.add(cast);
+
+        movie.setCast(castList);
+        movieRepository.save(movie);
+
+        return ResponseEntity.ok(Map.of("message", "Cast added."));
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.status(500).body(Map.of("message", "Failed to add cast."));
+    }
+}
+
+    // ---------------------- ADMIN: ADD SHOWTIME ----------------------
+@PostMapping(
+        value = "/shows",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE
+)
+public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
+    try {
+        Long movieId = Long.valueOf(body.get("movie_id").toString());
+        Long showroomId = Long.valueOf(body.get("showroom_id").toString());
+
+        String dateStr = (String) body.get("date");          // "YYYY-MM-DD"
+        String startStr = (String) body.get("startTime");   // "HH:mm"
+        String endStr = (String) body.get("endTime");       // "HH:mm"
+
+        if (dateStr == null || startStr == null || endStr == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Missing date/time."));
+        }
+
+        LocalDate date = LocalDate.parse(dateStr);
+        LocalTime start = LocalTime.parse(startStr);
+        LocalTime end = LocalTime.parse(endStr);
+
+        int duration = (int) Duration.between(start, end).toMinutes();
+        if (duration <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("message", "End time must be after start time."));
+        }
+
+        Show show = new Show(
+                duration,
+                Date.valueOf(date),
+                Time.valueOf(start),
+                Time.valueOf(end)
+        );
+
+        Showroom showroom = showroomRepository.findById(showroomId)
+                .orElseThrow(() -> new RuntimeException("Showroom not found"));
+
+        show.setShowroom(showroom);
+
+        Show savedShow = movieService.addShow(movieId, show);
+        return ResponseEntity.ok(savedShow);
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.status(500).body(Map.of("message", "Failed to add showtime."));
+    }
+}
 
   /**
      * The endpoint to filter movies by genre.

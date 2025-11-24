@@ -11,7 +11,7 @@ import ResetPassword from "./pages/ResetPassword";
 import AdminLogin from "./pages/AdminLogin";
 import AdminHomepage from "./pages/AdminHomepage";
 import ManageMovies from "./pages/ManageMovies";
-import ManageShowtimes from "./pages/ManageShowtimes";
+import ManageShowings from "./pages/ManageShowings";
 import ManagePromotions from "./pages/ManagePromotions";
 import VerificationPage from "./pages/VerificationPage";
 import { useAuth } from "./contexts/AuthContext";
@@ -48,7 +48,7 @@ function App() {
       <Route path="/admin-login" element={<AdminLogin />} />
       <Route path="/admin-homepage" element={<AdminHomepage />} />
       <Route path="/admin/manage-movies" element={<ManageMovies />} />
-      <Route path="/admin/manage-showtimes" element={<ManageShowtimes />} />
+      <Route path="/admin/manage-showings" element={<ManageShowings />} />
       <Route path="/admin/manage-promotions" element={<ManagePromotions />} />
     </Routes>
   );

@@ -113,6 +113,9 @@ public class AuthController {
 
         // Try to find as admin
         Optional<Admin> adminOpt = adminRepository.findByEmail(emailOrUsername);
+        if (adminOpt.isEmpty()) {
+            adminOpt = adminRepository.findByUsername(emailOrUsername);
+        }
         if (adminOpt.isPresent()) {
             Admin admin = adminOpt.get();
             

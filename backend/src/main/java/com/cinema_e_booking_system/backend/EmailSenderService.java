@@ -1,6 +1,7 @@
 package com.cinema_e_booking_system.backend;
 
 import com.cinema_e_booking_system.db.Customer;
+import com.cinema_e_booking_system.db.Promotion;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
@@ -95,6 +96,25 @@ public class EmailSenderService {
 
     mailSender.send(message);
 
+  }
+
+  public void sendPromo(Customer customer, Promotion promo) {
+    String subject = "New Promotion!";
+    String body = String.format(
+      "Hello %s,\n\n" +
+        "We have a new promotion for you!\n" +
+        "Use code: %s for a discount!\n\n" +
+        "The Cinema Team",
+      customer.getFirstName(), promo.getCode()
+    );
+
+    SimpleMailMessage message = new SimpleMailMessage();
+    message.setFrom("ashvijhosdurg@gmail.com");
+    message.setTo(customer.getEmail());
+    message.setSubject(subject);
+    message.setText(body);
+
+    mailSender.send(message);
   }
 }
 

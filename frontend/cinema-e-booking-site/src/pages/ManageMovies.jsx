@@ -78,8 +78,26 @@ function ManageMovies(){
                 <input name="title" value={movie.title} onChange={handleChange} placeholder="Title" required />
                 <input name="director" value={movie.director} onChange={handleChange} placeholder="Director" required />
                 <input name="producer" value={movie.producer} onChange={handleChange} placeholder="Producer" required />
-                <input name="movieGenre" value={movie.movieGenre} onChange={handleChange} placeholder="Genre" required />
-                <input name="mpaaRating" value={movie.mpaaRating} onChange={handleChange} placeholder="MPAA Rating" required />
+                <select name="movieGenre" value={movie.movieGenre} onChange={handleChange} required>
+                    <option value="ACTION">Action</option>
+                    <option value="ANIMATION">Animation</option>
+                    <option value="COMEDY">Comedy</option>
+                    <option value="CRIME">Crime</option>
+                    <option value="DRAMA">Drama</option>
+                    <option value="FANTASY">Fantasy</option>
+                    <option value="HORROR">Horror</option>
+                    <option value="ROMANCE">Romance</option>
+                    <option value="SCI_FI">Sci-Fi</option>
+                    <option value="THRILLER">Thriller</option>
+                    <option value="WESTERN">Western</option>
+                </select>
+                <select name="mpaaRating" value={movie.mpaaRating} onChange={handleChange} required>
+                    <option value="G">G</option>
+                    <option value="PG">PG</option>
+                    <option value="PG_13">PG-13</option>
+                    <option value="R">R</option>
+                    <option value="NC_17">NC-17</option>
+                </select>
                 <input name="posterLink" value={movie.posterLink} onChange={handleChange} placeholder="Poster Link URL" />
                 <input name="trailerLink" value={movie.trailerLink} onChange={handleChange} placeholder="Trailer Link URL" />
                 <textarea name="synopsis" value={movie.synopsis} onChange={handleChange} placeholder="Synopsis" required />

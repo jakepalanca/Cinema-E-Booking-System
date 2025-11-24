@@ -64,7 +64,7 @@ public class SecurityConfig {
                 // Public endpoints
                 .requestMatchers("/health", "/register", "/login", "/logout", "/verify", "/users/confirm",
                         "/forgot-password", "/reset-password", "/initialize-db", "/clear-db",
-                        "/movies", "/movies/**", "/shows", "/shows/**", "/cinemas", "/cinemas/**",
+                        "/movies", "/movies/**", "/movie_cast", "/shows", "/shows/**", "/cinemas", "/cinemas/**",
                         "/theaters", "/theaters/**", "/showrooms", "/showrooms/**",
                         "/ticket-categories", "/ticket-categories/**", "/promotions", "/promotions/**",
                         "/reviews", "/reviews/**", "/search-title", "/by-genre", "/return-all")

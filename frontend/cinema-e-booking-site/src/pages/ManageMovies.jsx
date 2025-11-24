@@ -32,15 +32,28 @@ function ManageMovies(){
     const handleSubmit = async (e) => {
         e.preventDefault();
         setMessage("");
+        
+        // Client-side validation
+        if (!movie.movieGenre || movie.movieGenre === "") {
+            setMessage("Please select a genre");
+            return;
+        }
+        if (!movie.mpaaRating || movie.mpaaRating === "") {
+            setMessage("Please select an MPAA rating");
+            return;
+        }
+        
         try{
             const movieRes = await fetch("http://localhost:8080/movies", {
                 method: "POST",
                 headers: { "Content-Type": "application/json"},
+                credentials: 'include',
                 body: JSON.stringify(movie),
             });
             if (!movieRes.ok){
                 const err = await movieRes.json();
-                throw new Error(err.message || "Failed to add movie");
+                setMessage(err.message || "Failed to add movie");
+                return;
             }
             const movieData = await movieRes.json();
             for (const cast of castList){
@@ -48,6 +61,7 @@ function ManageMovies(){
                 await fetch("http://localhost:8080/movie_cast",{
                     method: "POST",
                     headers: {"Content-Type": "application/json"},
+                    credentials: 'include',
                     body: JSON.stringify({
                         Movie_id: movieData.id,
                         cast,
@@ -68,7 +82,7 @@ function ManageMovies(){
             setCastList([""]);
         } catch (err) {
             console.error(err);
-            setMessage("Error adding movie.");
+            setMessage(err.message || "Error connecting to the server.");
         }
     };
     return (
@@ -79,6 +93,7 @@ function ManageMovies(){
                 <input name="director" value={movie.director} onChange={handleChange} placeholder="Director" required />
                 <input name="producer" value={movie.producer} onChange={handleChange} placeholder="Producer" required />
                 <select name="movieGenre" value={movie.movieGenre} onChange={handleChange} required>
+                    <option value="">Select Genre</option>
                     <option value="ACTION">Action</option>
                     <option value="ANIMATION">Animation</option>
                     <option value="COMEDY">Comedy</option>
@@ -92,6 +107,7 @@ function ManageMovies(){
                     <option value="WESTERN">Western</option>
                 </select>
                 <select name="mpaaRating" value={movie.mpaaRating} onChange={handleChange} required>
+                    <option value="">Select MPAA Rating</option>
                     <option value="G">G</option>
                     <option value="PG">PG</option>
                     <option value="PG_13">PG-13</option>

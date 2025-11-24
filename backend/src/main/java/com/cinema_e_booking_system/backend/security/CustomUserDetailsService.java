@@ -48,6 +48,9 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         // Try to find as admin
         Optional<Admin> adminOpt = adminRepository.findByEmail(emailOrUsername);
+        if (adminOpt.isEmpty()) {
+            adminOpt = adminRepository.findByUsername(emailOrUsername);
+        }
         if (adminOpt.isPresent()) {
             Admin admin = adminOpt.get();
             // Decrypt password if needed (admin passwords are now encrypted in production)

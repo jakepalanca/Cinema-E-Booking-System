@@ -1,11 +1,13 @@
 // src/DetailsPage.js
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import Navbar from './Navbar.jsx';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function DetailsPage() {
   const { movieId } = useParams();
   const { state } = useLocation();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const movie = state?.movie;
 
   if (!movie) {
@@ -84,7 +86,11 @@ export default function DetailsPage() {
 
           <div style={{ marginBottom: 12 }}>
             <strong>Book Now:</strong>
-            {movie.shows?.length > 0 ? (
+            {!isAuthenticated ? (
+              <div style={{ marginTop: 8, padding: "10px 16px", backgroundColor: "#f8f9fa", borderRadius: 6, color: "#495057" }}>
+                Please <a href="/login" style={{ color: "#dc3545", textDecoration: "underline" }}>log in</a> to book tickets
+              </div>
+            ) : movie.shows?.length > 0 ? (
               <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 10 }}>
                 {movie.shows.map((show) => (
                   <button

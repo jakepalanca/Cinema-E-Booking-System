@@ -1,6 +1,7 @@
 package com.cinema_e_booking_system.backend;
 
 import com.cinema_e_booking_system.backend.EmailRequest;
+import com.cinema_e_booking_system.backend.TicketRequest;
 
 import com.cinema_e_booking_system.db.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.lang.Integer;
 import java.time.Duration;
 
 
@@ -450,6 +452,11 @@ public ResponseEntity<Map<String, Object>> getCustomerByEmail(@RequestParam Stri
     return ResponseEntity.ok(response);
 }
 
+// --------------------- ADD MOVIE ---------------------
+
+
+  // -------------------- SCHEDULE MOVIE ---------------
+
 
 // ---------------------- REMOVE PROMOTION ----------------------
 @DeleteMapping("customers/{customerId}/promotions/{promotionId}")
@@ -474,7 +481,7 @@ public ResponseEntity<Map<String, String>> removePromotion(
   return ResponseEntity.ok(Map.of("message", "Promotion removed from " + currentCustomer.getFirstName()));
 }
 
-// ---------------------- ADD PROMOTION ----------------------
+// ---------------------- ADD PROMOTION TO CUSTOMER----------------------
 @PostMapping("customers/{customerId}/promotions/{promotionId}")
 public ResponseEntity<Map<String, String>> addPromotion(
   @PathVariable Long promotionId,
@@ -503,12 +510,79 @@ public ResponseEntity<Map<String, String>> addPromotion(
 public ResponseEntity<Map<>>
   */
 
+// ----------------------ADD PROMO TO PROMO_REPO ------------------
+@PostMapping("/promotions")
+public ResponseEntity<Map<String, String>> addPromo(
+  @RequestBody Map<String, Object> newPromo
+) {
+  String promoCode = (String)newPromo.get("code");
+  Double promoDiscountPercentage = ((Number) newPromo.get("discountPercentage")).doubleValue();
+  String promoEndDate = (String)newPromo.get("endDate");
+  Boolean promoHasBeenApplied = (Boolean)newPromo.get("hasBeenApplied");
+  String promoStartDate = (String)newPromo.get("startDate");
+
+  Promotion addThisPromo = new Promotion(promoCode, promoDiscountPercentage);
+  promotionRepository.save(addThisPromo);
+  return ResponseEntity.ok(Map.of("message", "Promo added successfully."));
+  }
+
+
+
+// ----------------------SEND PROMOTION EMAIL ----------------------
+//works, current issue is registeredForPromo isn't getting set to true on frontend side, i think.
+@PostMapping("/admin/sendPromotion/{promotionId}")
+public ResponseEntity<Map<String, String>> sendPromotion(
+  @PathVariable Long promotionId
+) {
+  //for every user, check if they signed up for promotions, then send email
+  List<Customer> promoEmailList = customerRepository.findAllByRegisteredForPromosTrue();
+
+  Optional<Promotion> p = promotionRepository.findById(promotionId);
+  if (p.isEmpty()) {
+    return ResponseEntity.status(404).body(Map.of("message", "Promotion not found."));
+  }
+  Promotion promo = p.get();
+
+
+  for (Customer c : promoEmailList) {
+    senderService.sendPromo(c, promo);
+  }
+  return ResponseEntity.ok(Map.of("message", "Promotion mail sent to " + promoEmailList.size() + " customers"));
+}
+
 
 // ---------------------- TEST ----------------------
 @GetMapping("/test")
 public String test() {
     return "User controller connected to DB!";
 }
+
+
+
+//-----------------------BOOK SEAT--------------------------
+  //only locks off seat, no payment yet
+@PutMapping("/bookseat/{showroomId}")
+public ResponseEntity<Map<String, String>> bookSeats(
+  @PathVariable Long showroomId,
+  @RequestBody TicketRequest tix
+  ) {
+  Optional<Showroom> sr = showroomRepository.findById(showroomId);
+  if (sr.isEmpty()) {
+    return ResponseEntity.status(404).body(Map.of("message", "Showroom not found."));
+  }
+  Showroom room = sr.get();
+
+  for (Ticket ticket : tix.getTickets()) {
+    int ticketRow = ticket.getSeatRow();
+    int ticketCol = ticket.getSeatCol();
+    boolean[][] roomMap = room.getSeats();
+
+    roomMap[ticketRow][ticketCol] = true;
+  }
+  int tixSize = tix.getTickets().size();
+
+  return ResponseEntity.ok(Map.of("message", tixSize + " tickets added"));
+  }
 
 // -----------------------------------------------------------
 

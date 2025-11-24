@@ -661,13 +661,35 @@ public ResponseEntity<?> addMovie(@RequestBody Map<String, Object> body) {
         String trailerLink = (String) body.get("trailerLink");
 
         // Enum normalization (handles "Action", "action", "SCI FI", "pg-13", etc.)
-        String genreStr = ((String) body.get("movieGenre")).trim()
-                .toUpperCase().replace(" ", "_");
-        Movie.Genre genre = Movie.Genre.valueOf(genreStr);
+        Object genreObj = body.get("movieGenre");
+        if (genreObj == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "movieGenre is required"));
+        }
+        String genreStr = genreObj.toString().trim().toUpperCase().replace(" ", "_");
+        if (genreStr.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "movieGenre cannot be empty"));
+        }
+        Movie.Genre genre;
+        try {
+            genre = Movie.Genre.valueOf(genreStr);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid genre: " + genreStr));
+        }
 
-        String ratingStr = ((String) body.get("mpaaRating")).trim()
-                .toUpperCase().replace("-", "_").replace(" ", "_");
-        Movie.MPAA_Rating rating = Movie.MPAA_Rating.valueOf(ratingStr);
+        Object ratingObj = body.get("mpaaRating");
+        if (ratingObj == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "mpaaRating is required"));
+        }
+        String ratingStr = ratingObj.toString().trim().toUpperCase().replace("-", "_").replace(" ", "_");
+        if (ratingStr.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "mpaaRating cannot be empty"));
+        }
+        Movie.MPAA_Rating rating;
+        try {
+            rating = Movie.MPAA_Rating.valueOf(ratingStr);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid MPAA rating: " + ratingStr + ". Valid values are: G, PG, PG_13, R, NC_17"));
+        }
 
       List<String> cast = (List<String>) body.get("castList");
 if (cast == null) cast = new ArrayList<>();

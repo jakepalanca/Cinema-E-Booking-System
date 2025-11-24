@@ -516,7 +516,9 @@ public ResponseEntity<Map<String, String>> addPromo(
   @RequestBody Map<String, Object> newPromo
 ) {
   String promoCode = (String)newPromo.get("code");
-  Double promoDiscountPercentage = ((Number) newPromo.get("discountPercentage")).doubleValue();
+  double percentageValue = ((Number) newPromo.get("discountPercentage")).doubleValue();
+  percentageValue = percentageValue / 100;
+  Double promoDiscountPercentage = percentageValue;
   String promoEndDate = (String)newPromo.get("endDate");
   Boolean promoHasBeenApplied = (Boolean)newPromo.get("hasBeenApplied");
   String promoStartDate = (String)newPromo.get("startDate");

@@ -77,9 +77,30 @@ if (Test-Path -LiteralPath $DB_FILE) {
 }
 
 Write-Host "Starting backend…"
+$backendLogFile = Join-Path $BACKEND_DIR "backend.log"
+$backendErrorLogFile = Join-Path $BACKEND_DIR "backend-error.log"
 Push-Location $BACKEND_DIR
 try {
-    $backProc = Start-Process -FilePath ".\mvnw.cmd" -ArgumentList "-q","spring-boot:run" -PassThru -WindowStyle Hidden
+    # Start backend with output redirected to log files
+    $backProc = Start-Process -FilePath ".\mvnw.cmd" -ArgumentList "spring-boot:run" -PassThru -NoNewWindow -RedirectStandardOutput $backendLogFile -RedirectStandardError $backendErrorLogFile
+    Write-Host "Backend process started (PID: $($backProc.Id))"
+    Write-Host "Backend logs will be written to: $backendLogFile"
+    
+    # Wait a moment to see if process crashes immediately
+    Start-Sleep -Seconds 3
+    if ($backProc.HasExited) {
+        $exitCode = $backProc.ExitCode
+        Write-Error "Backend process exited immediately with code $exitCode"
+        if (Test-Path $backendLogFile) {
+            Write-Host "Last 20 lines of backend log:"
+            Get-Content $backendLogFile -Tail 20 | ForEach-Object { Write-Host $_ }
+        }
+        if (Test-Path $backendErrorLogFile) {
+            Write-Host "Last 20 lines of backend error log:"
+            Get-Content $backendErrorLogFile -Tail 20 | ForEach-Object { Write-Host $_ }
+        }
+        throw "Backend failed to start. Check $backendLogFile and $backendErrorLogFile for details."
+    }
 } finally {
     Pop-Location
 }
@@ -99,6 +120,18 @@ $null = Register-EngineEvent PowerShell.Exiting -Action $cleanup
 
 if (-not (Wait-ForBackend -Port $BACKEND_PORT -TimeoutSec 120)) {
     Write-Error "Backend did not become healthy in time."
+    if ($null -ne $backProc -and $backProc.HasExited) {
+        Write-Host "Backend process has exited. Exit code: $($backProc.ExitCode)"
+    }
+    if (Test-Path $backendLogFile) {
+        Write-Host "Last 30 lines of backend log:"
+        Get-Content $backendLogFile -Tail 30 | ForEach-Object { Write-Host $_ }
+    }
+    if (Test-Path $backendErrorLogFile) {
+        Write-Host "Last 30 lines of backend error log:"
+        Get-Content $backendErrorLogFile -Tail 30 | ForEach-Object { Write-Host $_ }
+    }
+    throw "Backend did not become healthy in time. Check $backendLogFile and $backendErrorLogFile for details."
 }
 
 Write-Host "Calling /initialize-db…"

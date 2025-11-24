@@ -1,16 +1,19 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import "./Login.css";
+import "../css/Login.css";
 import Navbar from "./Navbar.jsx";
+import authService from '../services/authService.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 function AdminLogin(){
     const [credentials, setCredentials] = useState({
-        username: "",
+        emailOrUsername: "",
         password: "",
     });
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
     const navigate = useNavigate();
+    const { login } = useAuth();
 
     const handleChange = (e) => {
         const {name, value} = e.target;
@@ -21,17 +24,39 @@ function AdminLogin(){
         setLoading(true);
         setMessage("");
         try {
-            const res = await fetch("http://localhost:8080/admin-login", {
+            // Use the same login endpoint
+            const res = await fetch("http://localhost:8080/login", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
+                credentials: 'include', // Include cookies
                 body: JSON.stringify({
-                    username: credentials.username,
+                    emailOrUsername: credentials.emailOrUsername,
                     password: credentials.password,
                 }),
             });
             if (res.ok) {
                 const data = await res.json();
+                
+                // Verify it's an admin
+                if (data.role !== 'admin') {
+                    setMessage("Access denied. Admin credentials required.");
+                    return;
+                }
+
+                // Token is now in HTTP-only cookie, so we only store user data
+                const userData = {
+                    email: data.email,
+                    id: data.id,
+                    role: data.role,
+                    username: data.username,
+                    firstName: data.firstName,
+                    lastName: data.lastName,
+                };
+                
+                authService.setAuth(userData);
+                login(userData);
                 localStorage.setItem("isAdmin", "true");
+                
                 setMessage("Admin login successful");
                 navigate("/admin-homepage");
             } else {
@@ -52,11 +77,11 @@ function AdminLogin(){
                 <h2>Admin Sign In</h2>
                 <form onSubmit={handleSubmit} className="login-form">
                     <label>
-                        Username:
+                        Email or Username:
                         <input
                             type="text"
-                            name="username"
-                            value={credentials.username}
+                            name="emailOrUsername"
+                            value={credentials.emailOrUsername}
                             onChange={handleChange}
                             required
                         />

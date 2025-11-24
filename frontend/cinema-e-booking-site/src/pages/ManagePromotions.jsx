@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import Navbar from "./Navbar";
-import "./ManagePromotions.css"
+import "../css/ManagePromotions.css"
 
 function ManagePromotions(){
     const [promotion, setPromotion] = useState({

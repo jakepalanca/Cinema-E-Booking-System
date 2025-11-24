@@ -1,5 +1,5 @@
 import React, {useState} from "react";
-import "./ManageMovies.css";
+import "../css/ManageMovies.css";
 import Navbar from "./Navbar";
 
 function ManageMovies(){

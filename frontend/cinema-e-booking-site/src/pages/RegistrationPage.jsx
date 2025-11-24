@@ -1,6 +1,6 @@
 import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import "./RegistrationPage.css";
+import "../css/RegistrationPage.css";
 import Navbar from './Navbar.jsx';
 
 function RegistrationPage() {
@@ -35,9 +35,6 @@ function RegistrationPage() {
         },
         useDefaultAddress: false,
     });
-    const [step, setStep] = useState("register"); // register | verify | success
-    const [verificationCode, setVerificationCode] = useState("");
-    const [emailForVerification, setEmailForVerification] = useState("");
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
     const navigate = useNavigate();
@@ -183,9 +180,8 @@ function RegistrationPage() {
             });
 
             if (res.ok){
-                setEmailForVerification(formData.email);
-                setStep("verify");
                 setMessage("A verification code has been sent to your email.");
+                navigate("/verify", { state: { email: formData.email } });
             } else {
                 const err = await res.json();
                 setMessage(err.message || "Registration Failed");
@@ -197,92 +193,6 @@ function RegistrationPage() {
             setLoading(false);
         }
     };
-
-    const handleVerificationSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setMessage("");
-        try {
-            const res = await fetch("http://localhost:8080/verify", {
-                method: "POST",
-                headers: { "Content-Type": "application/json"},
-                body: JSON.stringify({
-                    emailforVerification: emailForVerification,
-                    verificationCode,
-                }),
-            });
-            if (res.ok) {
-                // After verification, log the user in automatically
-                const loginRes = await fetch("http://localhost:8080/login", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        emailOrUsername: emailForVerification,
-                        password: formData.password,
-                    }),
-                });
-
-                if (loginRes.ok) {
-                    const userData = await loginRes.json();
-                    
-                    // Store authentication data
-                    localStorage.setItem(
-                        "cinemaAuth",
-                        JSON.stringify({ email: userData.email })
-                    );
-                    localStorage.setItem("cinemaUser", JSON.stringify(userData));
-                    
-                    setStep("success");
-                    setMessage("Verification Confirmed! Logging you in...");
-                    setTimeout(() => navigate("/"), 2000);
-                } else {
-                    setStep("success");
-                    setMessage("Verification Confirmed! Please log in.");
-                    setTimeout(() => navigate("/login"), 2000);
-                }
-            } else {
-                const err = await res.json();
-                setMessage(err.message || "Verification code expired or incorrect.");
-            }
-        } catch (error) {
-            console.error(error);
-            setMessage("Error verifying account.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    if (step === "verify"){
-        return (
-            <div className="registration-div">
-                <h2>Email Verification</h2>
-                <p>A verification code has been sent to <strong>{emailForVerification}</strong></p>
-                <form onSubmit={handleVerificationSubmit}>
-                    <label>
-                        Verification Code:
-                        <input
-                            type="text"
-                            value={verificationCode}
-                            onChange={(e) => setVerificationCode(e.target.value)}
-                            required
-                        />
-                    </label>
-                    <button type="submit" disabled={loading}>
-                        {loading ? "Verifying..." : "Verify"}
-                    </button>
-                </form>
-                {message && <p className="info-message">{message}</p>}
-            </div>
-        );
-    }
-    if (step === "success") {
-        return (
-            <div className="registration-div">
-                <h2>Verification Confirmed</h2>
-                <p>Your email was successfully verified. You may now log in to your new account!</p>
-            </div>
-        );
-    }
 
     // Page Content
     return(

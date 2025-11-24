@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 import Navbar from "./Navbar";
-import "./ManageShowtimes.css";
+import "../css/ManageShowtimes.css";
 
 function ManageShowtimes(){
     const [movies, setMovies] = useState([]);

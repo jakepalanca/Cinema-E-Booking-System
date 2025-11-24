@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
-import "./Login.css";
+import "../css/Login.css";
 import Navbar from './Navbar.jsx';
+import authService from '../services/authService.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 function Login() {
+    const NOT_VERIFIED_MSG = "Account not verified. Please verify your email.";
     const [credentials, setCredentials] = useState({
         emailOrUsername: "",
         password: "",
@@ -11,6 +14,7 @@ function Login() {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
     const navigate = useNavigate();
+    const { login } = useAuth();
     
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -27,6 +31,7 @@ function Login() {
             const res = await fetch("http://localhost:8080/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: 'include', // Include cookies
                 body: JSON.stringify({
                     emailOrUsername: credentials.emailOrUsername,
                     password: credentials.password,
@@ -36,18 +41,34 @@ function Login() {
             if (res.ok) {
                 const data = await res.json();
 
-                // Prefer the email returned by the backend (works when user logged in by username)
-                const resolvedEmail = data.email || credentials.emailOrUsername;
+                // Token is now in HTTP-only cookie, so we only store user data
+                const userData = {
+                    email: data.email,
+                    id: data.id,
+                    role: data.role,
+                    username: data.username,
+                    firstName: data.firstName,
+                    lastName: data.lastName,
+                };
+                
+                authService.setAuth(userData);
+                login(userData);
 
-                // Store data with correct keys that EditProfile.jsx expects
+                // Also store for backward compatibility with existing code
                 localStorage.setItem(
                     "cinemaAuth",
-                    JSON.stringify({ email: resolvedEmail })
+                    JSON.stringify({ email: data.email })
                 );
-                localStorage.setItem("cinemaUser", JSON.stringify(data));
+                localStorage.setItem("cinemaUser", JSON.stringify(userData));
 
                 setMessage("Login successful");
-                navigate("/");
+                
+                // Redirect based on role
+                if (data.role === 'admin') {
+                    navigate("/admin-homepage");
+                } else {
+                    navigate("/");
+                }
             } else {
                 const err = await res.json();
                 setMessage(err.message || "Invalid email or password");
@@ -112,7 +133,24 @@ function Login() {
                     <button type="submit" disabled={loading}>
                         {loading ? "Logging in..." : "Login"}
                     </button>
-                    {message && <p className="info-message">{message}</p>}
+                    {message && (
+                        <p className="info-message">
+                            {message === NOT_VERIFIED_MSG ? (
+                                <>
+                                    Account not verified.{" "}
+                                    <Link
+                                        to="/verify"
+                                        state={{ email: credentials.emailOrUsername }}
+                                        className="verify-link"
+                                    >
+                                        Verify your email
+                                    </Link>
+                                </>
+                            ) : (
+                                message
+                            )}
+                        </p>
+                    )}
                 </form>
                 <p className="forgotPass-redirect">
                     Forgot your password? <Link to="/forgot-password">Click Here</Link>

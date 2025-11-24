@@ -1,6 +1,7 @@
 package com.cinema_e_booking_system.backend;
 
 import com.cinema_e_booking_system.backend.EmailRequest;
+import com.cinema_e_booking_system.backend.TicketRequest;
 
 import com.cinema_e_booking_system.db.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -513,6 +514,33 @@ public ResponseEntity<Map<String, String>> sendPromotion(
 public String test() {
     return "User controller connected to DB!";
 }
+
+
+
+//-----------------------BOOK SEAT--------------------------
+  //only locks off seat, no payment yet
+@PutMapping("/bookseat/{showroomId}")
+public ResponseEntity<Map<String, String>> bookSeats(
+  @PathVariable Long showroomId,
+  @RequestBody TicketRequest tix
+  ) {
+  Optional<Showroom> sr = showroomRepository.findById(showroomId);
+  if (sr.isEmpty()) {
+    return ResponseEntity.status(404).body(Map.of("message", "Showroom not found."));
+  }
+  Showroom room = sr.get();
+
+  for (Ticket ticket : tix.getTickets()) {
+    int ticketRow = ticket.getSeatRow();
+    int ticketCol = ticket.getSeatCol();
+    boolean[][] roomMap = room.getSeats();
+
+    roomMap[ticketRow][ticketCol] = true;
+  }
+  int tixSize = tix.getTickets().size();
+
+  return ResponseEntity.ok(Map.of("message", tixSize + " tickets added"));
+  }
 
 // -----------------------------------------------------------
 

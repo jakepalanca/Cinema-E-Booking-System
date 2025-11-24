@@ -47,6 +47,7 @@ function ManageMovies(){
             const movieRes = await fetch("http://localhost:8080/movies", {
                 method: "POST",
                 headers: { "Content-Type": "application/json"},
+                credentials: 'include',
                 body: JSON.stringify(movie),
             });
             if (!movieRes.ok){
@@ -60,6 +61,7 @@ function ManageMovies(){
                 await fetch("http://localhost:8080/movie_cast",{
                     method: "POST",
                     headers: {"Content-Type": "application/json"},
+                    credentials: 'include',
                     body: JSON.stringify({
                         Movie_id: movieData.id,
                         cast,

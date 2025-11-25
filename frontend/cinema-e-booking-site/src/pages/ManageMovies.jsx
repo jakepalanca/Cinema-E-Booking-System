@@ -44,7 +44,7 @@ function ManageMovies(){
         }
         
         try{
-            const movieRes = await fetch("http://localhost:8080/movies", {
+            const movieRes = await fetch("http://localhost:8080/admin/movies", {
                 method: "POST",
                 headers: { "Content-Type": "application/json"},
                 credentials: 'include',
@@ -58,7 +58,7 @@ function ManageMovies(){
             const movieData = await movieRes.json();
             for (const cast of castList){
                 if(cast.trim() === "") continue;
-                await fetch("http://localhost:8080/movie_cast",{
+                await fetch("http://localhost:8080/admin/movie_cast",{
                     method: "POST",
                     headers: {"Content-Type": "application/json"},
                     credentials: 'include',

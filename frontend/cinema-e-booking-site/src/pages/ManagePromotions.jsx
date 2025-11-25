@@ -104,9 +104,7 @@ function ManagePromotions(){
             setMessage("Sending promotion email...");
             const res = await fetch(`http://localhost:8080/admin/sendPromotion/${selectedPromotion}`, {
                 method: "POST",
-                headers: {"Content-Type": "application/json"},
-                credentials: 'include',
-
+                credentials: 'include'
             });
             if (res.ok) {
                 setMessage("Promotion email sent successfully.");

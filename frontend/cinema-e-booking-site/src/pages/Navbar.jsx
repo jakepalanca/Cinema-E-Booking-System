@@ -5,13 +5,34 @@ import { useAuth } from '../contexts/AuthContext';
 
 function Navbar() {
     const navigate = useNavigate();
-    const { isAuthenticated, logout, isAdmin } = useAuth();
+    const { isAuthenticated, logout, isAdmin, loading } = useAuth();
 
     // Logout clears all auth data
     const handleLogout = () => {
         logout();
         navigate("/");
     };
+
+    // Don't render auth-specific UI until we've checked authentication status
+    if (loading) {
+        return (
+            <header className="navbar-header">
+                <nav className="navbar">
+                    <div className="navbar-container">
+                        <Link to="/" className="logo-link">
+                            <img src="/logo.png" alt="Cinema Logo" className="navbar-logo"/>
+                        </Link>
+                        <ul className="nav-list">
+                            <li><Link to="/showtimes" className="nav-item">Showtimes</Link></li>
+                            <li><Link to="/promotions" className="nav-item">Promotions</Link></li>
+                            <li><Link to="/contact" className="nav-item">Contact Us</Link></li>
+                            <li><Link to="/browse" className="nav-item">Browse</Link></li>
+                        </ul>
+                    </div>
+                </nav>
+            </header>
+        );
+    }
 
     return (
         <header className="navbar-header">

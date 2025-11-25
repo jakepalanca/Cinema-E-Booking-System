@@ -20,9 +20,10 @@ public class Showroom {
     private Long id;
 
     /**
-     * The cinema associated with this theater.
+     * The seat map - stored as JSON in the database via converter.
      */
-    @Transient
+    @Convert(converter = BooleanArrayConverter.class)
+    @Column(name = "seats", columnDefinition = "TEXT")
     private boolean[][] seats;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

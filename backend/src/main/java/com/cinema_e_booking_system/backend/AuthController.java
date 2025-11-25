@@ -186,6 +186,17 @@ public class AuthController {
             response.put("email", email);
             response.put("role", role);
             response.put("id", userId);
+            
+            // Fetch first name from database
+            if ("CUSTOMER".equalsIgnoreCase(role)) {
+                customerRepository.findById(userId).ifPresent(customer -> {
+                    response.put("firstName", customer.getFirstName());
+                });
+            } else if ("ADMIN".equalsIgnoreCase(role)) {
+                adminRepository.findById(userId).ifPresent(admin -> {
+                    response.put("firstName", admin.getFirstName());
+                });
+            }
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -196,7 +207,7 @@ public class AuthController {
     /**
      * Logout endpoint that clears the JWT cookie.
      */
-    @PostMapping("/logout")
+    @PostMapping("/auth/logout")
     public ResponseEntity<Map<String, Object>> logout(HttpServletResponse response) {
         // Clear the JWT cookie by setting it to expire immediately
         Cookie jwtCookie = new Cookie("jwt_token", "");

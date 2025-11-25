@@ -60,20 +60,29 @@ class AuthService {
   async clearAuth() {
     // Call backend logout endpoint to clear cookie
     try {
-      await fetch('http://localhost:8080/logout', {
+      console.log('[authService] Calling logout endpoint...');
+      const response = await fetch('http://localhost:8080/auth/logout', {
         method: 'POST',
         credentials: 'include', // Include cookies
       });
+      console.log('[authService] Logout response status:', response.status);
+      if (!response.ok) {
+        console.error('[authService] Logout failed:', response.status, response.statusText);
+      } else {
+        console.log('[authService] Logout successful');
+      }
     } catch (error) {
-      console.error('Error during logout:', error);
+      console.error('[authService] Error during logout:', error);
     }
     
     // Clear local storage
+    console.log('[authService] Clearing localStorage...');
     localStorage.removeItem(USER_KEY);
     // Also clear old auth data if it exists
     localStorage.removeItem('cinemaAuth');
     localStorage.removeItem('cinemaUser');
     localStorage.removeItem('isAdmin');
+    console.log('[authService] Logout complete');
   }
 }
 

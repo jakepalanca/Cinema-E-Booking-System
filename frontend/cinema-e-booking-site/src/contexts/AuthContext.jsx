@@ -20,28 +20,32 @@ export const AuthProvider = ({ children }) => {
     // Check authentication status on mount
     const checkAuth = async () => {
       try {
-        // First try to get user from localStorage
-        const userData = authService.getUser();
-        
-        // Then verify with backend that cookie is valid
+        console.log('[AuthContext] Checking authentication...');
+        // Verify with backend that cookie is valid (don't trust localStorage alone)
         const response = await fetch('http://localhost:8080/auth/me', {
           method: 'GET',
           credentials: 'include', // Include cookies
         });
 
+        console.log('[AuthContext] /auth/me response status:', response.status);
+
         if (response.ok) {
           const serverUserData = await response.json();
+          console.log('[AuthContext] User authenticated:', serverUserData);
           // Update user data from server (more reliable)
           const updatedUserData = {
             email: serverUserData.email,
             id: serverUserData.id,
             role: serverUserData.role.toLowerCase(),
-            ...userData, // Keep any additional fields from localStorage
+            firstName: serverUserData.firstName,
           };
+          console.log('[AuthContext] Setting user:', updatedUserData);
           setUser(updatedUserData);
           setIsAuthenticated(true);
+          console.log('[AuthContext] isAuthenticated set to true');
           authService.setAuth(updatedUserData);
         } else {
+          console.log('[AuthContext] User not authenticated, clearing data');
           // Cookie invalid or expired, clear local data
           setUser(null);
           setIsAuthenticated(false);
@@ -50,10 +54,12 @@ export const AuthProvider = ({ children }) => {
           localStorage.removeItem('cinemaUser');
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
+        console.error('[AuthContext] Auth check failed:', error);
         setUser(null);
         setIsAuthenticated(false);
+        localStorage.removeItem('user_data');
       } finally {
+        console.log('[AuthContext] Auth check complete. isAuthenticated:', isAuthenticated);
         setLoading(false);
       }
     };

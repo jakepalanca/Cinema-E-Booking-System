@@ -60,6 +60,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .logout(logout -> logout.disable()) // Disable Spring Security's default logout
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
                 .requestMatchers("/health", "/register", "/login", "/logout", "/verify", "/users/confirm",

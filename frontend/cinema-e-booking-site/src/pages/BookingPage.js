@@ -21,11 +21,7 @@ export default function BookingPage() {
   const [tickets, setTickets] = useState([{ category: "", seat: null }]);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [showroomSeats, setShowroomSeats] = useState({ rows: 8, cols: 10 }); // Default seat layout
-  const [occupiedSeats, setOccupiedSeats] = useState(() => {
-    // Load occupied seats from localStorage on initial load
-    const stored = localStorage.getItem(`occupiedSeats-${show?.id}`);
-    return stored ? JSON.parse(stored) : [];
-  });
+  const [occupiedSeats, setOccupiedSeats] = useState([]);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [showDetails, setShowDetails] = useState(null);
@@ -249,10 +245,35 @@ export default function BookingPage() {
       console.log("Booking successful:", result);
       alert(`Booking successful! ${result.message || 'Your seats have been reserved.'}`);
       
-      // Add the selected seats to occupied seats and save to localStorage
-      const newOccupiedSeats = [...occupiedSeats, ...selectedSeats];
-      setOccupiedSeats(newOccupiedSeats);
-      localStorage.setItem(`occupiedSeats-${show?.id}`, JSON.stringify(newOccupiedSeats));
+      // Refresh occupied seats from the backend
+      console.log("Fetching updated showroom data from:", `http://localhost:8080/showrooms/${showroomId}`);
+      const roomResponse = await fetch(`http://localhost:8080/showrooms/${showroomId}`, {
+        credentials: 'include'
+      });
+      console.log("Room response status:", roomResponse.status);
+      if (roomResponse.ok) {
+        const room = await roomResponse.json();
+        console.log("Room data received:", room);
+        console.log("Room seats:", room.seats);
+        if (room && room.seats) {
+          const occupied = [];
+          const seatMap = room.seats;
+          console.log("Processing seat map, dimensions:", seatMap.length, "x", seatMap[0]?.length);
+          for (let row = 0; row < seatMap.length; row++) {
+            for (let col = 0; col < seatMap[row].length; col++) {
+              if (seatMap[row][col] === true) {
+                occupied.push(`${row}-${col}`);
+              }
+            }
+          }
+          console.log("Occupied seats from showroom:", occupied);
+          setOccupiedSeats(occupied);
+        } else {
+          console.warn("Room or seats is null/undefined");
+        }
+      } else {
+        console.error("Failed to fetch room, status:", roomResponse.status);
+      }
       
       // Clear the selected seats and reset the form
       setSelectedSeats([]);

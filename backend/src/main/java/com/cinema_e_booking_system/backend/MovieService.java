@@ -98,22 +98,28 @@ public Show addShow(long movieId, Show show, boolean skipConflict) {
     Movie movie = repo.findById(movieId).orElseThrow();
     show.setMovie(movie);
 
-    if (show.getShowroom() == null) {
-        throw new IllegalArgumentException("Show must be assigned to a showroom.");
+    if (show.getShowroom() == null || show.getShowroom().getId() == null) {
+        throw new IllegalArgumentException("Show must be assigned to a valid showroom.");
     }
-    if (show.getDate() == null || show.getStartTime() == null) {
-        throw new IllegalArgumentException("Show date and start time are required.");
+    if (show.getDate() == null || show.getStartTime() == null || show.getEndTime() == null) {
+        throw new IllegalArgumentException("Show date, start time, and end time are required.");
+    }
+
+    // sanity check: end after start
+    if (!show.getEndTime().after(show.getStartTime())) {
+        throw new IllegalArgumentException("End time must be after start time.");
     }
 
     Long showroomId = show.getShowroom().getId();
 
-    if (!skipConflict && showRepository.existsExactConflict(
+    if (!skipConflict && showRepository.existsOverlapConflict(
             showroomId,
             show.getDate(),
-            show.getStartTime()
+            show.getStartTime(),
+            show.getEndTime()
     )) {
         throw new SchedulingConflictException(
-                "Scheduling conflict: that showroom already has a show at this date/time."
+                "Scheduling conflict: that showroom already has a show overlapping this time."
         );
     }
 

@@ -75,6 +75,7 @@ function ManageShowings(){
             const res = await fetch("http://localhost:8080/admin/shows", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
+                credentials: 'include',
                 body: JSON.stringify(form),
             });
             if (res.ok){

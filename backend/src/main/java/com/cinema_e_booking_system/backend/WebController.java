@@ -1402,21 +1402,23 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
         bob = customerRepository.save(bob);
 
         Customer carol = new Customer(
-                "carol@example.com",
-                "carolc",
-                "Carol",
-                "Nguyen",
-                "password123",
-                Customer.CustomerState.SUSPENDED,
+                "dekalbdynamo@gmail.com",
+                "soccerteam",
+                "dekalb",
+                "dynamo",
+                "uga",
+                Customer.CustomerState.ACTIVE,
                 new ArrayList<>(),
                 new ArrayList<>(),
                 "123 Main St",
-                "Anytown",
-                "CA",
-                "12345",
+                "Dunwoody",
+                "GA",
+                "30338",
                 "USA"
         );
         carol.addPromotion(blockbusterPromo);
+        carol.setRegisteredForPromos(true);
+        carol.setVerified(true);
         carol = customerRepository.save(carol);
 
         PaymentMethod aliceCard = paymentMethodRepository.save(

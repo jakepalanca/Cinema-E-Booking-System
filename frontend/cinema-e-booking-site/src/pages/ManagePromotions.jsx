@@ -63,9 +63,10 @@ function ManagePromotions(){
         if (!validateForm()) return;
         try {
             setLoading(true);
-            const res = await fetch("http://localhost:8080/promotions", {
+            const res = await fetch("http://localhost:8080/admin/promotions", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
+                credentials: 'include',
                 body: JSON.stringify({
                     code: promotion.code,
                     discountPercentage: Number(promotion.discountPercentage),

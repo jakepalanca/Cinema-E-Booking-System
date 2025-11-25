@@ -101,10 +101,8 @@ function ManagePromotions(){
         try {
             setLoading(true);
             setMessage("Sending promotion email...");
-            const res = await fetch("http://localhost:8080/promotions/email", {
+            const res = await fetch(`http://localhost:8080/sendpromotions/${selectedPromotion}`, {
                 method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ code: selectedPromotion }),
             });
             if (res.ok) {
                 setMessage("Promotion email sent successfully.");
@@ -181,7 +179,7 @@ function ManagePromotions(){
                     >
                         <option value="">-- Select Promotion --</option>
                         {promotions.map((p) => (
-                            <option key={p.code} value={p.code}>
+                            <option key={p.id} value={p.id}>
                                 {p.code} — {p.discountPercentage}% off
                             </option>
                         ))}

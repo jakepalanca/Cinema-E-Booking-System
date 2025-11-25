@@ -608,19 +608,19 @@ public ResponseEntity<Map<String, String>> bookSeats(
   @PathVariable Long showroomId,
   @RequestBody TicketRequest tix
   ) {
+  /*
   Optional<Show> s = showRepository.findById(showroomId);
   if (s.isEmpty()) {
     return ResponseEntity.status(404).body(Map.of("message", "Show not found"));
   }
   Show show = s.get();
   room = show.getShowroom();
-  /*
+  */
   Optional<Showroom> sr = showroomRepository.findById(showroomId);
   if (sr.isEmpty()) {
     return ResponseEntity.status(404).body(Map.of("message", "Showroom not found."));
   }
   Showroom room = sr.get();
-   */
   boolean[][] roomMap = room.getSeats();
 
   for (Ticket ticket : tix.getTickets()) {

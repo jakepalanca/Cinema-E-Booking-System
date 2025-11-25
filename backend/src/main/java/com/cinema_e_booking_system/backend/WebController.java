@@ -563,6 +563,46 @@ public String test() {
 
 //-----------------------BOOK SEAT--------------------------
   //only locks off seat, no payment yet
+@PostMapping("/bookseat/{showroomId}")
+public ResponseEntity<Map<String, String>> bookSeats(
+  @PathVariable Long showroomId,
+  @RequestBody List<Map<String, Object>> seats
+  ) {
+  try {
+    Optional<Showroom> sr = showroomRepository.findById(showroomId);
+    if (sr.isEmpty()) {
+      return ResponseEntity.status(404).body(Map.of("message", "Showroom not found."));
+    }
+    Showroom room = sr.get();
+    boolean[][] roomMap = room.getSeats();
+    
+    // Initialize seats array if null (default 10x10)
+    if (roomMap == null) {
+      roomMap = new boolean[10][10];
+      room.setSeats(roomMap);
+    }
+
+    for (Map<String, Object> seat : seats) {
+      int ticketRow = ((Number) seat.get("seatRow")).intValue();
+      int ticketCol = ((Number) seat.get("seatCol")).intValue();
+      
+      if (ticketRow >= 0 && ticketRow < roomMap.length && 
+          ticketCol >= 0 && ticketCol < roomMap[0].length) {
+        roomMap[ticketRow][ticketCol] = true;
+      }
+    }
+    
+    showroomRepository.save(room);
+
+    return ResponseEntity.ok(Map.of("message", seats.size() + " tickets added"));
+  } catch (Exception e) {
+    e.printStackTrace();
+    return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+  }
+  }
+
+//-----------------------BOOK SEAT--------------------------
+  //only locks off seat, no payment yet
 @PutMapping("/bookseat/{showroomId}")
 public ResponseEntity<Map<String, String>> bookSeats(
   @PathVariable Long showroomId,
@@ -1268,7 +1308,7 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
                         "Francis Lawrence",
                         "Dummy Producers",
                         "Andy Singer, an out-of-work actor now struggling as a New York City realtor, finds his world crashing down around him when his estranged daughter shows up unannounced on his doorstep.",
-                        "https://youtu.be/ByXuk9QqQkk",
+                        "https://youtu.be/evAYWyfoZ4E?si=A9NEBQThCZM6FUid",
                         "https://m.media-amazon.com/images/M/MV5BODA2MDI2YzUtNzFkZS00MTQyLTg2YmQtZTBhMTk4ODRkMGU0XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
                         new ArrayList<>(), new ArrayList<>(), Movie.MPAA_Rating.PG_13
                 ),

@@ -2,16 +2,15 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "./Navbar.jsx";
 import MovieDisplay from "./Movie-Display.jsx";
+import { useAuth } from "../contexts/AuthContext";
 import "../css/Homepage.css";
 
 function Homepage() {
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState("nowShowing");
   const [movies, setMovies] = useState({ nowShowing: [], upcoming: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const storedName =
-    typeof window !== "undefined" ? localStorage.getItem("userName") : null;
-  const greetingName = storedName || "Guest";
   // Fetch data
   useEffect(() => {
     const fetchMovies = async () => {
@@ -42,8 +41,10 @@ function Homepage() {
       <Navbar/>
       <div className="home-header">
         <div className="welcome-blurb">
-          {storedName ? (
-            <h3>Welcome back, {greetingName}!</h3>
+          {authLoading ? (
+            <h3>Welcome!</h3>
+          ) : isAuthenticated && user?.firstName ? (
+            <h3>Welcome, {user.firstName}!</h3>
           ) : (
             <h3>
               Welcome! <Link to="/register" className="signup-link">Sign up today</Link>

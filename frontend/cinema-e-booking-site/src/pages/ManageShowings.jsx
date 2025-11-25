@@ -1,8 +1,11 @@
-import React, {useEffect, useState} from "react";
+import React, {use, useEffect, useState} from "react";
 import Navbar from "./Navbar";
+import { useNavigate } from "react-router-dom";
 import "../css/ManageShowings.css";
 
 function ManageShowings(){
+    const navigate = useNavigate();
+    const [authorized, setAuthorized] = useState(null);
     const [movies, setMovies] = useState([]);
     const [showrooms, setShowrooms] = useState([]);
     const [showtimes, setShowtimes] = useState([]);
@@ -14,6 +17,15 @@ function ManageShowings(){
         endTime: "",
     });
     const [message,setMessage] = useState("");
+    useEffect(() => {
+        const isAdmin = localStorage.getItem("isAdmin") === "true";
+        if (!isAdmin) {
+            navigate("/");
+        } else {
+            setAuthorized(true);
+        }
+    }, [navigate]);
+
     useEffect(() => {
         const fetchData = async () => {
             try{
@@ -31,6 +43,9 @@ function ManageShowings(){
         };
         fetchData();
     }, []);
+    if (authorized === null) {
+        return null;
+    }
     const handleChange = (e) => {
         const {name, value} = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
@@ -57,7 +72,7 @@ function ManageShowings(){
             return;
         }
         try {
-            const res = await fetch("http://localhost:8080/shows", {
+            const res = await fetch("http://localhost:8080/admin/shows", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify(form),

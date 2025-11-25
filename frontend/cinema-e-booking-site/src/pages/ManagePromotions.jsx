@@ -1,5 +1,6 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import Navbar from "./Navbar";
+import { useNavigate } from "react-router-dom";
 import "../css/ManagePromotions.css"
 
 function ManagePromotions(){
@@ -9,9 +10,33 @@ function ManagePromotions(){
         startDate: "",
         endDate: "",
     });
+    const [promotions, setPromotions] = useState([]);
+    const [selectedPromotion, setSelectedPromotion] = useState("");
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
+    const [authorized, setAuthorized] = useState(null);
+    const navigate = useNavigate();
 
+    useEffect(() => {
+        const isAdmin = localStorage.getItem("isAdmin") === "true";
+        if (!isAdmin) navigate("/");
+        else setAuthorized(true);
+    }, [navigate]);
+
+    useEffect(() => {
+        const fetchPromotions = async () => {
+            try {
+                const res = await fetch("http://localhost:8080/promotions");
+                const data = await res.json();
+                setPromotions(data);
+            } catch (err) {
+                console.error(err);
+                setMessage("Failed to fetch promotions.")
+            }
+        };
+        fetchPromotions();
+    }, []);
+    if (authorized === null) return null;
     const handleChange = (e) => {
         const {name, value} = e.target;
         setPromotion((prev) => ({ ...prev, [name]: value}));
@@ -38,9 +63,10 @@ function ManagePromotions(){
         if (!validateForm()) return;
         try {
             setLoading(true);
-            const res = await fetch("http://localhost:8080/promotions", {
+            const res = await fetch("http://localhost:8080/admin/promotions", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
+                credentials: 'include',
                 body: JSON.stringify({
                     code: promotion.code,
                     discountPercentage: Number(promotion.discountPercentage),
@@ -69,25 +95,25 @@ function ManagePromotions(){
         }
     };
     const handleEmailPromotion = async () => {
+        if ( !selectedPromotion) {
+            setMessage("Please select a promotion to email.");
+            return;
+        }
         try {
             setLoading(true);
-            setMessage("Sending promotion emails.");
-            const res = await fetch("http://localhost:8080/promotions/email", {
+            setMessage("Sending promotion email...");
+            const res = await fetch(`http://localhost:8080/sendpromotions/${selectedPromotion}`, {
                 method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    code: promotion.code,
-                }),
             });
             if (res.ok) {
-                setMessage("Promotion emailed to subscribed users!");
+                setMessage("Promotion email sent successfully.");
             } else {
                 const err = await res.json();
-                setMessage(err.message || "Failed to email promotion.");
+                setMessage(err.message || "Failed to send promotion email.");
             }
         } catch (err) {
             console.error(err);
-            setMessage(err.message || "Failed to email promotion.");
+            setMessage("Error connecting to the server.");
         } finally {
             setLoading(false);
         }
@@ -144,16 +170,31 @@ function ManagePromotions(){
                             <button type="submit" disabled={loading}>
                                 {loading ? "Creating..." : "Create Promotion"}
                             </button>
-                            <button
-                                type="button"
-                                className="email-btn"
-                                onClick={handleEmailPromotion}
-                                disabled={loading}
-                            >
-                                {loading ? "Sending..." : "Email Promotion"}
-                            </button>
                         </div>
                 </form>
+                <div className="send-section">
+                    <h3>Send Existing Promotion</h3>
+                    <select
+                        value={selectedPromotion}
+                        onChange={(e) => setSelectedPromotion(e.target.value)}
+                    >
+                        <option value="">-- Select Promotion --</option>
+                        {promotions.map((p) => (
+                            <option key={p.id} value={p.id}>
+                                {p.code} — {p.discountPercentage}% off
+                            </option>
+                        ))}
+                    </select>
+
+                    <button
+                        type="button"
+                        className="email-btn"
+                        onClick={handleEmailPromotion}
+                        disabled={loading}
+                    >
+                        {loading ? "Sending..." : "Send Promotion"}
+                    </button>
+                </div>
                 {message && <p className="info-message">{message}</p>}
             </div>
         </>

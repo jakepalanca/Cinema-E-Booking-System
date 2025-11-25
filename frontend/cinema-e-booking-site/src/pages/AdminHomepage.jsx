@@ -1,16 +1,22 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Navbar from "./Navbar";
 import "../css/AdminHomepage.css";
 
 function AdminHomepage() {
     const navigate = useNavigate();
-    //useEffect(() => {
-    //    const isAdmin = localStorage.getItem("isAdmin") === "true";
-    //    if (!isAdmin) {
-    //        navigate("/");
-    //    }
-    //}, [navigate]);
+    const [authorized, setAuthorized] = useState(null);
+    useEffect(() => {
+        const isAdmin = localStorage.getItem("isAdmin") === "true";
+        if (!isAdmin) {
+            navigate("/");
+        } else {
+            setAuthorized(true);
+        }
+    }, [navigate]);
+    if (authorized === null) {
+        return null;
+    }
     return(
         <>
             <Navbar isAdmin={true}/>

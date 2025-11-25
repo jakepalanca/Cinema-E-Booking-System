@@ -182,7 +182,7 @@ function ManagePromotions(){
                         <option value="">-- Select Promotion --</option>
                         {promotions.map((p) => (
                             <option key={p.id} value={p.id}>
-                                {p.code} — {p.discountPercentage}% off
+                                {p.code} — {p.discountPercentage * 100}% off
                             </option>
                         ))}
                     </select>

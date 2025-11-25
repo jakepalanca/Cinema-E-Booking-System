@@ -63,9 +63,10 @@ function ManagePromotions(){
         if (!validateForm()) return;
         try {
             setLoading(true);
-            const res = await fetch("http://localhost:8080/promotions", {
+            const res = await fetch("http://localhost:8080/admin/promotions", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
+                credentials: 'include',
                 body: JSON.stringify({
                     code: promotion.code,
                     discountPercentage: Number(promotion.discountPercentage),
@@ -101,8 +102,11 @@ function ManagePromotions(){
         try {
             setLoading(true);
             setMessage("Sending promotion email...");
-            const res = await fetch(`http://localhost:8080/sendpromotions/${selectedPromotion}`, {
+            const res = await fetch(`http://localhost:8080/admin/sendPromotion/${selectedPromotion}`, {
                 method: "POST",
+                headers: {"Content-Type": "application/json"},
+                credentials: 'include',
+
             });
             if (res.ok) {
                 setMessage("Promotion email sent successfully.");

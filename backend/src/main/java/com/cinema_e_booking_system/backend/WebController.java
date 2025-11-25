@@ -511,7 +511,7 @@ public ResponseEntity<Map<>>
   */
 
 // ----------------------ADD PROMO TO PROMO_REPO ------------------
-@PostMapping("/promotions")
+@PostMapping("admin/promotions")
 public ResponseEntity<Map<String, String>> addPromo(
   @RequestBody Map<String, Object> newPromo
 ) {
@@ -649,7 +649,7 @@ public ResponseEntity<Map<String, String>> bookSeats(
 
     // ---------------------- ADMIN: ADD MOVIE (Sprint 3) ----------------------
 @PostMapping(
-        value = "/movies",
+        value = "/admin/movies",
         consumes = MediaType.APPLICATION_JSON_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE
 )
@@ -725,7 +725,7 @@ Movie movie = new Movie(
 
     // ---------------------- ADMIN: ADD CAST MEMBER ----------------------
 @PostMapping(
-        value = "/movie_cast",
+        value = "/admin/movie_cast",
         consumes = MediaType.APPLICATION_JSON_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE
 )
@@ -763,7 +763,7 @@ public ResponseEntity<?> addCastMember(@RequestBody Map<String, Object> body) {
 
     // ---------------------- ADMIN: ADD SHOWTIME ----------------------
 @PostMapping(
-        value = "/shows",
+        value = "/admin/shows",
         consumes = MediaType.APPLICATION_JSON_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE
 )

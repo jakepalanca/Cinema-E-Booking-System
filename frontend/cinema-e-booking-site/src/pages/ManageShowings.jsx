@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from "react";
 import Navbar from "./Navbar";
-import "../css/ManageShowtimes.css";
+import "../css/ManageShowings.css";
 
-function ManageShowtimes(){
+function ManageShowings(){
     const [movies, setMovies] = useState([]);
     const [showrooms, setShowrooms] = useState([]);
     const [showtimes, setShowtimes] = useState([]);
@@ -83,8 +83,8 @@ function ManageShowtimes(){
     return(
         <>
             <Navbar />
-            <div className="manage-showtimes-container">
-                <h2>Manage Showtimes</h2>
+            <div className="manage-showings-container">
+                <h2>Manage Showings</h2>
                 <form className="showtime-form" onSubmit={handleSubmit}>
                     <label>
                         Movie:
@@ -121,7 +121,7 @@ function ManageShowtimes(){
                         <input type="time" name="endTime" value={form.endTime} onChange={handleChange} required />
                     </label>
                     <button type="submit" className="add-showtime-button">
-                        Add Showtime
+                        Add Showing
                     </button>
                 </form>
                 {message && <p className="info-message">{message}</p>}
@@ -129,4 +129,4 @@ function ManageShowtimes(){
         </>
     );
 }
-export default ManageShowtimes;
+export default ManageShowings;

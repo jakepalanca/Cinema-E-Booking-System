@@ -11,13 +11,74 @@ export default function BookingPage() {
   const title = movie?.title || state?.title || "Movie Title";
   const showtime = state?.showtime || "Showtime";
 
+  // Debug logging
+  useEffect(() => {
+    console.log("BookingPage state:", { movie, show });
+    console.log("Show showroom:", show?.showroom);
+  }, []);
+
   const [ticketCategories, setTicketCategories] = useState([]);
   const [tickets, setTickets] = useState([{ category: "", seat: null }]);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [showroomSeats, setShowroomSeats] = useState({ rows: 8, cols: 10 }); // Default seat layout
-  const [occupiedSeats, setOccupiedSeats] = useState([]);
+  const [occupiedSeats, setOccupiedSeats] = useState(() => {
+    // Load occupied seats from localStorage on initial load
+    const stored = localStorage.getItem(`occupiedSeats-${show?.id}`);
+    return stored ? JSON.parse(stored) : [];
+  });
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [showDetails, setShowDetails] = useState(null);
+  const [showroomId, setShowroomId] = useState(null);
+
+  // Fetch full show details with showroom info
+  useEffect(() => {
+    if (show?.id) {
+      // First, try to get the show details
+      fetch(`http://localhost:8080/shows/${show.id}`)
+        .then(res => res.json())
+        .then(data => {
+          console.log("Full show details:", data);
+          console.log("All properties:", Object.keys(data));
+          setShowDetails(data);
+        })
+        .catch(err => console.error("Failed to fetch show details:", err));
+      
+      // Also fetch all showrooms to find which one has this show
+      fetch(`http://localhost:8080/showrooms`)
+        .then(res => res.json())
+        .then(showrooms => {
+          console.log("All showrooms:", showrooms);
+          console.log("First showroom properties:", showrooms[0] ? Object.keys(showrooms[0]) : "none");
+          console.log("First showroom shows:", showrooms[0]?.shows);
+          
+          // Find the showroom that contains this show
+          const matchingShowroom = showrooms.find(room => {
+            console.log(`Checking showroom ${room.id}, shows:`, room.shows);
+            return room.shows?.some(s => s.id === show.id);
+          });
+          
+          if (matchingShowroom) {
+            console.log("Found matching showroom:", matchingShowroom);
+            setShowroomId(matchingShowroom.id);
+            setShowDetails(prev => ({
+              ...prev,
+              showroom: matchingShowroom
+            }));
+            setShowroomSeats({
+              rows: matchingShowroom.roomHeight || 8,
+              cols: matchingShowroom.roomWidth || 10
+            });
+          } else {
+            console.error("No matching showroom found for show ID:", show.id);
+            console.error("Try using showroom ID 1 as fallback");
+            // Fallback: use showroom ID 1 (common default)
+            setShowroomId(1);
+          }
+        })
+        .catch(err => console.error("Failed to fetch showrooms:", err));
+    }
+  }, [show?.id]);
 
   // Fetch ticket categories
   useEffect(() => {
@@ -36,19 +97,32 @@ export default function BookingPage() {
       });
     }
     
-    // Fetch occupied seats for this show
-    if (show?.id) {
-      fetch(`http://localhost:8080/tickets`)
-        .then(res => res.json())
-        .then(data => {
-          const occupied = data
-            .filter(ticket => ticket.show?.id === show.id)
-            .map(ticket => `${ticket.seatRow}-${ticket.seatCol}`);
-          setOccupiedSeats(occupied);
+    // Fetch occupied seats - first try showroom seats, then fall back to tickets
+    if (showroomId) {
+      fetch(`http://localhost:8080/showrooms/${showroomId}`, {
+        credentials: 'include'
+      })
+        .then(res => res.ok ? res.json() : null)
+        .then(room => {
+          if (room && room.seats) {
+            const occupied = [];
+            const seatMap = room.seats;
+            for (let row = 0; row < seatMap.length; row++) {
+              for (let col = 0; col < seatMap[row].length; col++) {
+                if (seatMap[row][col] === true) {
+                  occupied.push(`${row}-${col}`);
+                }
+              }
+            }
+            console.log("Occupied seats from showroom:", occupied);
+            if (occupied.length > 0) {
+              setOccupiedSeats(occupied);
+            }
+          }
         })
-        .catch(err => console.error("Failed to fetch occupied seats:", err));
+        .catch(err => console.warn("Failed to fetch showroom seats:", err));
     }
-  }, [show]);
+  }, [show, showroomId]);
 
   const addTicket = () => {
     setTickets([...tickets, { category: "", seat: null }]);
@@ -90,7 +164,7 @@ export default function BookingPage() {
     return "available";
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (selectedSeats.length !== tickets.length) {
@@ -104,20 +178,92 @@ export default function BookingPage() {
       return;
     }
 
-    // Build booking data
-    const bookingData = {
-      fullName,
-      email,
-      movie: title,
-      showtime,
-      tickets: tickets.map((ticket, index) => ({
-        category: ticketCategories.find(c => c.id === parseInt(ticket.category)),
-        seat: selectedSeats[index]
-      }))
-    };
+    if (!show?.id) {
+      alert("Show information is missing. Please try again.");
+      return;
+    }
 
-    console.log("Booking data:", bookingData);
-    alert("Booking submitted! (Check console for details)");
+    // Use the stored showroomId from state
+    if (!showroomId) {
+      alert("Showroom information is still loading or unavailable. Please wait and try again.");
+      console.error("Missing showroom ID. State showroomId:", showroomId, "showDetails:", showDetails, "show:", show);
+      return;
+    }
+
+    // Build ticket list for the API - send array directly
+    const ticketList = selectedSeats.map((seatId) => {
+      const [row, col] = seatId.split('-');
+      return {
+        seatRow: parseInt(row),
+        seatCol: parseInt(col)
+      };
+    });
+
+    try {
+      console.log("Sending booking request:", {
+        showroomId: showroomId,
+        seats: ticketList
+      });
+
+      // Check authentication before booking
+      const authCheck = await fetch('http://localhost:8080/auth/me', {
+        method: 'GET',
+        credentials: 'include',
+      });
+      console.log("Auth check status:", authCheck.status);
+      if (!authCheck.ok) {
+        alert("You are not logged in. Please log in and try again.");
+        return;
+      }
+
+      const response = await fetch(`http://localhost:8080/bookseat/${showroomId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(ticketList)
+      });
+
+      console.log("Response status:", response.status);
+      console.log("Response headers:", [...response.headers.entries()]);
+      
+      if (!response.ok) {
+        let errorText;
+        try {
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const errorJson = await response.json();
+            errorText = JSON.stringify(errorJson);
+          } else {
+            errorText = await response.text();
+          }
+          console.error("Error response:", errorText);
+        } catch (e) {
+          errorText = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorText || 'Failed to book seats');
+      }
+
+      const result = await response.json();
+      console.log("Booking successful:", result);
+      alert(`Booking successful! ${result.message || 'Your seats have been reserved.'}`);
+      
+      // Add the selected seats to occupied seats and save to localStorage
+      const newOccupiedSeats = [...occupiedSeats, ...selectedSeats];
+      setOccupiedSeats(newOccupiedSeats);
+      localStorage.setItem(`occupiedSeats-${show?.id}`, JSON.stringify(newOccupiedSeats));
+      
+      // Clear the selected seats and reset the form
+      setSelectedSeats([]);
+      setTickets([{ category: "", seat: null }]);
+      setFullName("");
+      setEmail("");
+      
+    } catch (error) {
+      console.error("Booking error:", error);
+      alert(`Booking failed: ${error.message}`);
+    }
   };
 
   const totalPrice = tickets.reduce((sum, ticket) => {

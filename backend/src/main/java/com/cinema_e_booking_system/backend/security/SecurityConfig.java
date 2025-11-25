@@ -67,14 +67,15 @@ public class SecurityConfig {
                         "/movies", "/movies/**", "/movie_cast", "/shows", "/shows/**", "/cinemas", "/cinemas/**",
                         "/theaters", "/theaters/**", "/showrooms", "/showrooms/**",
                         "/ticket-categories", "/ticket-categories/**", "/promotions", "/promotions/**",
-                        "/reviews", "/reviews/**", "/search-title", "/by-genre", "/return-all")
+                        "/reviews", "/reviews/**", "/search-title", "/by-genre", "/return-all", "/auth/**",
+                        "/bookseat/**")
                     .permitAll()
                 // Admin-only endpoints
                 .requestMatchers("/admin/**", "/admins/**", "/admin-homepage")
                     .hasRole("ADMIN")
                 // Customer endpoints (authenticated users)
                 .requestMatchers("/customers/**", "/bookings/**", "/tickets/**", "/payment-methods/**",
-                        "/profile/**")
+                        "/profile/**", "/bookseat/**")
                     .hasAnyRole("CUSTOMER", "ADMIN")
                 // All other requests require authentication
                 .anyRequest().authenticated()

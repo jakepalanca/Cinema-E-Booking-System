@@ -1,0 +1,10 @@
+body {
+    color: whitesmoke;
+}
+.movie-form{
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+    width: 400px;
+}

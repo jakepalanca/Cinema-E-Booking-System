@@ -89,13 +89,41 @@ public class MovieService {
      * The method to add a show to a movie.
      */
     @Transactional
-    public Show addShow(long movieId, Show show) {
-        Movie movie = repo.findById(movieId).orElseThrow();
-        show.setMovie(movie);
-        if (show.getShowroom() == null) {
-            throw new IllegalArgumentException("Show must be assigned to a showroom.");
-        }
-        movie.getShows().add(show);
-        return showRepository.save(show);
+public Show addShow(long movieId, Show show) {
+    return addShow(movieId, show, false);
+}
+
+@Transactional
+public Show addShow(long movieId, Show show, boolean skipConflict) {
+    Movie movie = repo.findById(movieId).orElseThrow();
+    show.setMovie(movie);
+
+    if (show.getShowroom() == null || show.getShowroom().getId() == null) {
+        throw new IllegalArgumentException("Show must be assigned to a valid showroom.");
     }
+    if (show.getDate() == null || show.getStartTime() == null || show.getEndTime() == null) {
+        throw new IllegalArgumentException("Show date, start time, and end time are required.");
+    }
+
+    // sanity check: end after start
+    if (!show.getEndTime().after(show.getStartTime())) {
+        throw new IllegalArgumentException("End time must be after start time.");
+    }
+
+    Long showroomId = show.getShowroom().getId();
+
+    if (!skipConflict && showRepository.existsOverlapConflict(
+            showroomId,
+            show.getDate(),
+            show.getStartTime(),
+            show.getEndTime()
+    )) {
+        throw new SchedulingConflictException(
+                "Scheduling conflict: that showroom already has a show overlapping this time."
+        );
+    }
+
+    movie.getShows().add(show);
+    return showRepository.save(show);
+}
 }

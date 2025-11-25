@@ -511,12 +511,14 @@ public ResponseEntity<Map<>>
   */
 
 // ----------------------ADD PROMO TO PROMO_REPO ------------------
-@PostMapping("/promotions")
+@PostMapping("admin/promotions")
 public ResponseEntity<Map<String, String>> addPromo(
   @RequestBody Map<String, Object> newPromo
 ) {
   String promoCode = (String)newPromo.get("code");
-  Double promoDiscountPercentage = ((Number) newPromo.get("discountPercentage")).doubleValue();
+  double percentageValue = ((Number) newPromo.get("discountPercentage")).doubleValue();
+  percentageValue = percentageValue / 100;
+  Double promoDiscountPercentage = percentageValue;
   String promoEndDate = (String)newPromo.get("endDate");
   Boolean promoHasBeenApplied = (Boolean)newPromo.get("hasBeenApplied");
   String promoStartDate = (String)newPromo.get("startDate");
@@ -561,7 +563,47 @@ public String test() {
 
 //-----------------------BOOK SEAT--------------------------
   //only locks off seat, no payment yet
-@PutMapping("/bookseat/{showId}")
+@PostMapping("/bookseat/{showroomId}")
+public ResponseEntity<Map<String, String>> bookSeats(
+  @PathVariable Long showroomId,
+  @RequestBody List<Map<String, Object>> seats
+  ) {
+  try {
+    Optional<Showroom> sr = showroomRepository.findById(showroomId);
+    if (sr.isEmpty()) {
+      return ResponseEntity.status(404).body(Map.of("message", "Showroom not found."));
+    }
+    Showroom room = sr.get();
+    boolean[][] roomMap = room.getSeats();
+    
+    // Initialize seats array if null (default 10x10)
+    if (roomMap == null) {
+      roomMap = new boolean[10][10];
+      room.setSeats(roomMap);
+    }
+
+    for (Map<String, Object> seat : seats) {
+      int ticketRow = ((Number) seat.get("seatRow")).intValue();
+      int ticketCol = ((Number) seat.get("seatCol")).intValue();
+      
+      if (ticketRow >= 0 && ticketRow < roomMap.length && 
+          ticketCol >= 0 && ticketCol < roomMap[0].length) {
+        roomMap[ticketRow][ticketCol] = true;
+      }
+    }
+    
+    showroomRepository.save(room);
+
+    return ResponseEntity.ok(Map.of("message", seats.size() + " tickets added"));
+  } catch (Exception e) {
+    e.printStackTrace();
+    return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+  }
+  }
+
+//-----------------------BOOK SEAT--------------------------
+  //only locks off seat, no payment yet
+@PutMapping("/bookseat/{showroomId}")
 public ResponseEntity<Map<String, String>> bookSeats(
   @PathVariable Long showroomId,
   @RequestBody TicketRequest tix
@@ -656,7 +698,7 @@ public ResponseEntity<Map<String, String>> bookSeats(
 
     // ---------------------- ADMIN: ADD MOVIE (Sprint 3) ----------------------
 @PostMapping(
-        value = "/movies",
+        value = "admin/movies",
         consumes = MediaType.APPLICATION_JSON_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE
 )
@@ -670,13 +712,35 @@ public ResponseEntity<?> addMovie(@RequestBody Map<String, Object> body) {
         String trailerLink = (String) body.get("trailerLink");
 
         // Enum normalization (handles "Action", "action", "SCI FI", "pg-13", etc.)
-        String genreStr = ((String) body.get("movieGenre")).trim()
-                .toUpperCase().replace(" ", "_");
-        Movie.Genre genre = Movie.Genre.valueOf(genreStr);
+        Object genreObj = body.get("movieGenre");
+        if (genreObj == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "movieGenre is required"));
+        }
+        String genreStr = genreObj.toString().trim().toUpperCase().replace(" ", "_");
+        if (genreStr.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "movieGenre cannot be empty"));
+        }
+        Movie.Genre genre;
+        try {
+            genre = Movie.Genre.valueOf(genreStr);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid genre: " + genreStr));
+        }
 
-        String ratingStr = ((String) body.get("mpaaRating")).trim()
-                .toUpperCase().replace("-", "_").replace(" ", "_");
-        Movie.MPAA_Rating rating = Movie.MPAA_Rating.valueOf(ratingStr);
+        Object ratingObj = body.get("mpaaRating");
+        if (ratingObj == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "mpaaRating is required"));
+        }
+        String ratingStr = ratingObj.toString().trim().toUpperCase().replace("-", "_").replace(" ", "_");
+        if (ratingStr.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "mpaaRating cannot be empty"));
+        }
+        Movie.MPAA_Rating rating;
+        try {
+            rating = Movie.MPAA_Rating.valueOf(ratingStr);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid MPAA rating: " + ratingStr + ". Valid values are: G, PG, PG_13, R, NC_17"));
+        }
 
       List<String> cast = (List<String>) body.get("castList");
 if (cast == null) cast = new ArrayList<>();
@@ -710,7 +774,7 @@ Movie movie = new Movie(
 
     // ---------------------- ADMIN: ADD CAST MEMBER ----------------------
 @PostMapping(
-        value = "/movie_cast",
+        value = "admin/movie_cast",
         consumes = MediaType.APPLICATION_JSON_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE
 )
@@ -748,7 +812,7 @@ public ResponseEntity<?> addCastMember(@RequestBody Map<String, Object> body) {
 
     // ---------------------- ADMIN: ADD SHOWTIME ----------------------
 @PostMapping(
-        value = "/shows",
+        value = "admin/shows",
         consumes = MediaType.APPLICATION_JSON_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE
 )
@@ -1253,7 +1317,7 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
                         "Francis Lawrence",
                         "Dummy Producers",
                         "Andy Singer, an out-of-work actor now struggling as a New York City realtor, finds his world crashing down around him when his estranged daughter shows up unannounced on his doorstep.",
-                        "https://youtu.be/ByXuk9QqQkk",
+                        "https://youtu.be/evAYWyfoZ4E?si=A9NEBQThCZM6FUid",
                         "https://m.media-amazon.com/images/M/MV5BODA2MDI2YzUtNzFkZS00MTQyLTg2YmQtZTBhMTk4ODRkMGU0XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
                         new ArrayList<>(), new ArrayList<>(), Movie.MPAA_Rating.PG_13
                 ),
@@ -1347,21 +1411,23 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
         bob = customerRepository.save(bob);
 
         Customer carol = new Customer(
-                "carol@example.com",
-                "carolc",
-                "Carol",
-                "Nguyen",
-                "password123",
-                Customer.CustomerState.SUSPENDED,
+                "dekalbdynamo@gmail.com",
+                "soccerteam",
+                "dekalb",
+                "dynamo",
+                "uga",
+                Customer.CustomerState.ACTIVE,
                 new ArrayList<>(),
                 new ArrayList<>(),
                 "123 Main St",
-                "Anytown",
-                "CA",
-                "12345",
+                "Dunwoody",
+                "GA",
+                "30338",
                 "USA"
         );
         carol.addPromotion(blockbusterPromo);
+        carol.setRegisteredForPromos(true);
+        carol.setVerified(true);
         carol = customerRepository.save(carol);
 
         PaymentMethod aliceCard = paymentMethodRepository.save(

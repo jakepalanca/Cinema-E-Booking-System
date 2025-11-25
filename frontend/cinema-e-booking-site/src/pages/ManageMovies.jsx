@@ -1,8 +1,11 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
+import { useNavigate } from "react-router-dom";
 import "../css/ManageMovies.css";
 import Navbar from "./Navbar";
 
 function ManageMovies(){
+    const navigate = useNavigate();
+    const [authorized, setAuthorized] = useState(null);
     const [movie, setMovie] = useState({
         title: "",
         director: "",
@@ -15,6 +18,17 @@ function ManageMovies(){
     });
     const [castList, setCastList] = useState([""]);
     const [message, setMessage] = useState("");
+    useEffect(() => {
+        const isAdmin = localStorage.getItem("isAdmin") === "true";
+        if (!isAdmin) {
+            navigate("/");
+        } else {
+            setAuthorized(true);
+        }
+    }, [navigate]);
+    if (authorized === null) {
+        return null;
+    }
     const handleChange = (e) => {
         const { name, value } = e.target;
         setMovie((prev) => ({ ...prev, [name]: value}));
@@ -32,22 +46,36 @@ function ManageMovies(){
     const handleSubmit = async (e) => {
         e.preventDefault();
         setMessage("");
+        
+        // Client-side validation
+        if (!movie.movieGenre || movie.movieGenre === "") {
+            setMessage("Please select a genre");
+            return;
+        }
+        if (!movie.mpaaRating || movie.mpaaRating === "") {
+            setMessage("Please select an MPAA rating");
+            return;
+        }
+        
         try{
-            const movieRes = await fetch("http://localhost:8080/movies", {
+            const movieRes = await fetch("http://localhost:8080/admin/movies", {
                 method: "POST",
                 headers: { "Content-Type": "application/json"},
+                credentials: 'include',
                 body: JSON.stringify(movie),
             });
             if (!movieRes.ok){
                 const err = await movieRes.json();
-                throw new Error(err.message || "Failed to add movie");
+                setMessage(err.message || "Failed to add movie");
+                return;
             }
             const movieData = await movieRes.json();
             for (const cast of castList){
                 if(cast.trim() === "") continue;
-                await fetch("http://localhost:8080/movie_cast",{
+                await fetch("http://localhost:8080/admin/movie_cast",{
                     method: "POST",
                     headers: {"Content-Type": "application/json"},
+                    credentials: 'include',
                     body: JSON.stringify({
                         Movie_id: movieData.id,
                         cast,
@@ -68,45 +96,67 @@ function ManageMovies(){
             setCastList([""]);
         } catch (err) {
             console.error(err);
-            setMessage("Error adding movie.");
+            setMessage(err.message || "Error connecting to the server.");
         }
     };
     return (
         <>
             <Navbar/>
-            <form className="movie-form" onSubmit={handleSubmit}>
-                <input name="title" value={movie.title} onChange={handleChange} placeholder="Title" required />
-                <input name="director" value={movie.director} onChange={handleChange} placeholder="Director" required />
-                <input name="producer" value={movie.producer} onChange={handleChange} placeholder="Producer" required />
-                <input name="movieGenre" value={movie.movieGenre} onChange={handleChange} placeholder="Genre" required />
-                <input name="mpaaRating" value={movie.mpaaRating} onChange={handleChange} placeholder="MPAA Rating" required />
-                <input name="posterLink" value={movie.posterLink} onChange={handleChange} placeholder="Poster Link URL" />
-                <input name="trailerLink" value={movie.trailerLink} onChange={handleChange} placeholder="Trailer Link URL" />
-                <textarea name="synopsis" value={movie.synopsis} onChange={handleChange} placeholder="Synopsis" required />
-                <h3>Cast</h3>
-                {castList.map((cast, index) => (
-                    <div key={index} className="cast-field">
-                        <input
-                            value={cast}
-                            onChange={(e) => handleCastChange(index, e.target.value)}
-                            placeholder={`Cast member #${index +1}`}
-                            required={index === 0}
-                        />
-                        {index > 0 && (
-                            <button type="button" onClick={() => removeCastField(index)}>
-                                Remove
-                            </button>
-                        )}
-                    </div>
-                ))}
-                <button type="button" onClick={addCastField}>
-                    Add Cast Member
-                </button>
-                <button type="submit" className="add-movie-button">
-                    Add Movie
-                </button>
-                {message && <p className="info-message">{message}</p>}
-            </form>
+            <div className ="manage-movies-container">
+                <form className="movie-form" onSubmit={handleSubmit}>
+                    <input name="title" value={movie.title} onChange={handleChange} placeholder="Title" required />
+                    <input name="director" value={movie.director} onChange={handleChange} placeholder="Director" required />
+                    <input name="producer" value={movie.producer} onChange={handleChange} placeholder="Producer" required />
+                    <select name="movieGenre" value={movie.movieGenre} onChange={handleChange} required>
+                        <option value="">Select Genre</option>
+                        <option value="ACTION">Action</option>
+                        <option value="ANIMATION">Animation</option>
+                        <option value="COMEDY">Comedy</option>
+                        <option value="CRIME">Crime</option>
+                        <option value="DRAMA">Drama</option>
+                        <option value="FANTASY">Fantasy</option>
+                        <option value="HORROR">Horror</option>
+                        <option value="ROMANCE">Romance</option>
+                        <option value="SCI_FI">Sci-Fi</option>
+                        <option value="THRILLER">Thriller</option>
+                        <option value="WESTERN">Western</option>
+                    </select>
+                    <select name="mpaaRating" value={movie.mpaaRating} onChange={handleChange} required>
+                        <option value="">Select MPAA Rating</option>
+                        <option value="G">G</option>
+                        <option value="PG">PG</option>
+                        <option value="PG_13">PG-13</option>
+                        <option value="R">R</option>
+                        <option value="NC_17">NC-17</option>
+                    </select>
+                    <input name="posterLink" value={movie.posterLink} onChange={handleChange} placeholder="Poster Link URL" />
+                    <input name="trailerLink" value={movie.trailerLink} onChange={handleChange} placeholder="Trailer Link URL" />
+                    <textarea name="synopsis" value={movie.synopsis} onChange={handleChange} placeholder="Synopsis" required />
+                    <h3>Cast</h3>
+                    {castList.map((cast, index) => (
+                        <div key={index} className="cast-field">
+                            <input
+                                value={cast}
+                                onChange={(e) => handleCastChange(index, e.target.value)}
+                                placeholder={`Cast member #${index +1}`}
+                                required={index === 0}
+                            />
+                            {index > 0 && (
+                                <button type="button" onClick={() => removeCastField(index)}>
+                                    Remove
+                                </button>
+                            )}
+                        </div>
+                    ))}
+                    <button type="button" onClick={addCastField}>
+                        Add Cast Member
+                    </button>
+                    <button type="submit" className="add-movie-button">
+                        Add Movie
+                    </button>
+                    {message && <p className="info-message">{message}</p>}
+                </form>
+            </div>
         </>
     );
 }

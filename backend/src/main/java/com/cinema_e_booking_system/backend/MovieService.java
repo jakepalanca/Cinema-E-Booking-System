@@ -89,13 +89,35 @@ public class MovieService {
      * The method to add a show to a movie.
      */
     @Transactional
-    public Show addShow(long movieId, Show show) {
-        Movie movie = repo.findById(movieId).orElseThrow();
-        show.setMovie(movie);
-        if (show.getShowroom() == null) {
-            throw new IllegalArgumentException("Show must be assigned to a showroom.");
-        }
-        movie.getShows().add(show);
-        return showRepository.save(show);
+public Show addShow(long movieId, Show show) {
+    return addShow(movieId, show, false);
+}
+
+@Transactional
+public Show addShow(long movieId, Show show, boolean skipConflict) {
+    Movie movie = repo.findById(movieId).orElseThrow();
+    show.setMovie(movie);
+
+    if (show.getShowroom() == null) {
+        throw new IllegalArgumentException("Show must be assigned to a showroom.");
     }
+    if (show.getDate() == null || show.getStartTime() == null) {
+        throw new IllegalArgumentException("Show date and start time are required.");
+    }
+
+    Long showroomId = show.getShowroom().getId();
+
+    if (!skipConflict && showRepository.existsExactConflict(
+            showroomId,
+            show.getDate(),
+            show.getStartTime()
+    )) {
+        throw new SchedulingConflictException(
+                "Scheduling conflict: that showroom already has a show at this date/time."
+        );
+    }
+
+    movie.getShows().add(show);
+    return showRepository.save(show);
+}
 }

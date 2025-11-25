@@ -1310,15 +1310,15 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
 
             Show matineeShow = new Show(matineeDuration, today, matinee, addMinutes(matinee, matineeDuration));
             matineeShow.setShowroom(matineeRoom);
-            scheduledShows.add(movieService.addShow(movie.getId(), matineeShow));
+            scheduledShows.add(movieService.addShow(movie.getId(), matineeShow, true));
 
             Show afternoonShow = new Show(afternoonDuration, tomorrow, afternoon, addMinutes(afternoon, afternoonDuration));
             afternoonShow.setShowroom(afternoonRoom);
-            scheduledShows.add(movieService.addShow(movie.getId(), afternoonShow));
+            scheduledShows.add(movieService.addShow(movie.getId(), afternoonShow, true));
 
             Show lateNightShow = new Show(eveningDuration, weekend, lateShow, addMinutes(lateShow, eveningDuration));
             lateNightShow.setShowroom(eveningRoom);
-            scheduledShows.add(movieService.addShow(movie.getId(), lateNightShow));
+            scheduledShows.add(movieService.addShow(movie.getId(), lateNightShow, true));
 
             movieService.addReview(movie.getId(), new Review(5, movie.getTitle() + " was incredible on the big screen."));
             movieService.addReview(movie.getId(), new Review(4, "Crowd loved the show and sound design."));

@@ -6,6 +6,10 @@ import java.util.Iterator;
 public class TicketRequest {
   private List<Ticket> tickets;
 
+  // No-argument constructor required for Jackson deserialization
+  public TicketRequest() {
+  }
+
   public List<Ticket> getTickets() {
     return tickets;
   }

@@ -1308,7 +1308,7 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
                         "Francis Lawrence",
                         "Dummy Producers",
                         "Andy Singer, an out-of-work actor now struggling as a New York City realtor, finds his world crashing down around him when his estranged daughter shows up unannounced on his doorstep.",
-                        "https://youtu.be/ByXuk9QqQkk",
+                        "https://youtu.be/evAYWyfoZ4E?si=A9NEBQThCZM6FUid",
                         "https://m.media-amazon.com/images/M/MV5BODA2MDI2YzUtNzFkZS00MTQyLTg2YmQtZTBhMTk4ODRkMGU0XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
                         new ArrayList<>(), new ArrayList<>(), Movie.MPAA_Rating.PG_13
                 ),

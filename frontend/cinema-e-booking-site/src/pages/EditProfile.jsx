@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from './Navbar.jsx';
 import "../css/EditProfile.css";
 import api from '../services/api.js';
-import authService from '../services/authService.js';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Profile() {
+    const { user, isAuthenticated, loading: authLoading } = useAuth();
     const [customer, setCustomer] = useState(null);
     const [form, setForm] = useState({ firstName: '', lastName: '', phoneNumber: '', address: '', city: '', state: '', zipCode: '', country: '' });
-    const [oldPassword, setOldPassword] = useState('');
     const [password, setPassword] = useState('');
     const [currentPasswordInput, setCurrentPasswordInput] = useState('');
     const [promotions, setPromotions] = useState([]);
@@ -17,40 +17,20 @@ export default function Profile() {
     const [newCard, setNewCard] = useState({ cardNumber: '', cardHolderFirstName: '', cardHolderLastName: '', expirationDate: '', securityCode: '', zipCode: '', country: '', state: '', city: '', address: '' });
     const [msg, setMsg] = useState('');
     const [localOnly, setLocalOnly] = useState(false);
+    const [dataLoading, setDataLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
-        const authRaw = localStorage.getItem('cinemaAuth');
-        const storedUserRaw = localStorage.getItem('cinemaUser');
-        const storedUser = storedUserRaw ? JSON.parse(storedUserRaw) : null;
+        // Wait for auth to finish loading
+        if (authLoading) return;
 
-        if (!authRaw) {
-            if (storedUser) {
-                setCustomer(storedUser);
-                setPaymentMethods(storedUser.paymentMethods || []);
-                setPromotions(storedUser.promotions || []);
-                setLocalOnly(true);
-                return;
-            }
+        // If not authenticated, redirect to login
+        if (!isAuthenticated || !user) {
             navigate('/login');
             return;
         }
 
-        let parsed;
-        try { parsed = JSON.parse(authRaw); } catch (e) { parsed = null; }
-        const email = parsed?.email;
-
-        if (!email) {
-            if (storedUser) {
-                setCustomer(storedUser);
-                setPaymentMethods(storedUser.paymentMethods || []);
-                setPromotions(storedUser.promotions || []);
-                setLocalOnly(true);
-                return;
-            }
-            navigate('/login');
-            return;
-        }
+        const email = user.email;
 
         // fetch customer by email from backend using authenticated API
         api.get(`/customers/by-email?email=${encodeURIComponent(email)}`)
@@ -62,10 +42,22 @@ export default function Profile() {
                 setCustomer(data);
                 setPaymentMethods(data.paymentMethods || []);
                 setPromotions(data.promotions || []);
+                setLocalOnly(false);
             })
-            .catch(() => {
-
-                navigate('/login');
+            .catch((err) => {
+                console.error('Failed to fetch customer data:', err);
+                // Use auth context data as fallback instead of redirecting
+                setCustomer({ 
+                    email: user.email, 
+                    firstName: user.firstName || '',
+                    lastName: '',
+                    id: user.id
+                });
+                setLocalOnly(true);
+                setMsg('Could not load full profile data. Some features may be limited.');
+            })
+            .finally(() => {
+                setDataLoading(false);
             });
 
         // fetch all promotions
@@ -73,7 +65,7 @@ export default function Profile() {
             .then(r => r.json())
             .then(list => setAllPromotions(list))
             .catch(() => setAllPromotions([]));
-    }, [navigate]);
+    }, [authLoading, isAuthenticated, user, navigate]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -284,6 +276,18 @@ export default function Profile() {
                 .catch(() => setMsg('Failed to update promotions'));
         }
     };
+
+    // Show loading state while auth or data is loading
+    if (authLoading || dataLoading) {
+        return (
+            <>
+                <Navbar />
+                <div style={{ color: "white", textAlign: "center", marginTop: "100px" }}>
+                    Loading your profile...
+                </div>
+            </>
+        );
+    }
 
     if (!customer) return null;
 

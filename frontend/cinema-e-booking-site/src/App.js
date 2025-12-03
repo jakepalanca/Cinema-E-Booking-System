@@ -3,6 +3,8 @@ import BookingPage from "./pages/BookingPage";
 import DetailsPage from "./pages/DetailsPage";
 import Homepage from "./pages/Homepage";
 import Browse from "./pages/Browse";
+import Showtimes from "./pages/Showtimes";
+import Promotions from "./pages/Promotions";
 import RegistrationPage from "./pages/RegistrationPage";
 import Login from "./pages/Login";
 import Profile from "./pages/EditProfile";
@@ -39,6 +41,8 @@ function App() {
         </ProtectedRoute>
       } />
       <Route path="/browse" element={<Browse />} />
+      <Route path="/showtimes" element={<Showtimes />} />
+      <Route path="/promotions" element={<Promotions />} />
       <Route path="/register" element={<RegistrationPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/verify" element={<VerificationPage />} />

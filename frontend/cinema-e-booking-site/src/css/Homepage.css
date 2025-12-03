@@ -220,12 +220,24 @@ hr {
     border-radius: 0.5rem;
     font-size: 0.8rem;
     font-weight: 500;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.moviecard__showtime--link {
+    text-decoration: none;
+    cursor: pointer;
+    display: inline-block;
 }
 
 .moviecard__showtime:hover {
-    background: rgba(186, 12, 47, 0.3);
+    background: var(--uga-red);
     border-color: var(--uga-red);
+    transform: translateY(-1px);
+}
+
+.moviecard__showtime:active {
+    transform: translateY(0);
+    background: var(--uga-red-dark);
 }
 
 /* Loading & Error States */

@@ -1,4 +1,4 @@
-import React, {use, useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import { useNavigate } from "react-router-dom";
 import "../css/ManageShowings.css";

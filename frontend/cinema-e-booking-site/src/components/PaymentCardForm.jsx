@@ -44,7 +44,7 @@ function PaymentCardForm({ onAddCard, defaultAddress = {}, maxCards = 3, current
     };
 
     const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
+        const { name, value, checked } = e.target;
 
         if (name === "useDefaultAddress") {
             setCard({

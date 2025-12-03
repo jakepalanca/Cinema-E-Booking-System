@@ -17,7 +17,7 @@ export default function BookingPage() {
   useEffect(() => {
     console.log("BookingPage state:", { movie, show });
     console.log("Show showroom:", show?.showroom);
-  }, []);
+  }, [movie, show]);
 
   const [ticketCategories, setTicketCategories] = useState([]);
   const [tickets, setTickets] = useState([{ category: "", seat: null }]);
@@ -400,9 +400,6 @@ export default function BookingPage() {
           </p>
           <p style={{ margin: 0 }}>
             <strong>Email:</strong> {user?.email || "On file with your account"}
-          </p>
-          <p style={{ margin: "10px 0 0 0", color: "#ccc", fontSize: 14 }}>
-            Contact info is pulled from your account automatically.
           </p>
         </div>
 

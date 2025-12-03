@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(false);
         localStorage.removeItem('user_data');
       } finally {
-        console.log('[AuthContext] Auth check complete. isAuthenticated:', isAuthenticated);
+        console.log('[AuthContext] Auth check complete.');
         setLoading(false);
       }
     };
@@ -99,4 +99,3 @@ export const AuthProvider = ({ children }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-

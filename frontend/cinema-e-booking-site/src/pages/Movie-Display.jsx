@@ -26,12 +26,21 @@ const formatDateShort = (dateString) => {
     });
 };
 
+const formatDateLong = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+    });
+};
+
 function MovieDisplay({ movie, dispShowtimes }) {
-    const showtimes = movie?.shows || [];
     const rating = (movie.mpaaRating || "NR").replace(/_/g, " ");
 
     // Group showtimes by date
     const groupedShowtimes = useMemo(() => {
+        const showtimes = movie?.shows || [];
         if (!showtimes.length) return [];
         
         const grouped = showtimes.reduce((acc, show) => {
@@ -39,13 +48,10 @@ function MovieDisplay({ movie, dispShowtimes }) {
             if (!acc[dateKey]) {
                 acc[dateKey] = {
                     date: dateKey,
-                    times: [],
+                    shows: [],
                 };
             }
-            acc[dateKey].times.push({
-                id: show.id,
-                time: formatTime(show.startTime),
-            });
+            acc[dateKey].shows.push(show);
             return acc;
         }, {});
 
@@ -53,7 +59,7 @@ function MovieDisplay({ movie, dispShowtimes }) {
         return Object.values(grouped)
             .sort((a, b) => new Date(a.date) - new Date(b.date))
             .slice(0, 3);
-    }, [showtimes]);
+    }, [movie]);
 
     const detailsLink = `/details/${movie.title.replace(/\s+/g, "-").toLowerCase()}`;
 
@@ -89,10 +95,20 @@ function MovieDisplay({ movie, dispShowtimes }) {
                                     {formatDateShort(group.date)}
                                 </span>
                                 <div className="moviecard__showtime-times">
-                                    {group.times.map((show) => (
-                                        <span key={show.id} className="moviecard__showtime">
-                                            {show.time}
-                                        </span>
+                                    {group.shows.map((show) => (
+                                        <Link
+                                            key={show.id}
+                                            to={`/booking/${movie.title.replace(/\s+/g, "-").toLowerCase()}`}
+                                            state={{
+                                                movie,
+                                                show,
+                                                showtime: `${formatDateLong(show.date)} at ${formatTime(show.startTime)}`,
+                                            }}
+                                            className="moviecard__showtime moviecard__showtime--link"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            {formatTime(show.startTime)}
+                                        </Link>
                                     ))}
                                 </div>
                             </div>

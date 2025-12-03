@@ -1440,9 +1440,21 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
         // Use native SQL to avoid loading entities with encrypted fields that may fail decryption
         // Wrap each in try-catch since tables may not exist on fresh database
         String[] tables = {
-            "ticket", "booking", "show", "review", "movie", 
-            "payment_method", "customer_promotions", "customer", 
-            "promotion", "ticket_category", "showroom", "theater", "cinema", "admin"
+            // delete from child tables first to avoid FK issues
+            "ticket",
+            "booking",
+            "show",
+            "review",
+            "movie",
+            "payment_method",
+            "customer_promotion",
+            "customer",
+            "promotion",
+            "ticket_category",
+            "showroom",
+            "theater",
+            "cinema",
+            "admin"
         };
         for (String table : tables) {
             try {

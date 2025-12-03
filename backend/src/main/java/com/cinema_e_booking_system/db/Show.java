@@ -18,7 +18,7 @@ public class Show {
     @JsonManagedReference("show-tickets")
     private final List<Ticket> tickets = new ArrayList<>();
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     // duration in minutes
     private int duration;

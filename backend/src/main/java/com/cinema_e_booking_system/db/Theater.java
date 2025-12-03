@@ -15,7 +15,7 @@ public class Theater {
      * The primary key of a theater.
      */
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     /**

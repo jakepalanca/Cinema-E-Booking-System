@@ -24,7 +24,7 @@ public class Booking {
      * The primary key of the booking.
      */
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * The customer that owns this booking.

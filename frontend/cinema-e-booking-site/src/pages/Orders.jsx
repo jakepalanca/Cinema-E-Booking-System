@@ -32,7 +32,7 @@ export default function Orders() {
     <>
       <Navbar />
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem", color: "var(--text-primary)" }}>
-        <div className="welcome-blurb" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem", marginBottom: orders.length > 0 ? "1.5rem" : 0 }}>
+        <div className="welcome-blurb" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem", marginBottom: "0.5rem" }}>
           <div>
             <h2 style={{ marginBottom: "0.5rem" }}>My Orders</h2>
             <p style={{ color: "var(--text-muted)" }}>

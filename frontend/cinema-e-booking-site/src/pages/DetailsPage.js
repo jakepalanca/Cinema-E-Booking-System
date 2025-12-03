@@ -1,4 +1,5 @@
 // src/DetailsPage.js
+import { useState, useEffect } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import Navbar from './Navbar.jsx';
 import { useAuth } from '../contexts/AuthContext';
@@ -8,10 +9,63 @@ export default function DetailsPage() {
   const { state } = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const movie = state?.movie;
+  const [movie, setMovie] = useState(state?.movie || null);
+  const [loading, setLoading] = useState(!state?.movie);
+  const [error, setError] = useState(null);
 
-  if (!movie) {
-    return <div style={{ padding: 20, textAlign: "center" }}>Movie not found. Please navigate from the homepage.</div>;
+  // If no movie in state, fetch from API
+  useEffect(() => {
+    if (state?.movie) {
+      setMovie(state.movie);
+      setLoading(false);
+      return;
+    }
+
+    // Fetch movie by matching the URL slug to the movie title
+    const fetchMovie = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/return-all");
+        if (!response.ok) throw new Error("Failed to fetch movies");
+        const data = await response.json();
+        
+        // Find movie where title slug matches the URL param
+        const found = (data.content || []).find(m => 
+          m.title.replace(/\s+/g, "-").toLowerCase() === movieId
+        );
+        
+        if (found) {
+          setMovie(found);
+        } else {
+          setError("Movie not found");
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMovie();
+  }, [movieId, state?.movie]);
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div style={{ padding: 20, textAlign: "center", color: "white" }}>Loading movie details...</div>
+      </>
+    );
+  }
+
+  if (error || !movie) {
+    return (
+      <>
+        <Navbar />
+        <div style={{ padding: 20, textAlign: "center", color: "white" }}>
+          {error || "Movie not found. Please navigate from the homepage."}
+        </div>
+      </>
+    );
   }
 
   // Extract YouTube video ID from trailer link

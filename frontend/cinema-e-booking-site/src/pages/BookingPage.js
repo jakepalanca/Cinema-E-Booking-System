@@ -1,28 +1,23 @@
 // src/BookingPage.js
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams, Link } from "react-router-dom";
 import Navbar from './Navbar.jsx';
 import { useAuth } from "../contexts/AuthContext.jsx";
 
 
 export default function BookingPage() {
+  const { movieId } = useParams();
   const { state } = useLocation();
   const { user } = useAuth();
-  const movie = state?.movie;
-  const show = state?.show;
-  const title = movie?.title || state?.title || "Movie Title";
-  const showtime = state?.showtime || "Showtime";
-
-  // Debug logging
-  useEffect(() => {
-    console.log("BookingPage state:", { movie, show });
-    console.log("Show showroom:", show?.showroom);
-  }, [movie, show]);
-
+  
+  const [movie, setMovie] = useState(state?.movie || null);
+  const [show, setShow] = useState(state?.show || null);
+  const [loading, setLoading] = useState(!state?.movie || !state?.show);
+  const [missingShow, setMissingShow] = useState(false);
   const [ticketCategories, setTicketCategories] = useState([]);
   const [tickets, setTickets] = useState([{ category: "", seat: null }]);
   const [selectedSeats, setSelectedSeats] = useState([]);
-  const [showroomSeats, setShowroomSeats] = useState({ rows: 8, cols: 10 }); // Default seat layout
+  const [showroomSeats, setShowroomSeats] = useState({ rows: 8, cols: 10 });
   const [occupiedSeats, setOccupiedSeats] = useState([]);
   const [showDetails, setShowDetails] = useState(null);
   const [showroomId, setShowroomId] = useState(null);
@@ -30,6 +25,52 @@ export default function BookingPage() {
   const [promoCodeInput, setPromoCodeInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState(null);
   const [promoMessage, setPromoMessage] = useState("");
+
+  const title = movie?.title || state?.title || "Movie Title";
+  const showtime = state?.showtime || "Showtime";
+
+  // If no movie/show in state, try to fetch movie and prompt for showtime selection
+  useEffect(() => {
+    if (state?.movie && state?.show) {
+      setMovie(state.movie);
+      setShow(state.show);
+      setLoading(false);
+      return;
+    }
+
+    // Try to fetch the movie at least
+    const fetchMovie = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/return-all");
+        if (!response.ok) throw new Error("Failed to fetch movies");
+        const data = await response.json();
+        
+        const found = (data.content || []).find(m => 
+          m.title.replace(/\s+/g, "-").toLowerCase() === movieId
+        );
+        
+        if (found) {
+          setMovie(found);
+          // If we found the movie but don't have show data, prompt user
+          if (!state?.show) {
+            setMissingShow(true);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch movie:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMovie();
+  }, [movieId, state?.movie, state?.show]);
+
+  // Debug logging
+  useEffect(() => {
+    console.log("BookingPage state:", { movie, show });
+    console.log("Show showroom:", show?.showroom);
+  }, [movie, show]);
 
   // Fetch full show details with showroom info
   useEffect(() => {
@@ -153,6 +194,68 @@ export default function BookingPage() {
         .catch(err => console.warn("Failed to fetch showroom seats:", err));
     }
   }, [show, showroomId]);
+
+  // Show error if we're missing the show selection - AFTER all hooks
+  if (!loading && (missingShow || !show)) {
+    return (
+      <>
+        <Navbar />
+        <div style={{ 
+          padding: 40, 
+          maxWidth: 600, 
+          margin: "0 auto", 
+          textAlign: "center", 
+          color: "white" 
+        }}>
+          <h2>Showtime Not Selected</h2>
+          <p style={{ color: "#ccc", marginBottom: 24 }}>
+            Please select a specific showtime to book tickets.
+          </p>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+            {movie ? (
+              <Link 
+                to={`/details/${movie.title.replace(/\s+/g, "-").toLowerCase()}`}
+                state={{ movie }}
+                style={{
+                  padding: "12px 24px",
+                  backgroundColor: "#dc3545",
+                  color: "white",
+                  textDecoration: "none",
+                  borderRadius: 6,
+                  fontWeight: 600
+                }}
+              >
+                View {movie.title} Showtimes
+              </Link>
+            ) : null}
+            <Link 
+              to="/showtimes"
+              style={{
+                padding: "12px 24px",
+                backgroundColor: "#333",
+                color: "white",
+                textDecoration: "none",
+                borderRadius: 6,
+                fontWeight: 600,
+                border: "1px solid #555"
+              }}
+            >
+              Browse All Showtimes
+            </Link>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div style={{ padding: 20, textAlign: "center", color: "white" }}>Loading...</div>
+      </>
+    );
+  }
 
   const addTicket = () => {
     setTickets([...tickets, { category: "", seat: null }]);

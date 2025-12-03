@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import "../css/ForgotPassword.css"
+import "../css/Login.css";
 import Navbar from "./Navbar.jsx";
 
 function ForgotPassword() {
@@ -35,30 +35,33 @@ function ForgotPassword() {
             setLoading(false);
         }
     };
+
     return(
         <>
             <Navbar />
-            <div className="forgot-password-container">
+            <div className="login-div">
                 <h2>Forgot Password</h2>
-                <form onSubmit={handleSubmit} className="forgot-password-form">
-                    <label>
-                        Enter your email:
-                        <input
-                            type="text"
-                            value={emailOrUsername}
-                            onChange={(e) => setEmailOrUsername(e.target.value)}
-                            required
-                        />
-                    </label>
+                <form onSubmit={handleSubmit} className="login-form">
+                    <input
+                        type="text"
+                        value={emailOrUsername}
+                        onChange={(e) => setEmailOrUsername(e.target.value)}
+                        placeholder="Email or username"
+                        required
+                        autoComplete="email"
+                    />
                     <button type="submit" disabled={loading}>
-                        {loading ? "Sending..." : "Submit"}
+                        {loading ? "Sending..." : "Send Reset Link"}
                     </button>
+                    {message && <p className="info-message">{message}</p>}
                 </form>
-
-                {message && <p className="info-message">{message}</p>}
+                <ul className="login-links">
+                    <li><Link to="/login">Back to Sign In</Link></li>
+                    <li><Link to="/register">Sign Up</Link></li>
+                </ul>
             </div>
         </>
-    )
-};
+    );
+}
 
 export default ForgotPassword;

@@ -5,7 +5,7 @@ import Navbar from "./Navbar.jsx";
 import authService from '../services/authService.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 
-function AdminLogin(){
+function AdminLogin() {
     const [credentials, setCredentials] = useState({
         emailOrUsername: "",
         password: "",
@@ -16,19 +16,19 @@ function AdminLogin(){
     const { login } = useAuth();
 
     const handleChange = (e) => {
-        const {name, value} = e.target;
-        setCredentials({...credentials, [name]: value});
+        const { name, value } = e.target;
+        setCredentials({ ...credentials, [name]: value });
     };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setMessage("");
         try {
-            // Use the same login endpoint
             const res = await fetch("http://localhost:8080/login", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
-                credentials: 'include', // Include cookies
+                credentials: 'include',
                 body: JSON.stringify({
                     emailOrUsername: credentials.emailOrUsername,
                     password: credentials.password,
@@ -37,13 +37,11 @@ function AdminLogin(){
             if (res.ok) {
                 const data = await res.json();
                 
-                // Verify it's an admin
                 if (data.role !== 'admin') {
                     setMessage("Access denied. Admin credentials required.");
                     return;
                 }
 
-                // Token is now in HTTP-only cookie, so we only store user data
                 const userData = {
                     email: data.email,
                     id: data.id,
@@ -70,41 +68,42 @@ function AdminLogin(){
             setLoading(false);
         }
     };
+
     return (
         <>
             <Navbar />
             <div className="login-div">
-                <h2>Admin Sign In</h2>
+                <h2>Admin Portal Sign In</h2>
                 <form onSubmit={handleSubmit} className="login-form">
-                    <label>
-                        Email or Username:
-                        <input
-                            type="text"
-                            name="emailOrUsername"
-                            value={credentials.emailOrUsername}
-                            onChange={handleChange}
-                            placeholder="Enter admin email or username"
-                            required
-                        />
-                    </label>
-                    <label>
-                        Password:
-                        <input
-                            type="password"
-                            name="password"
-                            value={credentials.password}
-                            onChange={handleChange}
-                            placeholder="Enter password"
-                            required
-                        />
-                    </label>
+                    <input
+                        type="text"
+                        name="emailOrUsername"
+                        value={credentials.emailOrUsername}
+                        onChange={handleChange}
+                        placeholder="Admin email or username"
+                        required
+                        autoComplete="username"
+                    />
+                    <input
+                        type="password"
+                        name="password"
+                        value={credentials.password}
+                        onChange={handleChange}
+                        placeholder="Password"
+                        required
+                        autoComplete="current-password"
+                    />
                     <button type="submit" disabled={loading}>
                         {loading ? "Logging in..." : "Login"}
                     </button>
                     {message && <p className="info-message">{message}</p>}
                 </form>
+                <ul className="login-links">
+                    <li><Link to="/login">Back to Sign In</Link></li>
+                </ul>
             </div>
         </>
     );
 }
+
 export default AdminLogin;

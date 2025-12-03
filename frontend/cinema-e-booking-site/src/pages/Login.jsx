@@ -150,7 +150,7 @@ function Login() {
                 <ul className="login-links">
                     <li><Link to="/forgot-password">Forgot password?</Link></li>
                     <li><Link to="/register">Sign Up</Link></li>
-                    <li><Link to="/admin-login">Admin Sign In</Link></li>
+                    <li><Link to="/admin-login">Admin Portal</Link></li>
                 </ul>
             </div>
         </>

@@ -4,6 +4,8 @@ import com.cinema_e_booking_system.backend.EmailRequest;
 import com.cinema_e_booking_system.backend.TicketRequest;
 
 import com.cinema_e_booking_system.db.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -1175,6 +1177,7 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
     /**
      * The endpoint to initialize the database.
      */
+    @Transactional
     @GetMapping("/initialize-db")
     public void initializeDb() {
         clearAllData();
@@ -1184,6 +1187,7 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
         Date weekend = Date.valueOf(LocalDate.now().plusDays(2));
         Date nextWeek = Date.valueOf(LocalDate.now().plusDays(7));
 
+        Time brunch = Time.valueOf(LocalTime.of(10, 30));
         Time matinee = Time.valueOf(LocalTime.of(12, 0));
         Time afternoon = Time.valueOf(LocalTime.of(15, 15));
         Time evening = Time.valueOf(LocalTime.of(18, 45));
@@ -1335,34 +1339,27 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
         }
 
         List<Show> scheduledShows = new ArrayList<>();
-        int roomIndex = 0;
-        int movieIndex = 0;
-        for (Movie movie : savedMovies) {
-            if (movieIndex % 3 == 0){
-                movieIndex++;
-                continue;
+        List<Date> dateSlots = List.of(today, tomorrow, weekend, nextWeek);
+        List<Time> timeSlots = List.of(brunch, matinee, afternoon, evening, lateShow);
+        int slotGridSize = showrooms.size() * timeSlots.size();
+        for (int movieIdx = 0; movieIdx < savedMovies.size(); movieIdx++) {
+            Movie movie = savedMovies.get(movieIdx);
+            int baseDuration = 105 + (movie.getTitle().length() % 25);
+
+            for (int dateIdx = 0; dateIdx < dateSlots.size(); dateIdx++) {
+                int slot = (movieIdx + dateIdx * savedMovies.size()) % slotGridSize;
+                int roomIndex = slot / timeSlots.size();
+                int timeIndex = slot % timeSlots.size();
+
+                Date showDate = dateSlots.get(dateIdx);
+                Time startTime = timeSlots.get(timeIndex);
+                int duration = baseDuration + (dateIdx * 5);
+
+                Showroom assignedRoom = showrooms.get(roomIndex);
+                Show scheduledShow = new Show(duration, showDate, startTime, addMinutes(startTime, duration));
+                scheduledShow.setShowroom(assignedRoom);
+                scheduledShows.add(movieService.addShow(movie.getId(), scheduledShow, true));
             }
-            Showroom matineeRoom = showrooms.get(roomIndex % showrooms.size());
-            Showroom afternoonRoom = showrooms.get((roomIndex + 1) % showrooms.size());
-            Showroom eveningRoom = showrooms.get((roomIndex + 2) % showrooms.size());
-            roomIndex++;
-            movieIndex++;
-
-            int matineeDuration = 120 + (movie.getTitle().length() % 20);
-            int afternoonDuration = 130 + (movie.getTitle().length() % 15);
-            int eveningDuration = 110 + (movie.getTitle().length() % 10);
-
-            Show matineeShow = new Show(matineeDuration, today, matinee, addMinutes(matinee, matineeDuration));
-            matineeShow.setShowroom(matineeRoom);
-            scheduledShows.add(movieService.addShow(movie.getId(), matineeShow, true));
-
-            Show afternoonShow = new Show(afternoonDuration, tomorrow, afternoon, addMinutes(afternoon, afternoonDuration));
-            afternoonShow.setShowroom(afternoonRoom);
-            scheduledShows.add(movieService.addShow(movie.getId(), afternoonShow, true));
-
-            Show lateNightShow = new Show(eveningDuration, weekend, lateShow, addMinutes(lateShow, eveningDuration));
-            lateNightShow.setShowroom(eveningRoom);
-            scheduledShows.add(movieService.addShow(movie.getId(), lateNightShow, true));
 
             movieService.addReview(movie.getId(), new Review(5, movie.getTitle() + " was incredible on the big screen."));
             movieService.addReview(movie.getId(), new Review(4, "Crowd loved the show and sound design."));
@@ -1430,25 +1427,30 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
     /**
      * The endpoint to clear the database.
      */
+    @Transactional
     @GetMapping("/clear-db")
     public void clearDb() {
         clearAllData();
     }
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     private void clearAllData() {
-        ticketRepository.deleteAll();
-        bookingRepository.deleteAll();
-        showRepository.deleteAll();
-        reviewRepository.deleteAll();
-        movieRepository.deleteAll();
-        paymentMethodRepository.deleteAll();
-        customerRepository.deleteAll();
-        promotionRepository.deleteAll();
-        ticketCategoryRepository.deleteAll();
-        showroomRepository.deleteAll();
-        theaterRepository.deleteAll();
-        cinemaRepository.deleteAll();
-        adminRepository.deleteAll();
+        // Use native SQL to avoid loading entities with encrypted fields that may fail decryption
+        // Wrap each in try-catch since tables may not exist on fresh database
+        String[] tables = {
+            "ticket", "booking", "show", "review", "movie", 
+            "payment_method", "customer_promotions", "customer", 
+            "promotion", "ticket_category", "showroom", "theater", "cinema", "admin"
+        };
+        for (String table : tables) {
+            try {
+                entityManager.createNativeQuery("DELETE FROM " + table).executeUpdate();
+            } catch (Exception e) {
+                // Table may not exist on fresh database - ignore
+            }
+        }
     }
 
     private Time addMinutes(Time startTime, int minutes) {

@@ -1,30 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from './Navbar.jsx';
-import "../css/EditProfile.css";
+import "../css/RegistrationPage.css";
+import AddressFields from '../components/AddressFields.jsx';
+import PaymentCardForm from '../components/PaymentCardForm.jsx';
 import api from '../services/api.js';
 import { useAuth } from '../contexts/AuthContext';
 
-export default function Profile() {
+export default function EditProfile() {
     const { user, isAuthenticated, loading: authLoading } = useAuth();
     const [customer, setCustomer] = useState(null);
-    const [form, setForm] = useState({ firstName: '', lastName: '', phoneNumber: '', address: '', city: '', state: '', zipCode: '', country: '' });
-    const [password, setPassword] = useState('');
-    const [currentPasswordInput, setCurrentPasswordInput] = useState('');
-    const [promotions, setPromotions] = useState([]);
-    const [allPromotions, setAllPromotions] = useState([]);
+    const [formData, setFormData] = useState({
+        email: "",
+        username: "",
+        firstName: "",
+        lastName: "",
+        phoneNumber: "",
+        currentPassword: "",
+        newPassword: "",
+        registeredForPromos: false,
+        address: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: "",
+    });
     const [paymentMethods, setPaymentMethods] = useState([]);
-    const [newCard, setNewCard] = useState({ cardNumber: '', cardHolderFirstName: '', cardHolderLastName: '', expirationDate: '', securityCode: '', zipCode: '', country: '', state: '', city: '', address: '' });
-    const [msg, setMsg] = useState('');
-    const [localOnly, setLocalOnly] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [dataLoading, setDataLoading] = useState(true);
+    const [message, setMessage] = useState("");
     const navigate = useNavigate();
 
+    // Fetch customer data and prefill form
     useEffect(() => {
-        // Wait for auth to finish loading
         if (authLoading) return;
 
-        // If not authenticated, redirect to login
         if (!isAuthenticated || !user) {
             navigate('/login');
             return;
@@ -32,7 +42,6 @@ export default function Profile() {
 
         const email = user.email;
 
-        // fetch customer by email from backend using authenticated API
         api.get(`/customers/by-email?email=${encodeURIComponent(email)}`)
             .then(r => {
                 if (!r.ok) throw new Error('Customer not found');
@@ -41,249 +50,198 @@ export default function Profile() {
             .then(data => {
                 setCustomer(data);
                 setPaymentMethods(data.paymentMethods || []);
-                setPromotions(data.promotions || []);
-                setLocalOnly(false);
+                // Prefill form with existing data
+                setFormData({
+                    email: data.email || "",
+                    username: data.username || "",
+                    firstName: data.firstName || "",
+                    lastName: data.lastName || "",
+                    phoneNumber: data.phoneNumber || "",
+                    currentPassword: "",
+                    newPassword: "",
+                    registeredForPromos: data.registeredForPromos || false,
+                    address: data.address || "",
+                    city: data.city || "",
+                    state: data.state || "",
+                    zipCode: data.zipCode || "",
+                    country: data.country || "",
+                });
             })
             .catch((err) => {
                 console.error('Failed to fetch customer data:', err);
-                // Use auth context data as fallback instead of redirecting
+                // Use auth context data as fallback
                 setCustomer({ 
                     email: user.email, 
                     firstName: user.firstName || '',
-                    lastName: '',
                     id: user.id
                 });
-                setLocalOnly(true);
-                setMsg('Could not load full profile data. Some features may be limited.');
+                setFormData(prev => ({
+                    ...prev,
+                    email: user.email || "",
+                    firstName: user.firstName || "",
+                }));
+                setMessage('Could not load full profile data. Some features may be limited.');
             })
             .finally(() => {
                 setDataLoading(false);
             });
-
-        // fetch all promotions
-        fetch('http://localhost:8080/promotions')
-            .then(r => r.json())
-            .then(list => setAllPromotions(list))
-            .catch(() => setAllPromotions([]));
     }, [authLoading, isAuthenticated, user, navigate]);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm(prev => ({ ...prev, [name]: value }));
+        const { name, value, type, checked } = e.target;
+        setFormData({
+            ...formData, 
+            [name]: type === "checkbox" ? checked : value, 
+        });
     };
 
-    const handleSave = async (e) => {
-        e.preventDefault();
-        if (!customer) return;
-    
-        // Prepare base payload with profile info (excluding password)
-        // Use form values if provided, otherwise keep existing customer data
-        const payload = { 
-            ...customer, 
-            firstName: form.firstName || customer.firstName,
-            lastName: form.lastName || customer.lastName,
-            phoneNumber: form.phoneNumber || customer.phoneNumber,
-            address: form.address || customer.address,
-            city: form.city || customer.city,
-            state: form.state || customer.state,
-            zipCode: form.zipCode || customer.zipCode,
-            country: form.country || customer.country
-        };
-    
-        // Handle password update logic
-        if (password) {
-            // If trying to change password, current password is required
-            if (!currentPasswordInput) {
-                setMsg('Please enter your current password to change password');
-                return;
-            }
-            
-            // Verify current password against backend before allowing update
-            try {
-                const verifyResponse = await fetch('http://localhost:8080/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include', // Include cookies
-                    body: JSON.stringify({
-                        emailOrUsername: customer.email,
-                        password: currentPasswordInput
-                    })
-                });
-                
-                if (!verifyResponse.ok) {
-                    setMsg('Current password is incorrect');
-                    return;
-                }
-                
-                // Only add new password to payload if current password was correct
-                payload.password = password;
-            } catch (error) {
-                setMsg('Failed to verify current password');
-                return;
-            }
-        }
-        
-        // Local save (no backend user)
-        if (localOnly || !customer?.id) {
-            const stored = JSON.parse(localStorage.getItem('cinemaUser') || '{}');
-            Object.assign(stored, payload);
-            localStorage.setItem('cinemaUser', JSON.stringify(stored));
-            setCustomer(stored);
-            setMsg(password ? 'Password and profile updated successfully' : 'Profile updated successfully');
-            setPassword('');
-            setCurrentPasswordInput('');
-            // Keep the form populated with the saved values (don't clear)
-            setForm({
-                firstName: stored.firstName || '',
-                lastName: stored.lastName || '',
-                phoneNumber: stored.phoneNumber || '',
-                address: stored.address || '',
-                city: stored.city || '',
-                state: stored.state || '',
-                zipCode: stored.zipCode || '',
-                country: stored.country || ''
-            });
-            return;
-        }
-    
-        // Backend save
-        api.put(`/customers/${customer.id}`, payload)
-            .then(r => {
-                if (!r.ok) throw new Error('Save failed');
-                return r.json();
-            })
-            .then(updated => {
-                setCustomer(updated);
-                setMsg(password ? 'Password and profile updated successfully' : 'Profile updated successfully');
-                setPassword('');
-                setCurrentPasswordInput('');
-                // Keep the form populated with the saved values (don't clear)
-                setForm({
-                    firstName: updated.firstName || '',
-                    lastName: updated.lastName || '',
-                    phoneNumber: updated.phoneNumber || '',
-                    address: updated.address || '',
-                    city: updated.city || '',
-                    state: updated.state || '',
-                    zipCode: updated.zipCode || '',
-                    country: updated.country || ''
-                });
-            })
-            .catch(() => setMsg('Failed to save profile'));
+    const handleAddressChange = ({ name, value }) => {
+        setFormData({ ...formData, [name]: value });
     };
-    
 
-
-    const handleAddCard = (e) => {
-        e.preventDefault();
-        if (!customer) return;
-
-
-        if ((paymentMethods || []).length >= 4) {
-            setMsg('Cannot add more than 3 payment cards');
+    const handleAddCard = (card) => {
+        if (!customer?.id) {
+            // Local-only: just add to state
+            const fakeCard = { ...card, id: Date.now() };
+            setPaymentMethods(prev => [...prev, fakeCard]);
+            setMessage('Card added (local only)');
             return;
         }
-      const ExpirationDate = `20${newCard.expYear}-${newCard.expMonth}-01`;
 
-        // Prepare PaymentMethod object similar to backend entity
+        // Convert card for backend
+        const [year, month] = card.expirationDate.split("-");
         const pmPayload = {
-            cardNumber: newCard.cardNumber,
-            cardHolderFirstName: newCard.cardHolderFirstName,
-            cardHolderLastName: newCard.cardHolderLastName,
-            expirationDate: ExpirationDate, // should be yyyy-mm-dd
-            securityCode: Number(newCard.securityCode),
-            //changed due to casting issue
-            zipCode: 30338,
-            country: newCard.country,
-            state: newCard.state,
-            city: newCard.city,
-            address: newCard.address
+            cardNumber: card.cardNumber,
+            cardHolderFirstName: card.cardHolderFirstName,
+            cardHolderLastName: card.cardHolderLastName,
+            expirationDate: `${year}-${month}-01`,
+            securityCode: Number(card.securityCode),
+            zipCode: parseInt(card.billingAddress?.zipCode) || 0,
+            country: card.billingAddress?.country || "",
+            state: card.billingAddress?.state || "",
+            city: card.billingAddress?.city || "",
+            address: card.billingAddress?.address || "",
         };
-
-        if (localOnly || !customer?.id) {
-            // create local payment method (fake id)
-            const fake = { ...pmPayload, id: Date.now() };
-            const updated = [...paymentMethods, fake];
-            setPaymentMethods(updated);
-            // persist to local storage
-            const storedRaw = localStorage.getItem('cinemaUser');
-            const stored = storedRaw ? JSON.parse(storedRaw) : {};
-            stored.paymentMethods = updated;
-            localStorage.setItem('cinemaUser', JSON.stringify(stored));
-            setNewCard({ cardNumber: '', cardHolderFirstName: '', cardHolderLastName: '', expirationDate: '', securityCode: '', zipCode: '', country: '', state: '', city: '', address: '' });
-            setMsg('Card added');
-            return;
-        }
 
         api.put(`/customers/${customer.id}/payment-methods`, pmPayload)
             .then(r => r.json())
             .then(saved => {
                 setPaymentMethods(prev => [...prev, saved]);
-                setNewCard({ cardNumber: '', cardHolderFirstName: '', cardHolderLastName: '', expirationDate: '', securityCode: '', zipCode: '', country: '', state: '', city: '', address: '' });
-                setMsg('Card added');
+                setMessage('Card added successfully');
             })
-            .catch(() => setMsg('Failed to add card'));
+            .catch(() => setMessage('Failed to add card'));
     };
 
-    const handleDeleteCard = (id) => {
-        if (localOnly || !customer?.id) {
-            const updated = paymentMethods.filter(p => p.id !== id);
-            setPaymentMethods(updated);
-            const storedRaw = localStorage.getItem('cinemaUser');
-            const stored = storedRaw ? JSON.parse(storedRaw) : {};
-            stored.paymentMethods = updated;
-            localStorage.setItem('cinemaUser', JSON.stringify(stored));
-            setMsg('Card removed');
+    const removeCard = (cardId) => {
+        if (!customer?.id) {
+            setPaymentMethods(prev => prev.filter(c => c.id !== cardId));
+            setMessage('Card removed');
             return;
         }
 
-        api.delete(`/payment-methods/${id}`)
+        api.delete(`/payment-methods/${cardId}`)
             .then(r => {
                 if (!r.ok) throw new Error('Delete failed');
-                setPaymentMethods(prev => prev.filter(p => p.id !== id));
-                setMsg('Card removed');
+                setPaymentMethods(prev => prev.filter(c => c.id !== cardId));
+                setMessage('Card removed');
             })
-            .catch(() => setMsg('Failed to remove card'));
+            .catch(() => setMessage('Failed to remove card'));
     };
 
-    const isPromoRegistered = (promo) => {
-        return promotions.some(p => p.id === promo.id);
-    };
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!customer) return;
 
-    const togglePromotion = (promo) => {
-    
-        if (!customer) {
-            return <div style={{ color: "white", textAlign: "center", marginTop: "100px" }}>
-                Loading your profile...
-            </div>;
+        setLoading(true);
+        setMessage("");
+
+        // Prepare payload
+        const payload = {
+            ...customer,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            phoneNumber: formData.phoneNumber,
+            address: formData.address || undefined,
+            city: formData.city || undefined,
+            state: formData.state || undefined,
+            zipCode: formData.zipCode || undefined,
+            country: formData.country || undefined,
+            registeredForPromos: formData.registeredForPromos,
+        };
+
+        // Handle password change
+        if (formData.newPassword) {
+            if (!formData.currentPassword) {
+                setMessage('Please enter your current password to change password');
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const verifyResponse = await fetch('http://localhost:8080/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        emailOrUsername: customer.email,
+                        password: formData.currentPassword
+                    })
+                });
+
+                if (!verifyResponse.ok) {
+                    setMessage('Current password is incorrect');
+                    setLoading(false);
+                    return;
+                }
+
+                payload.password = formData.newPassword;
+            } catch (error) {
+                setMessage('Failed to verify current password');
+                setLoading(false);
+                return;
+            }
         }
-    
-        const registered = isPromoRegistered(promo);
-        const url = `/customers/${customer.id}/promotions/${promo.id}`;
-        if (registered) {
-            api.delete(url)
-                .then(r => {
-                    if (!r.ok) throw new Error('Promo toggle failed');
-                    setPromotions(prev => prev.filter(p => p.id !== promo.id));
-                })
-                .catch(() => setMsg('Failed to update promotions'));
-        } else {
-            api.post(url, {})
-                .then(r => {
-                    if (!r.ok) throw new Error('Promo toggle failed');
-                    setPromotions(prev => [...prev, promo]);
-                })
-                .catch(() => setMsg('Failed to update promotions'));
+
+        // Save to backend
+        if (!customer?.id) {
+            setMessage('Profile updated locally');
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const response = await api.put(`/customers/${customer.id}`, payload);
+            if (!response.ok) throw new Error('Save failed');
+            const updated = await response.json();
+            setCustomer(updated);
+            setFormData(prev => ({
+                ...prev,
+                currentPassword: "",
+                newPassword: "",
+            }));
+            setMessage(formData.newPassword ? 'Profile and password updated successfully!' : 'Profile updated successfully!');
+        } catch (error) {
+            setMessage('Failed to save profile');
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Show loading state while auth or data is loading
+    const defaultAddress = {
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        country: formData.country,
+    };
+
+    // Loading state
     if (authLoading || dataLoading) {
         return (
             <>
                 <Navbar />
-                <div style={{ color: "white", textAlign: "center", marginTop: "100px" }}>
-                    Loading your profile...
+                <div className="registration-div">
+                    <p style={{ color: 'var(--text-muted)' }}>Loading your profile...</p>
                 </div>
             </>
         );
@@ -293,238 +251,129 @@ export default function Profile() {
 
     return (
         <>
-        <Navbar />
-        <div className="profile" style={{ padding: 20, maxWidth: 900, margin: '0 auto', color: 'white' }}>
-            <h2>My Profile</h2>
-            {msg && <div style={{ marginBottom: 12, color: '#0f0' }}>{msg}</div>}
-
-            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <fieldset style={{ border: '1px solid #444', padding: 12 }}>
-                <legend>Personal Information</legend>
-                <label>
-                    Email
-                    <input value={customer.email} disabled style={{ marginLeft: 8 }} />
-                </label>
-                <label>
-                    First name
+            <Navbar />
+            <div className="registration-div">
+                <form onSubmit={handleSubmit} className="registration-form">
+                    <h3>Account Information</h3>
+                    <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        disabled
+                        placeholder="Email"
+                        autoComplete="email"
+                        style={{ opacity: 0.6, cursor: 'not-allowed' }}
+                    />
                     <input 
-                        name="firstName" 
-                        value={form.firstName} 
-                        onChange={handleChange} 
-                        style={{ marginLeft: 8 }} 
+                        type="text"
+                        name="username"
+                        value={formData.username}
+                        disabled
+                        placeholder="Username"
+                        autoComplete="username"
+                        style={{ opacity: 0.6, cursor: 'not-allowed' }}
                     />
-                </label>
-                <label>
-                    Last name
-                    <input 
-                        name="lastName" 
-                        value={form.lastName} 
-                        onChange={handleChange} 
-                        style={{ marginLeft: 8 }} 
+                    
+                    <h4>Change Password</h4>
+                    <input
+                        type="password"
+                        name="currentPassword"
+                        value={formData.currentPassword}
+                        onChange={handleChange}
+                        placeholder="Current password"
+                        autoComplete="current-password"
                     />
-                </label>
-                <label>
-                    Phone number
-                    <input 
-                        name="phoneNumber" 
-                        value={form.phoneNumber} 
-                        onChange={handleChange} 
-                        style={{ marginLeft: 8 }} 
+                    <input
+                        type="password"
+                        name="newPassword"
+                        value={formData.newPassword}
+                        onChange={handleChange}
+                        placeholder="New password (leave blank to keep current)"
+                        autoComplete="new-password"
                     />
-                </label>
-                </fieldset>
 
-                <fieldset style={{ border: '1px solid #444', padding: 12 }}>
-                    <legend>Billing address</legend>
-                    <label>
-                        Address 
-                        <input 
-                            name="address" 
-                            value={form.address} 
-                            onChange={handleChange} 
-                        />
-                    </label>
-                    <label>
-                        City 
-                        <input 
-                            name="city" 
-                            value={form.city} 
-                            onChange={handleChange} 
-                        />
-                    </label>
-                    <label>
-                        State 
-                        <input 
-                            name="state" 
-                            value={form.state} 
-                            onChange={handleChange} 
-                        />
-                    </label>
-                    <label>
-                        Zip 
-                        <input 
-                            name="zipCode" 
-                            value={form.zipCode} 
-                            onChange={handleChange} 
-                        />
-                    </label>
-                    <label>
-                        Country 
-                        <input 
-                            name="country" 
-                            value={form.country} 
-                            onChange={handleChange} 
-                        />
-                    </label>
-                </fieldset>
-
-                <label>
-                    Current password
-                    <input type="password" value={currentPasswordInput} onChange={e => setCurrentPasswordInput(e.target.value)} style={{ marginLeft: 8 }} required={!!password} // required only if changing password
-                    />
-                </label>
-
-                <label>
-                    New password
-                    <input type="password" value={password} onChange={e => setPassword(e.target.value)} style={{ marginLeft: 8 }} />
-                </label>
-
-                <div>
-                    <button type="submit" style={{ marginRight: 8 }}>Save</button>
-                </div>
-            </form>
-
-            <section style={{ marginTop: 24 }}>
-                <h3>Payment Methods</h3>
-                <div>Maximum 3 cards allowed.</div>
-                <ul>
-                    {paymentMethods.map(pm => (
-                        <li key={pm.id} style={{ marginBottom: 8 }}>
-                            **** **** **** {String(pm.cardNumber).slice(-4)} — {pm.cardHolderFirstName} {pm.cardHolderLastName}
-                            <button style={{ marginLeft: 8 }} onClick={() => handleDeleteCard(pm.id)}>Remove</button>
-                        </li>
-                    ))}
-                </ul>
-
-                <form onSubmit={handleAddCard} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-                    <fieldset style={{ border: '1px solid #444', padding: 8 }}>
-                        <legend>Add card</legend>
-                        <div>
+                    <label className="inline-checkbox">
                         <input
-                            placeholder="First name"
-                            name="cardHolderFirstName"
-                            value={newCard.cardHolderFirstName}
-                            onChange={e => setNewCard({...newCard, cardHolderFirstName: e.target.value})}
+                            type="checkbox"
+                            name="registeredForPromos"
+                            checked={formData.registeredForPromos}
+                            onChange={handleChange}
+                        />
+                        Receive promotional emails
+                    </label>
+
+                    <h3>Personal Information</h3>
+                    <div className="naming-section">
+                        <input
+                            type="text"
+                            name="firstName"
+                            value={formData.firstName}
+                            onChange={handleChange}
+                            placeholder="First name *"
                             required
+                            autoComplete="given-name"
                         />
                         <input
-                            placeholder="Last Name"
-                            name="cardHolderLastName"
-                            value={newCard.cardHolderLastName}
-                            onChange={e => setNewCard({...newCard, cardHolderLastName: e.target.value})}
+                            type="text"
+                            name="lastName"
+                            value={formData.lastName}
+                            onChange={handleChange}
+                            placeholder="Last name *"
                             required
+                            autoComplete="family-name"
                         />
+                    </div>
+                    <input
+                        type="tel"
+                        name="phoneNumber"
+                        value={formData.phoneNumber}
+                        onChange={handleChange}
+                        placeholder="Phone number *"
+                        required
+                        pattern="^[\d\s\-\(\)\+]+$"
+                        title="Phone number (digits, spaces, dashes, parentheses)"
+                        autoComplete="tel"
+                    />
+
+                    <h3>Address</h3>
+                    <AddressFields
+                        address={defaultAddress}
+                        onChange={handleAddressChange}
+                    />
+
+                    <h3>Payment Methods</h3>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: '0 0 0.5rem' }}>
+                        Maximum 3 cards allowed. You have {paymentMethods.length} card(s).
+                    </p>
+                    
+                    <PaymentCardForm
+                        onAddCard={handleAddCard}
+                        defaultAddress={defaultAddress}
+                        currentCardCount={paymentMethods.length}
+                    />
+
+                    {paymentMethods.length > 0 && (
+                        <div className="saved-cards">
+                            <h4>Saved Cards</h4>
+                            <ul>
+                                {paymentMethods.map((card) => (
+                                    <li key={card.id}>
+                                        •••• {String(card.cardNumber).slice(-4)} — {card.cardHolderFirstName} {card.cardHolderLastName}
+                                        <button type="button" onClick={() => removeCard(card.id)}>Remove</button>
+                                    </li>
+                                ))}
+                            </ul>
                         </div>
+                    )}
 
-                        <div>
-                        <input
-                            placeholder="Card number"
-                            name="cardNumber"
-                            maxLength={16}
-                            inputMode="numeric"
-                            pattern="\d{16}"
-                            title="Card number must be 16 digits"
-                            value={newCard.cardNumber}
-                            onChange={e => setNewCard({...newCard, cardNumber: e.target.value})}
-                            required
-                        />
-
-                        <input
-                            placeholder="CVV"
-                            name="securityCode"
-                            maxLength={4}
-                            inputMode="numeric"
-                            pattern="\d{3,4}"
-                            title="CVV must be 3-4 digits"
-                            value={newCard.securityCode}
-                            onChange={e => setNewCard({...newCard, securityCode: e.target.value})}
-                            />
-                        <div>
-                            <div style={{ display: 'inline-block', marginLeft: 8 }}> Expiration:</div>
-                            <select
-                                name="expMonth"
-                                required
-                                value={newCard.expMonth || ""}
-                                onChange={e => setNewCard({ ...newCard, expMonth: e.target.value })}
-                            >
-                                <option value="">MM</option>
-                                {[...Array(12)].map((_, i) => {
-                                const month = String(i + 1).padStart(2, "0");
-                                return <option key={month} value={month}>{month}</option>;
-                                })}
-                            </select>
-
-                            <select
-                                name="expYear"
-                                required
-                                value={newCard.expYear || ""}
-                                onChange={e => setNewCard({ ...newCard, expYear: e.target.value })}
-                            >
-                                <option value="">YY</option>
-                                {[...Array(12)].map((_, i) => {
-                                    const year = new Date().getFullYear() + i;
-                                    return <option key={year} value={String(year).slice(-2)}>{year}</option>;
-                                })}
-                            </select>
-                            </div>
-                        </div>
-
-                        <div style={{ marginTop: 8 }}>
-                            <button type="submit" disabled={(paymentMethods||[]).length >= 3}>Add card</button>
-                        </div>
-                    </fieldset>
+                    <div className="form-actions">
+                        <button type="submit" disabled={loading}>
+                            {loading ? "Saving..." : "Save Changes"}
+                        </button>
+                    </div>
+                    {message && <p className="info-message">{message}</p>}
                 </form>
-            </section>
-            
-            <section style={{ marginTop: 24 }}>
-                <h3>Promotions</h3>
-
-                <label className="toggle-wrapper">
-                <input
-                    type="checkbox"
-                    className="toggle-input"
-                    checked={promotions.length === allPromotions.length && allPromotions.length > 0}
-                    onChange={() => {
-                        if (!customer) return;
-
-                        const selectingAll = promotions.length !== allPromotions.length;
-                        setPromotions(selectingAll ? allPromotions : []);
-                        const requestList = selectingAll? allPromotions: promotions;
-
-                        Promise.all(
-                        requestList.map(promo =>
-                        fetch(`http://localhost:8080/customers/${customer.id}/promotions/${promo.id}`, {
-                            method: selectingAll ? "POST" : "DELETE",
-                            credentials: 'include' // Include cookies
-                            })
-                        )
-                    )
-                    .then(() => {
-                        setPromotions(selectingAll ? allPromotions : []);
-                        setMsg(selectingAll
-                            ? "Registered for promotions"
-                            : "Unregistered from promotions"
-                        );
-                    })
-                    .catch(() => setMsg("Failed to update promotions"));
-            }}
-        />
-        <span className="toggle-switch"></span>
-        Receive promotional emails
-        </label>
-    </section>
-
-        </div>
+            </div>
         </>
     );
 }

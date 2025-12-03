@@ -2,6 +2,7 @@ package com.cinema_e_booking_system.db;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 import java.sql.Date;
@@ -106,5 +107,41 @@ public class Show {
 
     public List<Ticket> getTickets() {
         return tickets;
+    }
+
+    @Transient
+    @JsonProperty("theaterName")
+    public String getTheaterName() {
+        if (showroom == null || showroom.getTheater() == null) {
+            return null;
+        }
+        return showroom.getTheater().getName();
+    }
+
+    @Transient
+    @JsonProperty("theaterAddress")
+    public String getTheaterAddress() {
+        if (showroom == null || showroom.getTheater() == null) {
+            return null;
+        }
+        return showroom.getTheater().getAddress();
+    }
+
+    @Transient
+    @JsonProperty("cinemaName")
+    public String getCinemaName() {
+        if (showroom == null || showroom.getTheater() == null || showroom.getTheater().getCinema() == null) {
+            return null;
+        }
+        return showroom.getTheater().getCinema().getName();
+    }
+
+    @Transient
+    @JsonProperty("showroomLabel")
+    public String getShowroomLabel() {
+        if (showroom == null) {
+            return null;
+        }
+        return String.format("Screen %s (%dx%d)", showroom.getId(), showroom.getRoomHeight(), showroom.getRoomWidth());
     }
 }

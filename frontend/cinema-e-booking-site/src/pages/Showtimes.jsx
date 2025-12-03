@@ -62,6 +62,14 @@ function Showtimes() {
         });
     };
 
+    const formatLocation = (show) => {
+        const parts = [];
+        if (show?.cinemaName) parts.push(show.cinemaName);
+        if (show?.theaterName) parts.push(show.theaterName);
+        if (show?.showroomLabel) parts.push(show.showroomLabel);
+        return parts.join(" • ");
+    };
+
     // Group by date then by movie
     const getShowtimesByDate = () => {
         const dateGroups = {};
@@ -286,30 +294,47 @@ function Showtimes() {
                                             }}>
                                                 {movie.filteredShows
                                                     .sort((a, b) => a.startTime.localeCompare(b.startTime))
-                                                    .map(show => (
-                                                        <Link
-                                                            key={show.id}
-                                                            to={`/booking/${movie.title.replace(/\s+/g, "-").toLowerCase()}`}
-                                                            state={{
-                                                                movie,
-                                                                show,
-                                                                showtime: `${formatDate(show.date)} at ${formatTime(show.startTime)}`
-                                                            }}
-                                                            style={{
-                                                                display: "inline-block",
-                                                                padding: "0.5rem 1rem",
-                                                                background: "var(--uga-red)",
-                                                                color: "var(--paper)",
-                                                                borderRadius: "6px",
-                                                                textDecoration: "none",
-                                                                fontSize: "0.875rem",
-                                                                fontWeight: "600",
-                                                                transition: "background 0.2s"
-                                                            }}
-                                                        >
-                                                            {formatTime(show.startTime)}
-                                                        </Link>
-                                                    ))}
+                                                    .map(show => {
+                                                        const locationText = formatLocation(show);
+                                                        return (
+                                                            <Link
+                                                                key={show.id}
+                                                                to={`/booking/${movie.title.replace(/\s+/g, "-").toLowerCase()}`}
+                                                                state={{
+                                                                    movie,
+                                                                    show,
+                                                                    showtime: `${formatDate(show.date)} at ${formatTime(show.startTime)}`,
+                                                                    location: locationText
+                                                                }}
+                                                                style={{
+                                                                    display: "flex",
+                                                                    flexDirection: "column",
+                                                                    alignItems: "flex-start",
+                                                                    padding: "0.65rem 1rem",
+                                                                    background: "var(--uga-red)",
+                                                                    color: "var(--paper)",
+                                                                    borderRadius: "6px",
+                                                                    textDecoration: "none",
+                                                                    fontSize: "0.9rem",
+                                                                    fontWeight: "600",
+                                                                    transition: "background 0.2s",
+                                                                    minWidth: "120px"
+                                                                }}
+                                                            >
+                                                                <span>{formatTime(show.startTime)}</span>
+                                                                {locationText && (
+                                                                    <span style={{ 
+                                                                        fontSize: "0.75rem", 
+                                                                        color: "var(--paper)", 
+                                                                        opacity: 0.85,
+                                                                        fontWeight: 500
+                                                                    }}>
+                                                                        {locationText}
+                                                                    </span>
+                                                                )}
+                                                            </Link>
+                                                        );
+                                                    })}
                                             </div>
                                         </div>
                                     </div>
@@ -324,4 +349,3 @@ function Showtimes() {
 }
 
 export default Showtimes;
-

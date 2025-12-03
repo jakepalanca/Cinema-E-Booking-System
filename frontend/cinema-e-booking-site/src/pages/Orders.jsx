@@ -32,7 +32,7 @@ export default function Orders() {
     <>
       <Navbar />
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem", color: "var(--text-primary)" }}>
-        <div className="welcome-blurb" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
+        <div className="welcome-blurb" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem", marginBottom: orders.length > 0 ? "1.5rem" : 0 }}>
           <div>
             <h2 style={{ marginBottom: "0.5rem" }}>My Orders</h2>
             <p style={{ color: "var(--text-muted)" }}>
@@ -61,17 +61,17 @@ export default function Orders() {
           <div style={{ 
             textAlign: "center", 
             padding: "3rem",
+            marginTop: "0.5rem",
             background: "var(--surface)",
             borderRadius: "var(--radius)",
-            border: "1px solid var(--border)",
-            marginTop: "1.25rem"
+            border: "1px solid var(--border)"
           }}>
             <p style={{ color: "var(--text-muted)", fontSize: "1.1rem", margin: 0 }}>
               No orders saved yet. Complete a booking to see it here.
             </p>
           </div>
         ) : (
-          <div style={{ display: "grid", gap: "1rem", marginTop: "1.25rem" }}>
+          <div style={{ display: "grid", gap: "1rem" }}>
             {orders.map((order) => (
               <div
                 key={order.id}

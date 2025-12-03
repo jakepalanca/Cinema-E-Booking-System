@@ -86,7 +86,7 @@ function Promotions() {
                 padding: "2rem",
                 color: "var(--text-primary)"
             }}>
-                <div className="welcome-blurb">
+                <div className="welcome-blurb" style={{ marginBottom: "1.5rem" }}>
                     <h2 style={{ marginBottom: "0.5rem" }}>Current Promotions</h2>
                     <p style={{ color: "var(--text-muted)" }}>
                         Use these codes at checkout to save on your next movie experience!

@@ -131,7 +131,7 @@ function Showtimes() {
                 padding: "2rem",
                 color: "var(--text-primary)"
             }}>
-                <div className="welcome-blurb">
+                <div className="welcome-blurb" style={{ marginBottom: "1.5rem" }}>
                     <h2 style={{ marginBottom: "0.5rem" }}>Showtimes</h2>
                     <p style={{ color: "var(--text-muted)" }}>
                         Select a date to view available showtimes

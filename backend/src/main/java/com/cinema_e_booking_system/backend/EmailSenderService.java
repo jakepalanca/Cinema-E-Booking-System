@@ -2,6 +2,8 @@ package com.cinema_e_booking_system.backend;
 
 import com.cinema_e_booking_system.db.Customer;
 import com.cinema_e_booking_system.db.Promotion;
+import com.cinema_e_booking_system.db.Ticket;
+import com.cinema_e_booking_system.db.Booking;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
@@ -106,6 +108,48 @@ public class EmailSenderService {
         "Use code: %s for a discount!\n\n" +
         "The Cinema Team",
       customer.getFirstName(), promo.getCode()
+    );
+
+    SimpleMailMessage message = new SimpleMailMessage();
+    message.setFrom("ashvijhosdurg@gmail.com");
+    message.setTo(customer.getEmail());
+    message.setSubject(subject);
+    message.setText(body);
+
+    mailSender.send(message);
+  }
+
+  public void sendOrderConfirmation(Customer customer, /*List<Ticket> tickets,*/ Booking booking) {
+    //iterate through ticketlist, make an array of tickets
+    //extract cost and promocode from booking
+
+    double price = booking.getTotalPrice();
+    boolean promoUsed = false;
+    String promo = null;
+    if (booking.getPromoCode() != null) {
+      promoUsed = true;
+      promo = booking.getPromoCode();
+    }
+    String promoLine = "";
+    if (promoUsed) {
+      promoLine = "Promotion used: " + promo;
+    }
+    /*
+    String ticketLine;
+    for (ticket : tickets) {
+      ticketLine += "\n 1 " + ticket.getTicketCategory() + " ticket. Row: " + ticket.getSeatRow() + " Column: " + ticket.getSeatCol();
+    }
+     */
+
+    String subject = "Order Confirmation";
+    String body = String.format(
+      "Hello %s,\n\n" +
+        "Here is your order confirmation: \n" +
+        "Total Cost: %s\n" +
+        "%s\n" +
+        //"%s" +
+        "\nThe Cinema Team",
+      customer.getFirstName(), price, promoLine//, ticketLine
     );
 
     SimpleMailMessage message = new SimpleMailMessage();

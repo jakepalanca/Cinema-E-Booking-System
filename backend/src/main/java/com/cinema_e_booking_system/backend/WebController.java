@@ -770,8 +770,11 @@ public ResponseEntity<Map<String, Object>> bookSeats(
     // 8. Save everything
     bookingRepository.save(booking);
     showroomRepository.save(room);
+
+    // 9. Send Email
+    senderService.sendOrderConfirmation(customer, booking);
     
-    // 9. Build response
+    // 10. Build response
     Map<String, Object> response = new HashMap<>();
     response.put("message", seats.size() + " tickets booked successfully");
     response.put("bookingId", booking.getId());

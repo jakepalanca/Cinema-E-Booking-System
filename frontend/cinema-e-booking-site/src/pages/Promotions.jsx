@@ -6,6 +6,7 @@ function Promotions() {
     const [promotions, setPromotions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [feedback, setFeedback] = useState("");
 
     useEffect(() => {
         const fetchPromotions = async () => {
@@ -33,11 +34,24 @@ function Promotions() {
     }, []);
 
     const formatDate = (dateString) => {
+        if (!dateString) return "N/A";
         return new Date(dateString).toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",
             year: "numeric"
         });
+    };
+
+    const handleUsePromo = async (promo) => {
+        localStorage.setItem("selectedPromoCode", promo.code);
+        setFeedback(`Promo ${promo.code} saved. It will auto-fill on the booking page.`);
+
+        try {
+            await navigator.clipboard.writeText(promo.code);
+            setFeedback(`Promo ${promo.code} copied and saved for checkout.`);
+        } catch {
+            // Clipboard may fail in some browsers; ignore
+        }
     };
 
     if (loading) {
@@ -72,6 +86,9 @@ function Promotions() {
                     <p style={{ color: "var(--text-muted)" }}>
                         Use these codes at checkout to save on your next movie experience!
                     </p>
+                    {feedback && (
+                        <p style={{ marginTop: "0.5rem", color: "var(--success, #7dd87d)" }}>{feedback}</p>
+                    )}
                 </div>
 
                 {promotions.length === 0 ? (
@@ -166,6 +183,22 @@ function Promotions() {
                                     <span>Valid from {formatDate(promo.startDate)}</span>
                                     <span>Expires {formatDate(promo.endDate)}</span>
                                 </div>
+                                <button
+                                    onClick={() => handleUsePromo(promo)}
+                                    style={{
+                                        marginTop: "1rem",
+                                        width: "100%",
+                                        padding: "0.75rem",
+                                        borderRadius: "8px",
+                                        border: "none",
+                                        background: "var(--uga-red)",
+                                        color: "var(--paper)",
+                                        fontWeight: 700,
+                                        cursor: "pointer"
+                                    }}
+                                >
+                                    Use this code
+                                </button>
                             </div>
                         ))}
                     </div>
@@ -176,4 +209,3 @@ function Promotions() {
 }
 
 export default Promotions;
-

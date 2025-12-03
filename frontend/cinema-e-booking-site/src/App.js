@@ -16,6 +16,7 @@ import ManageMovies from "./pages/ManageMovies";
 import ManageShowings from "./pages/ManageShowings";
 import ManagePromotions from "./pages/ManagePromotions";
 import VerificationPage from "./pages/VerificationPage";
+import Orders from "./pages/Orders.jsx";
 import { useAuth } from "./contexts/AuthContext";
 import './css/App.css';
 
@@ -43,6 +44,11 @@ function App() {
       <Route path="/browse" element={<Browse />} />
       <Route path="/showtimes" element={<Showtimes />} />
       <Route path="/promotions" element={<Promotions />} />
+      <Route path="/orders" element={
+        <ProtectedRoute>
+          <Orders />
+        </ProtectedRoute>
+      } />
       <Route path="/register" element={<RegistrationPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/verify" element={<VerificationPage />} />

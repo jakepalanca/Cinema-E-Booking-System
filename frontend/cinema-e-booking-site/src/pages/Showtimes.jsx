@@ -70,40 +70,39 @@ function Showtimes() {
         return parts.join(" • ");
     };
 
-    // Group by date then by movie
-    const getShowtimesByDate = () => {
-        const dateGroups = {};
+    const sortShows = (shows = []) =>
+        [...shows].sort(
+            (a, b) => new Date(`${a.date}T${a.startTime}`) - new Date(`${b.date}T${b.startTime}`)
+        );
 
-        movies.forEach(movie => {
-            movie.shows?.forEach(show => {
-                // Apply date filter if selected
-                if (selectedDate && show.date !== selectedDate) return;
+    // Group by movie then cinema
+    const getShowtimesByMovie = () => {
+        return movies
+            .map((movie) => {
+                const filteredShows = (movie.shows || []).filter(
+                    (show) => !selectedDate || show.date === selectedDate
+                );
 
-                if (!dateGroups[show.date]) {
-                    dateGroups[show.date] = {};
-                }
+                const cinemaMap = {};
+                filteredShows.forEach((show) => {
+                    const cinemaKey = show.cinemaName || "Cinema";
+                    if (!cinemaMap[cinemaKey]) {
+                        cinemaMap[cinemaKey] = [];
+                    }
+                    cinemaMap[cinemaKey].push(show);
+                });
 
-                if (!dateGroups[show.date][movie.id]) {
-                    dateGroups[show.date][movie.id] = {
-                        ...movie,
-                        filteredShows: []
-                    };
-                }
+                const cinemaGroups = Object.entries(cinemaMap).map(([cinema, shows]) => ({
+                    cinema,
+                    shows: sortShows(shows),
+                }));
 
-                dateGroups[show.date][movie.id].filteredShows.push(show);
-            });
-        });
-
-        // Sort dates
-        const sortedDates = Object.keys(dateGroups).sort((a, b) => new Date(a) - new Date(b));
-        
-        return sortedDates.map(date => ({
-            date,
-            movies: Object.values(dateGroups[date])
-        }));
+                return { ...movie, cinemaGroups };
+            })
+            .filter((m) => m.cinemaGroups.length > 0);
     };
 
-    const showtimesByDate = getShowtimesByDate();
+    const showtimesByMovie = getShowtimesByMovie();
 
     if (loading) {
         return (
@@ -185,7 +184,7 @@ function Showtimes() {
                     ))}
                 </div>
 
-                {showtimesByDate.length === 0 ? (
+                {showtimesByMovie.length === 0 ? (
                     <div style={{ 
                         textAlign: "center", 
                         padding: "3rem",
@@ -198,147 +197,142 @@ function Showtimes() {
                         </p>
                     </div>
                 ) : (
-                    showtimesByDate.map(({ date, movies }) => (
-                        <div key={date} style={{ marginBottom: "2rem" }}>
-                            <h3 style={{
-                                fontSize: "1.25rem",
-                                marginBottom: "1rem",
-                                paddingBottom: "0.5rem",
-                                borderBottom: "2px solid var(--uga-red)"
-                            }}>
-                                {formatDate(date)}
-                            </h3>
+                    showtimesByMovie.map((movie) => (
+                        <div
+                            key={movie.id}
+                            style={{
+                                display: "flex",
+                                gap: "1.5rem",
+                                background: "linear-gradient(135deg, var(--surface) 0%, var(--surface-alt) 100%)",
+                                borderRadius: "var(--radius)",
+                                border: "1px solid var(--border)",
+                                padding: "1rem",
+                                alignItems: "flex-start",
+                                marginBottom: "1rem"
+                            }}
+                        >
+                            {/* Movie poster */}
+                            <Link 
+                                to={`/details/${movie.title.replace(/\s+/g, "-").toLowerCase()}`}
+                                state={{ movie }}
+                                style={{ flexShrink: 0 }}
+                            >
+                                <img
+                                    src={movie.posterLink}
+                                    alt={movie.title}
+                                    style={{
+                                        width: "110px",
+                                        height: "165px",
+                                        objectFit: "cover",
+                                        borderRadius: "8px"
+                                    }}
+                                />
+                            </Link>
 
-                            <div style={{
-                                display: "grid",
-                                gap: "1rem"
-                            }}>
-                                {movies.map(movie => (
-                                    <div
-                                        key={movie.id}
-                                        style={{
-                                            display: "flex",
-                                            gap: "1.5rem",
-                                            background: "linear-gradient(135deg, var(--surface) 0%, var(--surface-alt) 100%)",
-                                            borderRadius: "var(--radius)",
-                                            border: "1px solid var(--border)",
-                                            padding: "1rem",
-                                            alignItems: "flex-start"
-                                        }}
-                                    >
-                                        {/* Movie poster */}
-                                        <Link 
-                                            to={`/details/${movie.title.replace(/\s+/g, "-").toLowerCase()}`}
-                                            state={{ movie }}
-                                            style={{ flexShrink: 0 }}
-                                        >
-                                            <img
-                                                src={movie.posterLink}
-                                                alt={movie.title}
-                                                style={{
-                                                    width: "100px",
-                                                    height: "150px",
-                                                    objectFit: "cover",
-                                                    borderRadius: "8px"
-                                                }}
-                                            />
-                                        </Link>
+                            {/* Movie info and showtimes */}
+                            <div style={{ flex: 1 }}>
+                                <Link 
+                                    to={`/details/${movie.title.replace(/\s+/g, "-").toLowerCase()}`}
+                                    state={{ movie }}
+                                    style={{ textDecoration: "none", color: "inherit" }}
+                                >
+                                    <h4 style={{ 
+                                        margin: "0 0 0.5rem 0",
+                                        fontSize: "1.1rem",
+                                        color: "var(--paper)"
+                                    }}>
+                                        {movie.title}
+                                    </h4>
+                                </Link>
+                                
+                                <div style={{
+                                    display: "flex",
+                                    gap: "0.5rem",
+                                    marginBottom: "1rem",
+                                    flexWrap: "wrap"
+                                }}>
+                                    <span style={{
+                                        fontSize: "0.75rem",
+                                        padding: "0.25rem 0.5rem",
+                                        background: "var(--surface-alt)",
+                                        borderRadius: "4px",
+                                        color: "var(--text-muted)"
+                                    }}>
+                                        {movie.mpaaRating?.replace(/_/g, " ") || "NR"}
+                                    </span>
+                                    <span style={{
+                                        fontSize: "0.75rem",
+                                        padding: "0.25rem 0.5rem",
+                                        background: "var(--surface-alt)",
+                                        borderRadius: "4px",
+                                        color: "var(--text-muted)"
+                                    }}>
+                                        {movie.movieGenre?.replace(/_/g, " ") || "Genre"}
+                                    </span>
+                                </div>
 
-                                        {/* Movie info and showtimes */}
-                                        <div style={{ flex: 1 }}>
-                                            <Link 
-                                                to={`/details/${movie.title.replace(/\s+/g, "-").toLowerCase()}`}
-                                                state={{ movie }}
-                                                style={{ textDecoration: "none", color: "inherit" }}
-                                            >
-                                                <h4 style={{ 
-                                                    margin: "0 0 0.5rem 0",
-                                                    fontSize: "1.1rem",
-                                                    color: "var(--paper)"
-                                                }}>
-                                                    {movie.title}
-                                                </h4>
-                                            </Link>
-                                            
-                                            <div style={{
-                                                display: "flex",
-                                                gap: "0.5rem",
-                                                marginBottom: "1rem",
-                                                flexWrap: "wrap"
-                                            }}>
-                                                <span style={{
-                                                    fontSize: "0.75rem",
-                                                    padding: "0.25rem 0.5rem",
-                                                    background: "var(--surface-alt)",
-                                                    borderRadius: "4px",
-                                                    color: "var(--text-muted)"
-                                                }}>
-                                                    {movie.mpaaRating?.replace(/_/g, " ") || "NR"}
-                                                </span>
-                                                <span style={{
-                                                    fontSize: "0.75rem",
-                                                    padding: "0.25rem 0.5rem",
-                                                    background: "var(--surface-alt)",
-                                                    borderRadius: "4px",
-                                                    color: "var(--text-muted)"
-                                                }}>
-                                                    {movie.movieGenre?.replace(/_/g, " ") || "Genre"}
+                                {/* Cinemas */}
+                                <div style={{ display: "grid", gap: "0.75rem" }}>
+                                    {movie.cinemaGroups.map((group) => (
+                                        <div key={`${movie.id}-${group.cinema}`} style={{ border: "1px solid var(--border)", borderRadius: "8px", padding: "0.75rem" }}>
+                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                                                <strong>{group.cinema}</strong>
+                                                <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
+                                                    {group.shows.length} show{group.shows.length !== 1 ? "s" : ""}
                                                 </span>
                                             </div>
-
-                                            {/* Showtimes */}
                                             <div style={{
                                                 display: "flex",
                                                 gap: "0.5rem",
                                                 flexWrap: "wrap"
                                             }}>
-                                                {movie.filteredShows
-                                                    .sort((a, b) => a.startTime.localeCompare(b.startTime))
-                                                    .map(show => {
-                                                        const locationText = formatLocation(show);
-                                                        return (
-                                                            <Link
-                                                                key={show.id}
-                                                                to={`/booking/${movie.title.replace(/\s+/g, "-").toLowerCase()}`}
-                                                                state={{
-                                                                    movie,
-                                                                    show,
-                                                                    showtime: `${formatDate(show.date)} at ${formatTime(show.startTime)}`,
-                                                                    location: locationText
-                                                                }}
-                                                                style={{
-                                                                    display: "flex",
-                                                                    flexDirection: "column",
-                                                                    alignItems: "flex-start",
-                                                                    padding: "0.65rem 1rem",
-                                                                    background: "var(--uga-red)",
-                                                                    color: "var(--paper)",
-                                                                    borderRadius: "6px",
-                                                                    textDecoration: "none",
-                                                                    fontSize: "0.9rem",
-                                                                    fontWeight: "600",
-                                                                    transition: "background 0.2s",
-                                                                    minWidth: "120px"
-                                                                }}
-                                                            >
-                                                                <span>{formatTime(show.startTime)}</span>
-                                                                {locationText && (
-                                                                    <span style={{ 
-                                                                        fontSize: "0.75rem", 
-                                                                        color: "var(--paper)", 
-                                                                        opacity: 0.85,
-                                                                        fontWeight: 500
-                                                                    }}>
-                                                                        {locationText}
-                                                                    </span>
-                                                                )}
-                                                            </Link>
-                                                        );
-                                                    })}
+                                                {group.shows.map((show) => {
+                                                    const locationText = formatLocation(show);
+                                                    return (
+                                                        <Link
+                                                            key={show.id}
+                                                            to={`/booking/${movie.title.replace(/\s+/g, "-").toLowerCase()}`}
+                                                            state={{
+                                                                movie,
+                                                                show,
+                                                                showtime: `${formatDate(show.date)} at ${formatTime(show.startTime)}`,
+                                                                location: locationText
+                                                            }}
+                                                            style={{
+                                                                display: "flex",
+                                                                flexDirection: "column",
+                                                                alignItems: "flex-start",
+                                                                padding: "0.65rem 1rem",
+                                                                background: "var(--uga-red)",
+                                                                color: "var(--paper)",
+                                                                borderRadius: "6px",
+                                                                textDecoration: "none",
+                                                                fontSize: "0.9rem",
+                                                                fontWeight: "600",
+                                                                transition: "background 0.2s",
+                                                                minWidth: "140px"
+                                                            }}
+                                                        >
+                                                            <span>{formatTime(show.startTime)}</span>
+                                                            <span style={{ fontSize: "0.8rem", opacity: 0.85 }}>{formatDate(show.date)}</span>
+                                                            {locationText && (
+                                                                <span style={{ 
+                                                                    fontSize: "0.75rem", 
+                                                                    color: "var(--paper)", 
+                                                                    opacity: 0.9,
+                                                                    fontWeight: 500
+                                                                }}>
+                                                                    {show.theaterName ? `${show.theaterName}` : locationText}
+                                                                    {show.showroomLabel ? ` • ${show.showroomLabel}` : ""}
+                                                                </span>
+                                                            )}
+                                                        </Link>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     ))

@@ -2,10 +2,12 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import Navbar from './Navbar.jsx';
+import { useAuth } from "../contexts/AuthContext.jsx";
 
 
 export default function BookingPage() {
   const { state } = useLocation();
+  const { user } = useAuth();
   const movie = state?.movie;
   const show = state?.show;
   const title = movie?.title || state?.title || "Movie Title";
@@ -22,10 +24,12 @@ export default function BookingPage() {
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [showroomSeats, setShowroomSeats] = useState({ rows: 8, cols: 10 }); // Default seat layout
   const [occupiedSeats, setOccupiedSeats] = useState([]);
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
   const [showDetails, setShowDetails] = useState(null);
   const [showroomId, setShowroomId] = useState(null);
+  const [promotions, setPromotions] = useState([]);
+  const [promoCodeInput, setPromoCodeInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState(null);
+  const [promoMessage, setPromoMessage] = useState("");
 
   // Fetch full show details with showroom info
   useEffect(() => {
@@ -82,6 +86,36 @@ export default function BookingPage() {
       .then(res => res.json())
       .then(data => setTicketCategories(data))
       .catch(err => console.error("Failed to fetch ticket categories:", err));
+  }, []);
+
+  // Fetch active promotions and hydrate saved code
+  useEffect(() => {
+    const savedCode = localStorage.getItem("selectedPromoCode");
+    if (savedCode) {
+      setPromoCodeInput(savedCode);
+    }
+
+    fetch("http://localhost:8080/promotions")
+      .then(res => res.json())
+      .then(data => {
+        const now = new Date();
+        const active = data.filter(promo => {
+          if (!promo.startDate || !promo.endDate) return true;
+          const start = new Date(promo.startDate);
+          const end = new Date(promo.endDate);
+          return now >= start && now <= end;
+        });
+        setPromotions(active);
+
+        if (savedCode) {
+          const match = active.find(p => p.code.toUpperCase() === savedCode.toUpperCase());
+          if (match) {
+            setAppliedPromo(match);
+            setPromoMessage(`Applied ${match.code} from promotions.`);
+          }
+        }
+      })
+      .catch(err => console.error("Failed to fetch promotions:", err));
   }, []);
 
   // Fetch showroom info and occupied seats for this show
@@ -158,6 +192,52 @@ export default function BookingPage() {
     if (occupiedSeats.includes(seatId)) return "occupied";
     if (selectedSeats.includes(seatId)) return "selected";
     return "available";
+  };
+
+  const totalPrice = tickets.reduce((sum, ticket) => {
+    const category = ticketCategories.find(c => c.id === parseInt(ticket.category));
+    return sum + (category?.price || 0);
+  }, 0);
+  const discountRate = appliedPromo?.discountPercentage || 0;
+  const discountedTotal = Math.max(totalPrice * (1 - discountRate), 0);
+
+  const applyPromoCode = () => {
+    const trimmed = promoCodeInput.trim();
+    if (!trimmed) {
+      setPromoMessage("Enter a promo code to apply.");
+      setAppliedPromo(null);
+      return;
+    }
+
+    const match = promotions.find(
+      (promo) => promo.code?.toUpperCase() === trimmed.toUpperCase()
+    );
+
+    if (!match) {
+      setPromoMessage("Promo code not valid or expired.");
+      setAppliedPromo(null);
+      localStorage.removeItem("selectedPromoCode");
+      return;
+    }
+
+    setAppliedPromo(match);
+    localStorage.setItem("selectedPromoCode", match.code);
+    setPromoMessage(`Promo ${match.code} applied. ${Math.round(match.discountPercentage * 100)}% off will be applied to your total.`);
+  };
+
+  const formatSeatLabel = (seatId) => {
+    const [row, col] = seatId.split("-");
+    return `${String.fromCharCode(65 + parseInt(row, 10))}${parseInt(col, 10) + 1}`;
+  };
+
+  const persistOrderLocally = (orderSummary) => {
+    try {
+      const existing = JSON.parse(localStorage.getItem("orders") || "[]");
+      const updated = [orderSummary, ...existing].slice(0, 25);
+      localStorage.setItem("orders", JSON.stringify(updated));
+    } catch (err) {
+      console.warn("Failed to persist order locally:", err);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -244,6 +324,21 @@ export default function BookingPage() {
       const result = await response.json();
       console.log("Booking successful:", result);
       alert(`Booking successful! ${result.message || 'Your seats have been reserved.'}`);
+
+      const locationText = [showDetails?.cinemaName || show?.cinemaName, showDetails?.theaterName || show?.theaterName, showDetails?.showroomLabel || show?.showroomLabel]
+        .filter(Boolean)
+        .join(" • ");
+      const formattedSeats = selectedSeats.map(formatSeatLabel);
+      persistOrderLocally({
+        id: Date.now(),
+        movieTitle: title,
+        showtime: showtime,
+        location: locationText || "Cinema",
+        seats: formattedSeats,
+        total: Number(discountedTotal.toFixed(2)),
+        promoCode: appliedPromo?.code || null,
+        createdAt: new Date().toISOString(),
+      });
       
       // Refresh occupied seats from the backend
       console.log("Fetching updated showroom data from:", `http://localhost:8080/showrooms/${showroomId}`);
@@ -278,19 +373,12 @@ export default function BookingPage() {
       // Clear the selected seats and reset the form
       setSelectedSeats([]);
       setTickets([{ category: "", seat: null }]);
-      setFullName("");
-      setEmail("");
       
     } catch (error) {
       console.error("Booking error:", error);
       alert(`Booking failed: ${error.message}`);
     }
   };
-
-  const totalPrice = tickets.reduce((sum, ticket) => {
-    const category = ticketCategories.find(c => c.id === parseInt(ticket.category));
-    return sum + (category?.price || 0);
-  }, 0);
 
   return (
     <>
@@ -306,31 +394,16 @@ export default function BookingPage() {
       <form onSubmit={handleSubmit} style={{ display: "grid", gap: 20 }}>
         {/* Customer Info */}
         <div style={{ border: "1px solid #555", borderRadius: 8, padding: 16 }}>
-          <h3 style={{ marginTop: 0 }}>Customer Information</h3>
-          <div style={{ display: "grid", gap: 10 }}>
-            <label>
-              Full Name
-              <input
-                type="text"
-                placeholder="Jane Doe"
-                required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                style={{ width: "100%", padding: 8, marginTop: 4 }}
-              />
-            </label>
-            <label>
-              Email
-              <input
-                type="email"
-                placeholder="jane@example.com"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                style={{ width: "100%", padding: 8, marginTop: 4 }}
-              />
-            </label>
-          </div>
+          <h3 style={{ marginTop: 0 }}>Booking For</h3>
+          <p style={{ margin: "0 0 6px 0" }}>
+            <strong>Name:</strong> {user?.firstName || "Signed-in user"}
+          </p>
+          <p style={{ margin: 0 }}>
+            <strong>Email:</strong> {user?.email || "On file with your account"}
+          </p>
+          <p style={{ margin: "10px 0 0 0", color: "#ccc", fontSize: 14 }}>
+            Contact info is pulled from your account automatically.
+          </p>
         </div>
 
         {/* Ticket Selection */}
@@ -386,9 +459,79 @@ export default function BookingPage() {
             + Add Ticket
           </button>
           {totalPrice > 0 && (
-            <p style={{ marginTop: 10, fontSize: 18, fontWeight: "bold" }}>
-              Total: ${totalPrice.toFixed(2)}
-            </p>
+            <div style={{ marginTop: 12, display: "grid", gap: 6 }}>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span>Subtotal</span>
+                <strong>${totalPrice.toFixed(2)}</strong>
+              </div>
+              {appliedPromo && (
+                <div style={{ display: "flex", justifyContent: "space-between", color: "#7dd87d" }}>
+                  <span>Promo ({appliedPromo.code})</span>
+                  <strong>-{Math.round(appliedPromo.discountPercentage * 100)}%</strong>
+                </div>
+              )}
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 18 }}>
+                <span>Total</span>
+                <strong>${discountedTotal.toFixed(2)}</strong>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Promotions */}
+        <div style={{ border: "1px solid #555", borderRadius: 8, padding: 16 }}>
+          <h3 style={{ marginTop: 0 }}>Promotions</h3>
+          <p style={{ marginTop: 0, color: "#ccc", fontSize: 14 }}>
+            Apply a promo code before you place the order.
+          </p>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <input
+              type="text"
+              value={promoCodeInput}
+              placeholder="Enter promo code"
+              onChange={(e) => setPromoCodeInput(e.target.value)}
+              style={{ flex: 1, minWidth: 220, padding: 8, borderRadius: 6, border: "1px solid #666" }}
+            />
+            <button
+              type="button"
+              onClick={applyPromoCode}
+              style={{
+                padding: "10px 16px",
+                backgroundColor: "#007bff",
+                color: "white",
+                border: "none",
+                borderRadius: 6,
+                cursor: "pointer",
+                fontWeight: 600
+              }}
+            >
+              Apply
+            </button>
+            {appliedPromo && (
+              <button
+                type="button"
+                onClick={() => { setAppliedPromo(null); setPromoMessage("Promo removed."); localStorage.removeItem("selectedPromoCode"); }}
+                style={{
+                  padding: "10px 12px",
+                  backgroundColor: "#444",
+                  color: "white",
+                  border: "1px solid #666",
+                  borderRadius: 6,
+                  cursor: "pointer",
+                  fontWeight: 600
+                }}
+              >
+                Remove
+              </button>
+            )}
+          </div>
+          {promoMessage && (
+            <p style={{ marginTop: 8, color: "#7dd87d" }}>{promoMessage}</p>
+          )}
+          {!appliedPromo && promotions.length > 0 && (
+            <div style={{ marginTop: 8, color: "#ccc", fontSize: 13 }}>
+              Tip: select a promotion on the Promotions page to auto-fill here.
+            </div>
           )}
         </div>
 

@@ -81,6 +81,9 @@ function Navbar() {
                         {isAuthenticated && (
                             <li><Link to="/promotions" className={`nav-item ${isActive("/promotions") ? "active" : ""}`} onClick={handleNavClick}>Promotions</Link></li>
                         )}
+                        {isAuthenticated && !isAdmin && (
+                            <li><Link to="/orders" className={`nav-item ${isActive("/orders") ? "active" : ""}`} onClick={handleNavClick}>Orders</Link></li>
+                        )}
                         <li><Link to="/browse" className={`nav-item ${isActive("/browse") ? "active" : ""}`} onClick={handleNavClick}>Browse</Link></li>
 
                         {isAuthenticated ? (

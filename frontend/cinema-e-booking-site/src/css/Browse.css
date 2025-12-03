@@ -1,14 +1,14 @@
 body {
-    background-color: #0d0d12;
+    background-color: var(--near-black);
 }
 
 .browse-controls {
     margin: 16px 20px 6px;
     padding: 18px 20px;
-    border-radius: 18px;
-    border: 1px solid #1f1f2a;
-    background: linear-gradient(120deg, #111118 0%, #181821 60%, #111118 100%);
-    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.45);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: linear-gradient(120deg, var(--surface) 0%, var(--surface-alt) 60%, var(--surface) 100%);
+    box-shadow: var(--shadow-strong);
     display: flex;
     gap: 18px;
     flex-wrap: wrap;
@@ -25,26 +25,26 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.6px;
     font-size: 12px;
-    color: #f34a4a;
+    color: var(--uga-red);
     font-weight: 700;
 }
 
 .browse-title {
     margin: 4px 0 2px;
-    color: #f5f6fa;
+    color: var(--text-primary);
     font-size: 26px;
     letter-spacing: 0.3px;
 }
 
 .browse-sub {
     margin: 0;
-    color: #c6cad4;
+    color: var(--text-muted);
     font-size: 14px;
 }
 
 .browse-error {
     margin: 8px 0 0;
-    color: #f48b6b;
+    color: #f8b4c2;
     font-size: 13px;
 }
 
@@ -62,7 +62,7 @@ body {
 }
 
 .field-label {
-    color: #9ca0aa;
+    color: var(--text-muted);
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.4px;
@@ -79,10 +79,10 @@ body {
 .select-shell select {
     width: 100%;
     padding: 12px 14px;
-    border-radius: 12px;
-    border: 1px solid #262635;
-    background-color: #0f0f15;
-    color: #f5f6fa;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background-color: #0f1118;
+    color: var(--text-primary);
     font-size: 14px;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
 }
@@ -96,7 +96,7 @@ body {
     left: 12px;
     width: 18px;
     height: 18px;
-    color: #f34a4a;
+    color: var(--uga-red);
 }
 
 .select-shell select {
@@ -110,20 +110,20 @@ body {
     position: absolute;
     right: 14px;
     font-size: 14px;
-    color: #e0e4eb;
+    color: var(--text-muted);
     pointer-events: none;
 }
 
 .input-shell input:focus,
 .select-shell select:focus {
     outline: none;
-    border-color: #f34a4a;
-    box-shadow: 0 0 0 3px rgba(243, 74, 74, 0.18);
+    border-color: var(--uga-red);
+    box-shadow: 0 0 0 3px rgba(186, 12, 47, 0.18);
 }
 
 .input-shell input:hover,
 .select-shell select:hover {
-    border-color: #353546;
+    border-color: #2f3344;
     transform: translateY(-1px);
 }
 
@@ -132,9 +132,9 @@ body {
     right: 12px;
     padding: 6px 10px;
     border-radius: 999px;
-    background: rgba(243, 74, 74, 0.14);
+    background: rgba(186, 12, 47, 0.14);
     color: #f8dddd;
-    border: 1px solid rgba(243, 74, 74, 0.35);
+    border: 1px solid rgba(186, 12, 47, 0.35);
     font-size: 12px;
     font-weight: 600;
 }

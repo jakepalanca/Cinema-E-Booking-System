@@ -1,52 +1,101 @@
 .login-div{
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     gap: 1rem;
-    padding: .5rem;
-    color: whitesmoke;
+    padding: 2.5rem 1rem;
+    color: var(--text-primary);
+    text-align: center;
 }
 .login-div h2 {
-  margin-bottom: 1.5rem;
-  color: white;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+.login-form {
+  width: min(640px, 100%);
+  background: linear-gradient(145deg, rgba(17,19,27,0.95), rgba(22,25,39,0.9));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  box-shadow: var(--shadow-strong);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  text-align: left;
 }
 .login-form label {
   display: grid;
   grid-template-columns: 160px 1fr;
   align-items: center;
   column-gap: 1rem;
-  margin-bottom: .25rem;
+  margin: 0.35rem 0;
 }
 .login-form input[type="email"],
 .login-form input[type="text"],
 .login-form input[type="password"] {
-  width: 320px;
-  padding: 0.6rem;
-  border-radius: 4px;
-  border: 1px solid #444;
-  background-color: #1e1e1e;
-  color: white;
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background-color: #0f1118;
+  color: var(--text-primary);
   box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.login-form input[type="email"]:focus,
+.login-form input[type="text"]:focus,
+.login-form input[type="password"]:focus {
+  outline: none;
+  border-color: var(--uga-red);
+  box-shadow: 0 0 0 3px rgba(186, 12, 47, 0.22);
 }
 .login-form button {
-  display: block;
-  margin-top: 1rem;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem 1.6rem;
+  border: none;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--uga-red-dark), var(--uga-red));
+  color: var(--paper);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
-.signup-redirect a {
-  color: whitesmoke;
-  text-decoration: none;
+.login-form button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(186, 12, 47, 0.35);
+  filter: brightness(1.05);
 }
-.signup-redirect a:hover {
-  text-decoration: underline;
+.login-form button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
-.forgotPass-redirect a {
-  color: whitesmoke;
-  text-decoration: none;
+.info-message {
+  margin-top: 0.5rem;
+  color: #f8d7e1;
 }
-.forgotPass-redirect a:hover {
-  text-decoration: underline;
+.signup-redirect,
+.forgotPass-redirect,
+.admin-redirect {
+  margin-top: 0.25rem;
+  color: var(--text-muted);
 }
+.signup-redirect a,
+.forgotPass-redirect a,
 .admin-redirect a {
-  color: whitesmoke;
+  color: var(--text-primary);
   text-decoration: none;
 }
+.signup-redirect a:hover,
+.forgotPass-redirect a:hover,
 .admin-redirect a:hover {
-  text-decoration: underline;
+  color: var(--uga-red);
 }

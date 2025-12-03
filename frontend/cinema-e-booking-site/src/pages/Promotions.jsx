@@ -19,8 +19,11 @@ function Promotions() {
                 // Filter to show only active promotions (current date is between start and end)
                 const now = new Date();
                 const activePromotions = data.filter(promo => {
+                    // If seed promos don't have dates, show them by default
+                    if (!promo.startDate || !promo.endDate) return true;
                     const start = new Date(promo.startDate);
                     const end = new Date(promo.endDate);
+                    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return true;
                     return now >= start && now <= end;
                 });
                 setPromotions(activePromotions);
@@ -34,8 +37,10 @@ function Promotions() {
     }, []);
 
     const formatDate = (dateString) => {
-        if (!dateString) return "N/A";
-        return new Date(dateString).toLocaleDateString("en-US", {
+        if (!dateString) return null;
+        const parsed = new Date(dateString);
+        if (Number.isNaN(parsed.getTime())) return null;
+        return parsed.toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",
             year: "numeric"
@@ -106,87 +111,47 @@ function Promotions() {
                 ) : (
                     <div style={{
                         display: "grid",
-                        gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-                        gap: "1.5rem",
-                        marginTop: "1.5rem"
+                        gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                        gap: "1rem",
+                        marginTop: "1.25rem"
                     }}>
                         {promotions.map((promo) => (
                             <div
                                 key={promo.id}
                                 style={{
-                                    background: "linear-gradient(135deg, var(--surface) 0%, var(--surface-alt) 100%)",
-                                    borderRadius: "var(--radius)",
+                                    background: "var(--surface)",
+                                    borderRadius: "12px",
                                     border: "1px solid var(--border)",
-                                    padding: "1.5rem",
-                                    boxShadow: "var(--shadow-strong)",
-                                    position: "relative",
-                                    overflow: "hidden"
+                                    padding: "1.1rem",
+                                    display: "grid",
+                                    gap: "0.75rem"
                                 }}
                             >
-                                {/* Decorative accent */}
-                                <div style={{
-                                    position: "absolute",
-                                    top: 0,
-                                    left: 0,
-                                    right: 0,
-                                    height: "4px",
-                                    background: "var(--uga-red)"
-                                }} />
-                                
-                                <div style={{ 
-                                    display: "flex", 
-                                    justifyContent: "space-between",
-                                    alignItems: "flex-start",
-                                    marginBottom: "1rem"
-                                }}>
-                                    <div>
-                                        <span style={{
-                                            display: "inline-block",
-                                            background: "var(--uga-red)",
-                                            color: "var(--paper)",
-                                            padding: "0.25rem 0.75rem",
-                                            borderRadius: "9999px",
-                                            fontSize: "0.875rem",
-                                            fontWeight: "600",
-                                            marginBottom: "0.5rem"
-                                        }}>
-                                            {Math.round(promo.discountPercentage * 100)}% OFF
-                                        </span>
+                                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                                    <div style={{
+                                        background: "var(--uga-red)",
+                                        color: "var(--paper)",
+                                        borderRadius: "10px",
+                                        padding: "0.35rem 0.7rem",
+                                        fontWeight: 700,
+                                        minWidth: "72px",
+                                        textAlign: "center"
+                                    }}>
+                                        {Math.round(promo.discountPercentage * 100)}% OFF
+                                    </div>
+                                    <div style={{ fontFamily: "monospace", fontSize: "1.1rem", fontWeight: 700 }}>
+                                        {promo.code}
                                     </div>
                                 </div>
 
-                                <div style={{
-                                    background: "var(--near-black)",
-                                    border: "2px dashed var(--border)",
-                                    borderRadius: "8px",
-                                    padding: "1rem",
-                                    textAlign: "center",
-                                    marginBottom: "1rem"
-                                }}>
-                                    <span style={{
-                                        fontFamily: "monospace",
-                                        fontSize: "1.5rem",
-                                        fontWeight: "700",
-                                        letterSpacing: "0.1em",
-                                        color: "var(--paper)"
-                                    }}>
-                                        {promo.code}
-                                    </span>
+                                <div style={{ display: "grid", gap: "0.35rem", fontSize: "0.95rem", color: "var(--text-muted)" }}>
+                                    <span>Valid from: {formatDate(promo.startDate) || "Available now"}</span>
+                                    <span>Expires: {formatDate(promo.endDate) || "No end date set"}</span>
                                 </div>
 
-                                <div style={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    fontSize: "0.875rem",
-                                    color: "var(--text-muted)"
-                                }}>
-                                    <span>Valid from {formatDate(promo.startDate)}</span>
-                                    <span>Expires {formatDate(promo.endDate)}</span>
-                                </div>
                                 <button
                                     onClick={() => handleUsePromo(promo)}
                                     style={{
-                                        marginTop: "1rem",
                                         width: "100%",
                                         padding: "0.75rem",
                                         borderRadius: "8px",

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from './Navbar.jsx';
+import "../css/Homepage.css";
 import "../css/RegistrationPage.css";
 import AddressFields from '../components/AddressFields.jsx';
 import PaymentCardForm from '../components/PaymentCardForm.jsx';
@@ -252,7 +253,10 @@ export default function EditProfile() {
             <>
                 <Navbar />
                 <div className="registration-div">
-                    <p style={{ color: 'var(--text-muted)' }}>Loading your profile...</p>
+                    <div className="welcome-blurb" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                        <h2 style={{ marginBottom: "0.5rem" }}>Edit Profile</h2>
+                        <p style={{ color: "var(--text-muted)" }}>Loading your profile...</p>
+                    </div>
                 </div>
             </>
         );
@@ -264,6 +268,10 @@ export default function EditProfile() {
         <>
             <Navbar />
             <div className="registration-div">
+                <div className="welcome-blurb" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                    <h2 style={{ marginBottom: "0.5rem" }}>Edit Profile</h2>
+                    <p style={{ color: "var(--text-muted)" }}>Update your account information and preferences.</p>
+                </div>
                 <form onSubmit={handleSubmit} className="registration-form">
                     <h3>Account Information</h3>
                     <input

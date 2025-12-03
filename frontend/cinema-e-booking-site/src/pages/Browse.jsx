@@ -70,57 +70,84 @@ function Browse() {
   return (
     <>
       <Navbar />
-      <div className="browse-controls">
-        <div className="browse-copy">
-          <p className="browse-eyebrow">Browse</p>
-          <h2 className="browse-title">Find your next film</h2>
-          <p className="browse-sub">Search by title and refine by genre.</p>
-          {error && <p className="browse-error">Error: {error}</p>}
+      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem", color: "var(--text-primary)" }}>
+        <div className="welcome-blurb">
+          <h2 style={{ marginBottom: "0.5rem" }}>Browse</h2>
+          <p style={{ color: "var(--text-muted)" }}>Search by title and refine by genre to find your next film.</p>
+          {error && <p style={{ color: "var(--uga-red)", marginTop: "0.5rem" }}>Error: {error}</p>}
         </div>
-        <div className="filter-group">
-          <div className="filter-field">
-            <span className="field-label">Search</span>
-            <div className="input-shell">
+        <div style={{
+          display: "flex",
+          gap: "1rem",
+          flexWrap: "wrap",
+          marginTop: "1.25rem",
+          marginBottom: "2rem",
+          padding: "1rem",
+          background: "var(--surface)",
+          borderRadius: "var(--radius)",
+          border: "1px solid var(--border)"
+        }}>
+          <div style={{ flex: "1", minWidth: "200px" }}>
+            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "0.25rem", display: "block" }}>Search</span>
+            <div style={{ position: "relative" }}>
+              <input
+                type="text"
+                placeholder="Search movies..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "0.65rem 0.9rem",
+                  paddingLeft: "2.25rem",
+                  borderRadius: "var(--radius)",
+                  border: "1px solid var(--border)",
+                  background: "var(--surface-alt)",
+                  color: "var(--text-primary)",
+                  boxSizing: "border-box"
+                }}
+              />
               <svg
                 aria-hidden="true"
                 viewBox="0 0 24 24"
-                className="input-icon"
+                style={{ position: "absolute", left: "0.75rem", top: "50%", transform: "translateY(-50%)", width: "1rem", height: "1rem", color: "var(--text-muted)" }}
               >
                 <path
                   fill="currentColor"
                   d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.71.71l.27.28v.78l5 4.99L20.49 19zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14"
                 />
               </svg>
-              <input
-                type="text"
-                placeholder="Search movies..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              {loading && <span className="pill-status">Searching...</span>}
+              {loading && <span style={{ position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)", fontSize: "0.75rem", color: "var(--text-muted)" }}>Searching...</span>}
             </div>
           </div>
-          <div className="filter-field">
-            <span className="field-label">Genre</span>
-            <div className="select-shell">
-              <select
-                value={selectedGenre}
-                onChange={(e) => setSelectedGenre(e.target.value)}
-              >
-                {genreOptions.map((genre, idx) => (
-                  <option key={idx} value={genre}>
-                    {genre === "All" ? "All Genres" : genre.replace("_", " ")}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div style={{ minWidth: "160px" }}>
+            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "0.25rem", display: "block" }}>Genre</span>
+            <select
+              value={selectedGenre}
+              onChange={(e) => setSelectedGenre(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "0.65rem 0.9rem",
+                borderRadius: "var(--radius)",
+                border: "1px solid var(--border)",
+                background: "var(--surface-alt)",
+                color: "var(--text-primary)",
+                cursor: "pointer"
+              }}
+            >
+              {genreOptions.map((genre, idx) => (
+                <option key={idx} value={genre}>
+                  {genre === "All" ? "All Genres" : genre.replace("_", " ")}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
-      </div>
-      <div className="movie-grid">
-        {filteredMovies.map((movie) => (
-          <MovieDisplay key={movie.id} movie={movie} />
-        ))}
+
+        <div className="movie-grid">
+          {filteredMovies.map((movie) => (
+            <MovieDisplay key={movie.id} movie={movie} />
+          ))}
+        </div>
       </div>
     </>
   );

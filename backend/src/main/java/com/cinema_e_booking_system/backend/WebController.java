@@ -608,7 +608,20 @@ public ResponseEntity<Map<String, String>> addPromo(
   Boolean promoHasBeenApplied = (Boolean)newPromo.get("hasBeenApplied");
   String promoStartDate = (String)newPromo.get("startDate");
 
-  Promotion addThisPromo = new Promotion(promoCode, promoDiscountPercentage);
+  Date startDate = null;
+  Date endDate = null;
+  try {
+      if (promoStartDate != null && !promoStartDate.isBlank()) {
+          startDate = Date.valueOf(LocalDate.parse(promoStartDate));
+      }
+      if (promoEndDate != null && !promoEndDate.isBlank()) {
+          endDate = Date.valueOf(LocalDate.parse(promoEndDate));
+      }
+  } catch (Exception e) {
+      return ResponseEntity.badRequest().body(Map.of("message", "Invalid start or end date format. Use YYYY-MM-DD."));
+  }
+
+  Promotion addThisPromo = new Promotion(promoCode, promoDiscountPercentage, startDate, endDate);
   promotionRepository.save(addThisPromo);
   return ResponseEntity.ok(Map.of("message", "Promo added successfully."));
   }
@@ -1297,9 +1310,11 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
         TicketCategory childCategory = ticketCategoryRepository.save(new TicketCategory("Child", 9.50));
         TicketCategory seniorCategory = ticketCategoryRepository.save(new TicketCategory("Senior", 11.00));
 
-        Promotion welcomePromo = promotionRepository.save(new Promotion("WELCOME10", 0.10));
-        Promotion loyaltyPromo = promotionRepository.save(new Promotion("LOYAL15", 0.15));
-        Promotion blockbusterPromo = promotionRepository.save(new Promotion("BLOCKBUSTER20", 0.20));
+        Date promoStart = Date.valueOf(LocalDate.now());
+        Date promoEnd = Date.valueOf(LocalDate.now().plusDays(3));
+        Promotion welcomePromo = promotionRepository.save(new Promotion("WELCOME10", 0.10, promoStart, promoEnd));
+        Promotion loyaltyPromo = promotionRepository.save(new Promotion("LOYAL15", 0.15, promoStart, promoEnd));
+        Promotion blockbusterPromo = promotionRepository.save(new Promotion("BLOCKBUSTER20", 0.20, promoStart, promoEnd));
 
         adminRepository.save(new Admin("admin@cinemae.com", "sysadmin", "System", "Admin", "admin123"));
 

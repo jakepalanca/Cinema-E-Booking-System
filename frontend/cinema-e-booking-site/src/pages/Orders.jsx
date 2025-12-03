@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "./Navbar.jsx";
+import "../css/Homepage.css";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
 export default function Orders() {
@@ -30,11 +31,11 @@ export default function Orders() {
   return (
     <>
       <Navbar />
-      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "2rem", color: "white" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem", color: "var(--text-primary)" }}>
+        <div className="welcome-blurb" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
           <div>
-            <h2 style={{ margin: 0 }}>My Orders</h2>
-            <p style={{ margin: "4px 0", color: "#ccc" }}>
+            <h2 style={{ marginBottom: "0.5rem" }}>My Orders</h2>
+            <p style={{ color: "var(--text-muted)" }}>
               {user?.firstName ? `${user.firstName}'s tickets` : "Your saved ticket summaries"}
             </p>
           </div>
@@ -42,12 +43,13 @@ export default function Orders() {
             <button
               onClick={clearOrders}
               style={{
-                background: "#2d2d2d",
-                color: "white",
-                border: "1px solid #555",
-                borderRadius: 6,
-                padding: "10px 14px",
+                background: "var(--surface-alt)",
+                color: "var(--text-primary)",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius)",
+                padding: "0.65rem 1rem",
                 cursor: "pointer",
+                fontWeight: 500,
               }}
             >
               Clear saved orders
@@ -56,38 +58,45 @@ export default function Orders() {
         </div>
 
         {orders.length === 0 ? (
-          <div style={{ padding: "1.5rem", border: "1px solid #444", borderRadius: 10, background: "#1f1f1f" }}>
-            <p style={{ margin: 0, color: "#ccc" }}>
+          <div style={{ 
+            textAlign: "center", 
+            padding: "3rem",
+            background: "var(--surface)",
+            borderRadius: "var(--radius)",
+            border: "1px solid var(--border)",
+            marginTop: "1.25rem"
+          }}>
+            <p style={{ color: "var(--text-muted)", fontSize: "1.1rem", margin: 0 }}>
               No orders saved yet. Complete a booking to see it here.
             </p>
           </div>
         ) : (
-          <div style={{ display: "grid", gap: "1rem" }}>
+          <div style={{ display: "grid", gap: "1rem", marginTop: "1.25rem" }}>
             {orders.map((order) => (
               <div
                 key={order.id}
                 style={{
-                  border: "1px solid #444",
-                  borderRadius: 10,
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius)",
                   padding: "1rem",
-                  background: "linear-gradient(135deg, #1f1f1f, #252525)",
+                  background: "linear-gradient(135deg, var(--surface) 0%, var(--surface-alt) 100%)",
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
                   <div>
                     <h3 style={{ margin: "0 0 4px 0" }}>{order.movieTitle}</h3>
-                    <p style={{ margin: 0, color: "#ccc" }}>{order.showtime}</p>
+                    <p style={{ margin: 0, color: "var(--text-muted)" }}>{order.showtime}</p>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <p style={{ margin: 0, color: "#ccc" }}>Booked: {formatDateTime(order.createdAt)}</p>
+                    <p style={{ margin: 0, color: "var(--text-muted)" }}>Booked: {formatDateTime(order.createdAt)}</p>
                     <p style={{ margin: "2px 0 0 0", fontWeight: 700 }}>${order.total?.toFixed(2)}</p>
                   </div>
                 </div>
-                <p style={{ margin: "8px 0", color: "#ccc" }}>{order.location}</p>
-                <p style={{ margin: "8px 0", color: "#ccc" }}>
+                <p style={{ margin: "8px 0", color: "var(--text-muted)" }}>{order.location}</p>
+                <p style={{ margin: "8px 0", color: "var(--text-muted)" }}>
                   Seats: {order.seats?.join(", ") || "—"}
                 </p>
-                <div style={{ display: "flex", gap: "1rem", color: "#7dd87d" }}>
+                <div style={{ display: "flex", gap: "1rem", color: "var(--success, #7dd87d)" }}>
                   {order.promoCode && <span>Promo: {order.promoCode}</span>}
                 </div>
               </div>

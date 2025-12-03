@@ -17,3 +17,4 @@ Sample bookings are created against the first shows returned during seeding. Use
 test cases:
 
 trying to add fourth card
+trying to sign in with an unverified account goes to account verification page

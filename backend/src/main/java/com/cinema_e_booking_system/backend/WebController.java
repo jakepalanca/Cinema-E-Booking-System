@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Objects;
 import java.lang.Integer;
 import java.time.Duration;
 
@@ -112,6 +113,9 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
     String zipCode = (String) newUser.get("zipCode");
     String country = (String) newUser.get("country");
 
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> paymentMethodsPayload = (List<Map<String, Object>>) newUser.get("paymentMethods");
+
     if (email == null || password == null || username == null) {
         return ResponseEntity.badRequest().body(Map.of("message", "Missing required fields."));
     }
@@ -146,6 +150,47 @@ public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, Obj
   String generatedToken = UUID.randomUUID().toString();
   c.setVerificationToken(generatedToken);
   c.setVerified(false); // Use 'false' for initial state
+
+  // Persist any payment methods sent during registration
+  if (paymentMethodsPayload != null) {
+      for (Map<String, Object> cardPayload : paymentMethodsPayload) {
+          if (cardPayload == null) {
+              continue;
+          }
+
+          // Use billing address if provided (falls back to customer address)
+          @SuppressWarnings("unchecked")
+          Map<String, Object> billing = (Map<String, Object>) cardPayload.get("billingAddress");
+          String billAddress = billing != null ? (String) billing.getOrDefault("address", address) : address;
+          String billCity = billing != null ? (String) billing.getOrDefault("city", city) : city;
+          String billState = billing != null ? (String) billing.getOrDefault("state", state) : state;
+          String billZip = billing != null ? Objects.toString(billing.getOrDefault("zipCode", zipCode), null) : zipCode;
+          String billCountry = billing != null ? (String) billing.getOrDefault("country", country) : country;
+
+          // Normalize expiration date to YYYY-MM-DD
+          String expirationRaw = (String) cardPayload.get("expirationDate");
+          String normalizedExp = null;
+          if (expirationRaw != null) {
+              normalizedExp = expirationRaw.length() == 7 ? expirationRaw + "-01" : expirationRaw;
+          }
+
+          PaymentMethod card = new PaymentMethod(
+                  c,
+                  (String) cardPayload.get("cardNumber"),
+                  (String) cardPayload.get("cardHolderFirstName"),
+                  (String) cardPayload.get("cardHolderLastName"),
+                  normalizedExp != null ? java.sql.Date.valueOf(normalizedExp) : null,
+                  toInteger(cardPayload.get("securityCode")),
+                  toInteger(billZip),
+                  billCountry,
+                  billState,
+                  billCity,
+                  billAddress
+          );
+
+          c.addPaymentMethod(card);
+      }
+  }
 
   Customer savedCustomer = customerRepository.save(c);
 
@@ -740,11 +785,11 @@ public ResponseEntity<Map<String, String>> bookSeats(
         consumes = MediaType.APPLICATION_JSON_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE
 )
-public ResponseEntity<?> addMovie(@RequestBody Map<String, Object> body) {
-    try {
-        String title = (String) body.get("title");
-        String director = (String) body.get("director");
-        String producer = (String) body.get("producer");
+    public ResponseEntity<?> addMovie(@RequestBody Map<String, Object> body) {
+        try {
+            String title = (String) body.get("title");
+            String director = (String) body.get("director");
+            String producer = (String) body.get("producer");
         String synopsis = (String) body.get("synopsis");
         String posterLink = (String) body.get("posterLink");
         String trailerLink = (String) body.get("trailerLink");
@@ -1548,5 +1593,19 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
         booking.addTicket(ticket);
         show.getShowroom().occupySeat(seatRow, seatCol);
         ticketRepository.save(ticket);
+    }
+
+    private Integer toInteger(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        try {
+            return Integer.parseInt(value.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

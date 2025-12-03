@@ -8,7 +8,7 @@ function VerificationPage() {
   const navigate = useNavigate();
   const prefillEmail = location.state?.email || "";
 
-  const [email, setEmail] = useState(prefillEmail);
+  const email = prefillEmail;
   const [verificationCode, setVerificationCode] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,15 +48,10 @@ function VerificationPage() {
       <Navbar />
       <div className="login-div">
         <h2>Email Verification</h2>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+          Enter the code sent to <strong>{email}</strong>
+        </p>
         <form onSubmit={handleSubmit} className="login-form">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            required
-            autoComplete="email"
-          />
           <input
             type="text"
             value={verificationCode}

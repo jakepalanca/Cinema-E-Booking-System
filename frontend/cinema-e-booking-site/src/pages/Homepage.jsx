@@ -11,7 +11,7 @@ function Homepage() {
   const [movies, setMovies] = useState({ nowShowing: [], upcoming: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // Fetch data
+
   useEffect(() => {
     const fetchMovies = async () => {
       try {
@@ -23,7 +23,7 @@ function Homepage() {
         setMovies({
           nowShowing: data.content.filter(movie => movie.shows.length > 0),
           upcoming: data.content.filter(movie => movie.shows.length === 0)
-        })
+        });
       } catch (err) {
         setError(err.message);
       } finally {
@@ -34,11 +34,28 @@ function Homepage() {
   }, []);
 
   const displayedMovies = movies[selectedCategory] || [];
-  if (loading) return <p>Loading movies</p>;
-  if (error) return <p>Error loading movies: {error}</p>;
-  return(
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div className="loading-state">Loading movies...</div>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <Navbar />
+        <div className="error-state">Error loading movies: {error}</div>
+      </>
+    );
+  }
+
+  return (
     <>
-      <Navbar/>
+      <Navbar />
       <div className="home-header">
         <div className="welcome-blurb">
           {authLoading ? (
@@ -68,17 +85,23 @@ function Homepage() {
           </button>
         </div>
       </div>
-      <div className='movie-grid'>
-        {displayedMovies.map((movie) => (
-          <MovieDisplay
-          key={movie.id}
-          movie={movie}
-          dispShowtimes={selectedCategory === "nowShowing"}
-          />
-        ))}
+      <div className="movie-grid">
+        {displayedMovies.length > 0 ? (
+          displayedMovies.map((movie) => (
+            <MovieDisplay
+              key={movie.id}
+              movie={movie}
+              dispShowtimes={selectedCategory === "nowShowing"}
+            />
+          ))
+        ) : (
+          <p style={{ color: 'var(--text-muted)', padding: '1rem' }}>
+            No movies available in this category.
+          </p>
+        )}
       </div>
     </>
   );
 }
 
-export default Homepage
+export default Homepage;

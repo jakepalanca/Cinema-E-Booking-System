@@ -1197,12 +1197,7 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
         Promotion loyaltyPromo = promotionRepository.save(new Promotion("LOYAL15", 0.15));
         Promotion blockbusterPromo = promotionRepository.save(new Promotion("BLOCKBUSTER20", 0.20));
 
-        // Encrypt admin passwords before saving
-        StringCryptoConverter crypto = new StringCryptoConverter();
-        adminRepository.save(new Admin("admin@cinemae.com", "sysadmin", "System", "Admin", 
-            crypto.convertToDatabaseColumn("admin123")));
-        adminRepository.save(new Admin("manager@cinemae.com", "cinemamgr", "Morgan", "Reeves", 
-            crypto.convertToDatabaseColumn("managersafe")));
+        adminRepository.save(new Admin("admin@cinemae.com", "sysadmin", "System", "Admin", "admin123"));
 
         Cinema downtown = cinemaRepository.save(new Cinema("Downtown Cinema"));
         Cinema uptown = cinemaRepository.save(new Cinema("Uptown Screens"));
@@ -1373,11 +1368,11 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
             movieService.addReview(movie.getId(), new Review(4, "Crowd loved the show and sound design."));
         }
 
-        Customer alice = new Customer(
-                "alice@example.com",
-                "alice1",
-                "Alice",
-                "Johnson",
+        Customer demoUser = new Customer(
+                "demo.user@cinemae.com",
+                "demouser",
+                "Demo",
+                "User",
                 "password123",
                 Customer.CustomerState.ACTIVE,
                 new ArrayList<>(),
@@ -1388,141 +1383,47 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
                 "12345",
                 "USA"
         );
-        alice.addPromotion(welcomePromo);
-        alice = customerRepository.save(alice);
+        demoUser.addPromotion(welcomePromo);
+        demoUser.setRegisteredForPromos(true);
+        demoUser.setVerified(true);
+        demoUser = customerRepository.save(demoUser);
 
-        Customer bob = new Customer(
-                "bob@example.com",
-                "bobby",
-                "Bob",
-                "Miller",
-                "password123",
-                Customer.CustomerState.ACTIVE,
-                new ArrayList<>(),
-                new ArrayList<>(),
-                "123 Main St",
-                "Anytown",
-                "CA",
-                "12345",
-                "USA"
-        );
-        bob.addPromotion(welcomePromo);
-        bob.addPromotion(loyaltyPromo);
-        bob = customerRepository.save(bob);
-
-        Customer carol = new Customer(
-                "dekalbdynamo@gmail.com",
-                "soccerteam",
-                "dekalb",
-                "dynamo",
-                "uga",
-                Customer.CustomerState.ACTIVE,
-                new ArrayList<>(),
-                new ArrayList<>(),
-                "123 Main St",
-                "Dunwoody",
-                "GA",
-                "30338",
-                "USA"
-        );
-        carol.addPromotion(blockbusterPromo);
-        carol.setRegisteredForPromos(true);
-        carol.setVerified(true);
-        carol = customerRepository.save(carol);
-
-        PaymentMethod aliceCard = paymentMethodRepository.save(
+        PaymentMethod demoCard = paymentMethodRepository.save(
                 new PaymentMethod(
-                        alice,
+                        demoUser,
                         "4111111111111111",
-                        "Alice",
-                        "Johnson",
+                        "Demo",
+                        "User",
                         java.sql.Date.valueOf(LocalDate.now().plusYears(3)),
                         123,
                         30338,
                         "USA",
-                        "GA",
-                        "Dunwoody",
+                        "CA",
+                        "Anytown",
                         "1234 Parliament Drive"
                 )
         );
-        alice.addPaymentMethod(aliceCard);
+        demoUser.addPaymentMethod(demoCard);
 
-        PaymentMethod bobCard = paymentMethodRepository.save(
-                new PaymentMethod(
-                        bob,
-                        "5500000000000004",
-                        "Bob",
-                        "Miller",
-                        Date.valueOf(LocalDate.now().plusYears(4)),
-                        456,
-                        30318,
-                        "FSU",
-                        "GA",
-                        "Atlanta",
-                        "4321 Parliament Drive"
-                )
-        );
-        bob.addPaymentMethod(bobCard);
-
-        PaymentMethod carolCard = paymentMethodRepository.save(
-                new PaymentMethod(
-                        carol,
-                        "6011000990139424",
-                        "Carol",
-                        "Nguyen",
-                        Date.valueOf(LocalDate.now().plusYears(2)),
-                        789,
-                        11111,
-                        "CND",
-                        "WH",
-                        "Pearl",
-                        "6767 Parliament Drive"
-                )
-        );
-        carol.addPaymentMethod(carolCard);
-
-        customerRepository.saveAll(List.of(alice, bob, carol));
+        customerRepository.save(demoUser);
 
         if (!scheduledShows.isEmpty()) {
-            Booking aliceMatinee = bookingRepository.save(new Booking(new ArrayList<>(), alice));
-            alice.addBooking(aliceMatinee);
-            Booking bobEvening = bookingRepository.save(new Booking(new ArrayList<>(), bob));
-            bob.addBooking(bobEvening);
-            Booking carolLate = bookingRepository.save(new Booking(new ArrayList<>(), carol));
-            carol.addBooking(carolLate);
+            Booking demoBooking = bookingRepository.save(new Booking(new ArrayList<>(), demoUser));
+            demoUser.addBooking(demoBooking);
 
-            issueTicket(aliceMatinee, scheduledShows.get(0), adultCategory, 1, 4, aliceCard);
-            issueTicket(aliceMatinee, scheduledShows.get(0), childCategory, 1, 5, aliceCard);
-            bookingRepository.save(aliceMatinee);
+            issueTicket(demoBooking, scheduledShows.get(0), adultCategory, 1, 4, demoCard);
+            issueTicket(demoBooking, scheduledShows.get(0), childCategory, 1, 5, demoCard);
+            bookingRepository.save(demoBooking);
 
             if (scheduledShows.size() > 1) {
-                issueTicket(bobEvening, scheduledShows.get(1), adultCategory, 2, 3, bobCard);
-                issueTicket(bobEvening, scheduledShows.get(1), seniorCategory, 2, 4, bobCard);
-                bookingRepository.save(bobEvening);
-            }
-
-            if (scheduledShows.size() > 2) {
-                issueTicket(carolLate, scheduledShows.get(2), adultCategory, 0, 2, carolCard);
-                bookingRepository.save(carolLate);
-            }
-
-            if (scheduledShows.size() > 3) {
-                Booking aliceWeekend = bookingRepository.save(new Booking(new ArrayList<>(), alice));
-                alice.addBooking(aliceWeekend);
-                issueTicket(aliceWeekend, scheduledShows.get(3), adultCategory, 3, 3, aliceCard);
-                bookingRepository.save(aliceWeekend);
-            }
-
-            if (scheduledShows.size() > 4) {
-                Booking bobFamily = bookingRepository.save(new Booking(new ArrayList<>(), bob));
-                bob.addBooking(bobFamily);
-                issueTicket(bobFamily, scheduledShows.get(4), childCategory, 4, 1, bobCard);
-                issueTicket(bobFamily, scheduledShows.get(4), childCategory, 4, 2, bobCard);
-                bookingRepository.save(bobFamily);
+                Booking demoFollowUp = bookingRepository.save(new Booking(new ArrayList<>(), demoUser));
+                demoUser.addBooking(demoFollowUp);
+                issueTicket(demoFollowUp, scheduledShows.get(1), seniorCategory, 2, 3, demoCard);
+                bookingRepository.save(demoFollowUp);
             }
         }
 
-        customerRepository.saveAll(List.of(alice, bob, carol));
+        customerRepository.save(demoUser);
         promotionRepository.saveAll(List.of(welcomePromo, loyaltyPromo, blockbusterPromo));
     }
 

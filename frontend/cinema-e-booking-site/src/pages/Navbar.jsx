@@ -1,5 +1,5 @@
 import '../css/Navbar.css';
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from '../contexts/AuthContext';
 
@@ -8,19 +8,27 @@ function Navbar() {
     const location = useLocation();
     const { isAuthenticated, logout, isAdmin, loading } = useAuth();
     const { pathname } = location;
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const isActive = (path) => {
         if (path === "/") return pathname === "/";
         return pathname === path || pathname.startsWith(`${path}/`);
     };
 
-    // Logout clears all auth data
     const handleLogout = () => {
         logout();
         navigate("/");
+        setMobileMenuOpen(false);
     };
 
-    // Don't render auth-specific UI until we've checked authentication status
+    const handleNavClick = () => {
+        setMobileMenuOpen(false);
+    };
+
+    const toggleMobileMenu = () => {
+        setMobileMenuOpen(!mobileMenuOpen);
+    };
+
     if (loading) {
         return (
             <header className="navbar-header">
@@ -29,10 +37,20 @@ function Navbar() {
                         <Link to="/" className="logo-link">
                             <img src="/logo.png" alt="Cinema Logo" className="navbar-logo"/>
                         </Link>
-                        <ul className="nav-list">
-                            <li><Link to="/showtimes" className={`nav-item ${isActive("/showtimes") ? "active" : ""}`}>Showtimes</Link></li>
-                            <li><Link to="/contact" className={`nav-item ${isActive("/contact") ? "active" : ""}`}>Contact Us</Link></li>
-                            <li><Link to="/browse" className={`nav-item ${isActive("/browse") ? "active" : ""}`}>Browse</Link></li>
+                        <button 
+                            className={`mobile-menu-toggle ${mobileMenuOpen ? 'is-open' : ''}`}
+                            onClick={toggleMobileMenu}
+                            aria-label="Toggle menu"
+                        >
+                            <div className="hamburger">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </button>
+                        <ul className={`nav-list ${mobileMenuOpen ? 'is-open' : ''}`}>
+                            <li><Link to="/showtimes" className={`nav-item ${isActive("/showtimes") ? "active" : ""}`} onClick={handleNavClick}>Showtimes</Link></li>
+                            <li><Link to="/browse" className={`nav-item ${isActive("/browse") ? "active" : ""}`} onClick={handleNavClick}>Browse</Link></li>
                         </ul>
                     </div>
                 </nav>
@@ -44,24 +62,34 @@ function Navbar() {
         <header className="navbar-header">
             <nav className="navbar">
                 <div className="navbar-container">
-                    <Link to="/" className="logo-link">
+                    <Link to="/" className="logo-link" onClick={handleNavClick}>
                         <img src="/logo.png" alt="Cinema Logo" className="navbar-logo"/>
                     </Link>
-                    <ul className="nav-list">
-                        <li><Link to="/showtimes" className={`nav-item ${isActive("/showtimes") ? "active" : ""}`}>Showtimes</Link></li>
+                    <button 
+                        className={`mobile-menu-toggle ${mobileMenuOpen ? 'is-open' : ''}`}
+                        onClick={toggleMobileMenu}
+                        aria-label="Toggle menu"
+                    >
+                        <div className="hamburger">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </button>
+                    <ul className={`nav-list ${mobileMenuOpen ? 'is-open' : ''}`}>
+                        <li><Link to="/showtimes" className={`nav-item ${isActive("/showtimes") ? "active" : ""}`} onClick={handleNavClick}>Showtimes</Link></li>
                         {isAuthenticated && (
-                            <li><Link to="/promotions" className={`nav-item ${isActive("/promotions") ? "active" : ""}`}>Promotions</Link></li>
+                            <li><Link to="/promotions" className={`nav-item ${isActive("/promotions") ? "active" : ""}`} onClick={handleNavClick}>Promotions</Link></li>
                         )}
-                        <li><Link to="/contact" className={`nav-item ${isActive("/contact") ? "active" : ""}`}>Contact Us</Link></li>
-                        <li><Link to="/browse" className={`nav-item ${isActive("/browse") ? "active" : ""}`}>Browse</Link></li>
+                        <li><Link to="/browse" className={`nav-item ${isActive("/browse") ? "active" : ""}`} onClick={handleNavClick}>Browse</Link></li>
 
                         {isAuthenticated ? (
                             <>
                                 {isAdmin && (
-                                    <li><Link to="/admin-homepage" className={`nav-item ${isActive("/admin-homepage") ? "active" : ""}`}>Admin</Link></li>
+                                    <li><Link to="/admin-homepage" className={`nav-item ${isActive("/admin-homepage") ? "active" : ""}`} onClick={handleNavClick}>Admin</Link></li>
                                 )}
                                 {!isAdmin && (
-                                    <li><Link to="/edit-profile" className={`nav-item ${isActive("/edit-profile") ? "active" : ""}`}>Edit Profile</Link></li>
+                                    <li><Link to="/edit-profile" className={`nav-item ${isActive("/edit-profile") ? "active" : ""}`} onClick={handleNavClick}>Edit Profile</Link></li>
                                 )}
                                 <li>
                                     <Link
@@ -75,8 +103,8 @@ function Navbar() {
                             </>
                         ) : (
                             <>
-                                <li><Link to="/register" className={`nav-item ${isActive("/register") ? "active" : ""}`}>Sign Up</Link></li>
-                                <li><Link to="/login" className={`nav-item ${isActive("/login") ? "active" : ""}`}>Sign In</Link></li>
+                                <li><Link to="/register" className={`nav-item ${isActive("/register") ? "active" : ""}`} onClick={handleNavClick}>Sign Up</Link></li>
+                                <li><Link to="/login" className={`nav-item ${isActive("/login") ? "active" : ""}`} onClick={handleNavClick}>Sign In</Link></li>
                             </>
                         )}
                     </ul>

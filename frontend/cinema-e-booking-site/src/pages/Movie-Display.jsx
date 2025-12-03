@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 
 const formatGenre = (genre) => {
@@ -9,15 +9,6 @@ const formatGenre = (genre) => {
         .join(" ");
 };
 
-const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-    });
-};
-
 const formatTime = (timeString) => {
     const [hours, minutes] = timeString.split(":");
     const hour = parseInt(hours, 10);
@@ -26,97 +17,91 @@ const formatTime = (timeString) => {
     return `${formattedHour}:${minutes} ${ampm}`;
 };
 
+const formatDateShort = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+    });
+};
+
 function MovieDisplay({ movie, dispShowtimes }) {
-    const [posterRatio, setPosterRatio] = useState(null);
     const showtimes = movie?.shows || [];
-    const badgeLabel = dispShowtimes
-        ? "Now Showing"
-        : showtimes.length > 0
-        ? "Available"
-        : "Coming Soon";
     const rating = (movie.mpaaRating || "NR").replace(/_/g, " ");
 
-    const formattedShowtimes = useMemo(
-        () =>
-            showtimes.map((show) => ({
+    // Group showtimes by date
+    const groupedShowtimes = useMemo(() => {
+        if (!showtimes.length) return [];
+        
+        const grouped = showtimes.reduce((acc, show) => {
+            const dateKey = show.date;
+            if (!acc[dateKey]) {
+                acc[dateKey] = {
+                    date: dateKey,
+                    times: [],
+                };
+            }
+            acc[dateKey].times.push({
                 id: show.id,
-                label: `${formatDate(show.date)} Â· ${formatTime(show.startTime)}`,
-            })),
-        [showtimes]
-    );
+                time: formatTime(show.startTime),
+            });
+            return acc;
+        }, {});
+
+        // Sort by date and limit to first 3 dates
+        return Object.values(grouped)
+            .sort((a, b) => new Date(a.date) - new Date(b.date))
+            .slice(0, 3);
+    }, [showtimes]);
 
     const detailsLink = `/details/${movie.title.replace(/\s+/g, "-").toLowerCase()}`;
 
     return (
-        <div className="moviecard">
-            <div
-                className="moviecard__poster-wrap"
-                style={{ "--poster-ratio": posterRatio || undefined }}
-            >
-                <Link
-                    to={detailsLink}
-                    state={{ movie }}
-                    style={{ textDecoration: "none", color: "inherit" }}
-                >
-                    <img
-                        className="moviecard__poster"
-                        src={movie.posterLink}
-                        alt={`${movie.title} Poster`}
-                        onLoad={(e) => {
-                            const { naturalWidth, naturalHeight } = e.target;
-                            if (naturalWidth && naturalHeight) {
-                                setPosterRatio(naturalWidth / naturalHeight);
-                            }
-                        }}
-                    />
-                </Link>
-                <div className="moviecard__badge">{badgeLabel}</div>
+        <Link
+            to={detailsLink}
+            state={{ movie }}
+            className="moviecard"
+            style={{ textDecoration: "none", color: "inherit" }}
+        >
+            <div className="moviecard__poster-wrap">
+                <img
+                    className="moviecard__poster"
+                    src={movie.posterLink}
+                    alt={`${movie.title} Poster`}
+                />
             </div>
 
             <div className="moviecard__body">
-                <Link
-                    to={detailsLink}
-                    state={{ movie }}
-                    style={{ textDecoration: "none", color: "inherit" }}
-                >
-                    <h2 className="movie-title">{movie.title || "Movie Title"}</h2>
-                </Link>
+                <h2 className="movie-title">{movie.title || "Movie Title"}</h2>
+                
                 <div className="moviecard__meta">
                     <span className="moviecard__pill">{formatGenre(movie.movieGenre)}</span>
-                    <span className="moviecard__pill moviecard__pill--ghost">
-                        {rating}
-                    </span>
+                    <span className="moviecard__pill moviecard__pill--ghost">{rating}</span>
                 </div>
-                <p className="moviecard__synopsis">
-                    {movie.synopsis ||
-                        "No synopsis yet — check back soon for more about this title."}
-                </p>
 
-                {dispShowtimes && showtimes.length > 0 && (
-                    <div className="moviecard__showtimes">
-                        <div className="moviecard__showtime-list">
-                            {formattedShowtimes.map((show) => (
-                                <span key={show.id} className="moviecard__showtime">
-                                    {show.label}
+                {dispShowtimes && groupedShowtimes.length > 0 && (
+                    <div className="moviecard__showtimes" onClick={(e) => e.stopPropagation()}>
+                        <span className="moviecard__showtimes-label">Showtimes</span>
+                        {groupedShowtimes.map((group) => (
+                            <div key={group.date} className="moviecard__showtime-group">
+                                <span className="moviecard__showtime-date">
+                                    {formatDateShort(group.date)}
                                 </span>
-                            ))}
-                        </div>
+                                <div className="moviecard__showtime-times">
+                                    {group.times.map((show) => (
+                                        <span key={show.id} className="moviecard__showtime">
+                                            {show.time}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
-
-                <div className="moviecard__footer">
-                    <Link
-                        to={detailsLink}
-                        state={{ movie }}
-                        className="moviecard__cta"
-                    >
-                        View details
-                    </Link>
-                </div>
             </div>
-        </div>
+        </Link>
     );
 }
 
 export default MovieDisplay;
-

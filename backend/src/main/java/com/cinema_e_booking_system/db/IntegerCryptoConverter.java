@@ -51,7 +51,12 @@ public class IntegerCryptoConverter implements AttributeConverter<Integer, Integ
         if (dbData == null) {
             return null;
         }
-        return encryptor.decrypt(BigInteger.valueOf(dbData)).intValue();
+        try {
+            return encryptor.decrypt(BigInteger.valueOf(dbData)).intValue();
+        } catch (Exception e) {
+            System.err.println("[IntegerCryptoConverter] Decrypt failed, returning stored value: " + e.getMessage());
+            return dbData;
+        }
     }
 
     @Override
@@ -59,7 +64,12 @@ public class IntegerCryptoConverter implements AttributeConverter<Integer, Integ
         if (attribute == null) {
             return null;
         }
-        BigInteger bigIntValue = BigInteger.valueOf(attribute);
-        return encryptor.encrypt(bigIntValue).intValue();
+        try {
+            BigInteger bigIntValue = BigInteger.valueOf(attribute);
+            return encryptor.encrypt(bigIntValue).intValue();
+        } catch (Exception e) {
+            System.err.println("[IntegerCryptoConverter] Encrypt failed, storing plain value: " + e.getMessage());
+            return attribute;
+        }
     }
 }

@@ -425,6 +425,27 @@ if (currentCustomer.getPaymentMethods().size() >= 3) {
     return ResponseEntity.ok(Map.of("message", "New card added to user " + currentCustomer.getFirstName()));
 }
 
+// Remove a payment method
+@DeleteMapping("/payment-methods/{paymentMethodId}")
+public ResponseEntity<Map<String, String>> deletePaymentMethod(@PathVariable Long paymentMethodId) {
+    Optional<PaymentMethod> cardOpt = paymentMethodRepository.findById(paymentMethodId);
+    if (cardOpt.isEmpty()) {
+        return ResponseEntity.status(404).body(Map.of("message", "Payment method not found."));
+    }
+
+    PaymentMethod card = cardOpt.get();
+    Customer owner = card.getCustomer();
+
+    if (owner != null) {
+        owner.removePaymentMethod(card);
+        customerRepository.save(owner); // orphanRemoval will delete the card
+    } else {
+        paymentMethodRepository.delete(card);
+    }
+
+    return ResponseEntity.ok(Map.of("message", "Payment method removed."));
+}
+
 // ---------------------- FRONTEND COMPATIBILITY HELPERS ----------------------
 
 
@@ -440,6 +461,7 @@ public ResponseEntity<Map<String, Object>> getCustomerByEmail(@RequestParam Stri
     Map<String, Object> response = new HashMap<>();
     response.put("id", c.getId());
     response.put("email", c.getEmail());
+    response.put("username", c.getUsername());
     response.put("firstName", c.getFirstName());
     response.put("lastName", c.getLastName());
     response.put("phoneNumber", c.getPhoneNumber());
@@ -448,6 +470,7 @@ public ResponseEntity<Map<String, Object>> getCustomerByEmail(@RequestParam Stri
     response.put("state", c.getState());
     response.put("zipCode", c.getZipCode());
     response.put("country", c.getCountry());
+    response.put("registeredForPromos", c.getRegisteredForPromos());
     response.put("paymentMethods", c.getPaymentMethods());
     response.put("promotions", c.getPromotions());
 
@@ -1380,12 +1403,14 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
                 "12345",
                 "USA"
         );
+        demoUser.setPhoneNumber("555-123-4567");
         demoUser.addPromotion(welcomePromo);
         demoUser.setRegisteredForPromos(true);
         demoUser.setVerified(true);
         demoUser = customerRepository.save(demoUser);
 
-        PaymentMethod demoCard = paymentMethodRepository.save(
+        // Payment method 1: Uses main address for billing (same as customer address)
+        PaymentMethod demoCard1 = paymentMethodRepository.save(
                 new PaymentMethod(
                         demoUser,
                         "4111111111111111",
@@ -1393,14 +1418,50 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
                         "User",
                         java.sql.Date.valueOf(LocalDate.now().plusYears(3)),
                         123,
-                        30338,
+                        12345,
                         "USA",
                         "CA",
                         "Anytown",
-                        "1234 Parliament Drive"
+                        "123 Main St"
                 )
         );
-        demoUser.addPaymentMethod(demoCard);
+        demoUser.addPaymentMethod(demoCard1);
+
+        // Payment method 2: Different billing address
+        PaymentMethod demoCard2 = paymentMethodRepository.save(
+                new PaymentMethod(
+                        demoUser,
+                        "5500000000000004",
+                        "Demo",
+                        "User",
+                        java.sql.Date.valueOf(LocalDate.now().plusYears(2)),
+                        456,
+                        30338,
+                        "USA",
+                        "GA",
+                        "Atlanta",
+                        "456 Peachtree St"
+                )
+        );
+        demoUser.addPaymentMethod(demoCard2);
+
+        // Payment method 3: Another different billing address
+        PaymentMethod demoCard3 = paymentMethodRepository.save(
+                new PaymentMethod(
+                        demoUser,
+                        "340000000000009",
+                        "Demo",
+                        "User",
+                        java.sql.Date.valueOf(LocalDate.now().plusYears(4)),
+                        789,
+                        10001,
+                        "USA",
+                        "NY",
+                        "New York",
+                        "789 Broadway Ave"
+                )
+        );
+        demoUser.addPaymentMethod(demoCard3);
 
         customerRepository.save(demoUser);
 
@@ -1408,14 +1469,14 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
             Booking demoBooking = bookingRepository.save(new Booking(new ArrayList<>(), demoUser));
             demoUser.addBooking(demoBooking);
 
-            issueTicket(demoBooking, scheduledShows.get(0), adultCategory, 1, 4, demoCard);
-            issueTicket(demoBooking, scheduledShows.get(0), childCategory, 1, 5, demoCard);
+            issueTicket(demoBooking, scheduledShows.get(0), adultCategory, 1, 4, demoCard1);
+            issueTicket(demoBooking, scheduledShows.get(0), childCategory, 1, 5, demoCard1);
             bookingRepository.save(demoBooking);
 
             if (scheduledShows.size() > 1) {
                 Booking demoFollowUp = bookingRepository.save(new Booking(new ArrayList<>(), demoUser));
                 demoUser.addBooking(demoFollowUp);
-                issueTicket(demoFollowUp, scheduledShows.get(1), seniorCategory, 2, 3, demoCard);
+                issueTicket(demoFollowUp, scheduledShows.get(1), seniorCategory, 2, 3, demoCard2);
                 bookingRepository.save(demoFollowUp);
             }
         }

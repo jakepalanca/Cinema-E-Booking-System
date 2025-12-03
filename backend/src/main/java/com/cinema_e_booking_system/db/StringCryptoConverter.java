@@ -54,7 +54,12 @@ public class StringCryptoConverter implements AttributeConverter<String, String>
         if (attribute == null) {
             return null;
         }
-        return encryptor.encrypt(attribute);
+        try {
+            return encryptor.encrypt(attribute);
+        } catch (Exception e) {
+            System.err.println("[StringCryptoConverter] Encrypt failed, storing plain text value: " + e.getMessage());
+            return attribute;
+        }
     }
 
     /**
@@ -68,6 +73,11 @@ public class StringCryptoConverter implements AttributeConverter<String, String>
         if (dbData == null) {
             return null;
         }
-        return encryptor.decrypt(dbData);
+        try {
+            return encryptor.decrypt(dbData);
+        } catch (Exception e) {
+            System.err.println("[StringCryptoConverter] Decrypt failed, returning stored value as-is: " + e.getMessage());
+            return dbData;
+        }
     }
 }

@@ -76,7 +76,7 @@ public class SecurityConfig {
                     .hasRole("ADMIN")
                 // Customer endpoints (authenticated users)
                 .requestMatchers("/customers/**", "/bookings/**", "/tickets/**", "/payment-methods/**",
-                        "/profile/**", "/bookseat/**")
+                        "/profile/**", "/bookseat/**", "/my-bookings")
                     .hasAnyRole("CUSTOMER", "ADMIN")
                 // All other requests require authentication
                 .anyRequest().authenticated()

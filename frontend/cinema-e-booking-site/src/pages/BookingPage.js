@@ -369,20 +369,29 @@ export default function BookingPage() {
       return;
     }
 
-    // Build ticket list for the API - send array directly
-    const ticketList = selectedSeats.map((seatId) => {
+    // Build ticket list for the API with category info
+    const ticketList = selectedSeats.map((seatId, index) => {
       const [row, col] = seatId.split('-');
+      const ticketData = tickets[index];
       return {
         seatRow: parseInt(row),
-        seatCol: parseInt(col)
+        seatCol: parseInt(col),
+        categoryId: ticketData?.category ? parseInt(ticketData.category) : null
       };
     });
 
+    // Build the full booking request
+    const bookingRequest = {
+      showId: show?.id || null,
+      seats: ticketList,
+      totalPrice: Number(discountedTotal.toFixed(2)),
+      promoCode: appliedPromo?.code || null,
+      movieTitle: title,
+      showtime: showtime
+    };
+
     try {
-      console.log("Sending booking request:", {
-        showroomId: showroomId,
-        seats: ticketList
-      });
+      console.log("Sending booking request:", bookingRequest);
 
       // Check authentication before booking
       const authCheck = await fetch('http://localhost:8080/auth/me', {
@@ -401,7 +410,7 @@ export default function BookingPage() {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify(ticketList)
+        body: JSON.stringify(bookingRequest)
       });
 
       console.log("Response status:", response.status);

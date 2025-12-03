@@ -2,6 +2,7 @@ package com.cinema_e_booking_system.backend;
 
 import com.cinema_e_booking_system.backend.EmailRequest;
 import com.cinema_e_booking_system.backend.TicketRequest;
+import com.cinema_e_booking_system.backend.security.JwtTokenProvider;
 
 import com.cinema_e_booking_system.db.*;
 import jakarta.persistence.EntityManager;
@@ -17,6 +18,7 @@ import org.springframework.http.MediaType;
 import java.sql.Date;
 import java.sql.Time;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -92,6 +94,9 @@ public class WebController {
 
     @Autowired
     UserRepository userRepository;
+
+    @Autowired
+    JwtTokenProvider jwtTokenProvider;
 
 // ---------------------- USER AUTHENTICATION & PROFILE MANAGEMENT ----------------------
 
@@ -660,13 +665,34 @@ public String test() {
 
 
 //-----------------------BOOK SEAT--------------------------
-  //only locks off seat, no payment yet
+// Creates Booking and Ticket records, marks seats as occupied
 @PostMapping("/bookseat/{showroomId}")
-public ResponseEntity<Map<String, String>> bookSeats(
+@Transactional
+public ResponseEntity<Map<String, Object>> bookSeats(
   @PathVariable Long showroomId,
-  @RequestBody List<Map<String, Object>> seats
+  @RequestBody Map<String, Object> bookingRequest,
+  @CookieValue(value = "jwt_token", required = false) String token
   ) {
   try {
+    // 1. Authenticate user
+    if (token == null || token.isEmpty()) {
+      return ResponseEntity.status(401).body(Map.of("message", "Not authenticated"));
+    }
+    
+    Long userId = jwtTokenProvider.getUserIdFromToken(token);
+    String role = jwtTokenProvider.getRoleFromToken(token);
+    
+    if (!"CUSTOMER".equalsIgnoreCase(role)) {
+      return ResponseEntity.status(403).body(Map.of("message", "Only customers can book tickets"));
+    }
+    
+    Optional<Customer> customerOpt = customerRepository.findById(userId);
+    if (customerOpt.isEmpty()) {
+      return ResponseEntity.status(404).body(Map.of("message", "Customer not found"));
+    }
+    Customer customer = customerOpt.get();
+    
+    // 2. Get showroom
     Optional<Showroom> sr = showroomRepository.findById(showroomId);
     if (sr.isEmpty()) {
       return ResponseEntity.status(404).body(Map.of("message", "Showroom not found."));
@@ -679,41 +705,92 @@ public ResponseEntity<Map<String, String>> bookSeats(
       roomMap = new boolean[10][10];
       room.setSeats(roomMap);
     }
-
-    for (Map<String, Object> seat : seats) {
-      int ticketRow = ((Number) seat.get("seatRow")).intValue();
-      int ticketCol = ((Number) seat.get("seatCol")).intValue();
-      
-      if (ticketRow >= 0 && ticketRow < roomMap.length && 
-          ticketCol >= 0 && ticketCol < roomMap[0].length) {
-        roomMap[ticketRow][ticketCol] = true;
+    
+    // 3. Get show (optional but needed for proper ticket linking)
+    Show show = null;
+    if (bookingRequest.containsKey("showId")) {
+      Long showId = ((Number) bookingRequest.get("showId")).longValue();
+      Optional<Show> showOpt = showRepository.findById(showId);
+      if (showOpt.isPresent()) {
+        show = showOpt.get();
       }
     }
     
+    // 4. Extract booking info
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> seats = (List<Map<String, Object>>) bookingRequest.get("seats");
+    Double totalPrice = bookingRequest.containsKey("totalPrice") 
+        ? ((Number) bookingRequest.get("totalPrice")).doubleValue() 
+        : null;
+    String promoCode = (String) bookingRequest.get("promoCode");
+    String movieTitle = (String) bookingRequest.get("movieTitle");
+    String showtime = (String) bookingRequest.get("showtime");
+    
+    // 5. Validate seats are not already occupied
+    for (Map<String, Object> seat : seats) {
+      int seatRow = ((Number) seat.get("seatRow")).intValue();
+      int seatCol = ((Number) seat.get("seatCol")).intValue();
+      
+      if (seatRow < 0 || seatRow >= roomMap.length || 
+          seatCol < 0 || seatCol >= roomMap[0].length) {
+        return ResponseEntity.status(400).body(Map.of("message", "Invalid seat position: " + seatRow + "-" + seatCol));
+      }
+      
+      if (roomMap[seatRow][seatCol]) {
+        return ResponseEntity.status(409).body(Map.of("message", "Seat " + seatRow + "-" + seatCol + " is already booked"));
+      }
+    }
+    
+    // 6. Create Booking record
+    Booking booking = new Booking(customer, show, totalPrice, promoCode);
+    
+    // 7. Create Ticket records for each seat
+    List<Ticket> ticketList = new ArrayList<>();
+    for (Map<String, Object> seat : seats) {
+      int seatRow = ((Number) seat.get("seatRow")).intValue();
+      int seatCol = ((Number) seat.get("seatCol")).intValue();
+      
+      // Get ticket category if provided
+      TicketCategory category = null;
+      if (seat.containsKey("categoryId")) {
+        Long categoryId = ((Number) seat.get("categoryId")).longValue();
+        category = ticketCategoryRepository.findById(categoryId).orElse(null);
+      }
+      
+      Ticket ticket = new Ticket(seatRow, seatCol, category, show, room, null);
+      ticket.setBooking(booking);
+      ticketList.add(ticket);
+      
+      // Mark seat as occupied
+      roomMap[seatRow][seatCol] = true;
+    }
+    
+    booking.setTickets(ticketList);
+    
+    // 8. Save everything
+    bookingRepository.save(booking);
     showroomRepository.save(room);
-
-    return ResponseEntity.ok(Map.of("message", seats.size() + " tickets added"));
+    
+    // 9. Build response
+    Map<String, Object> response = new HashMap<>();
+    response.put("message", seats.size() + " tickets booked successfully");
+    response.put("bookingId", booking.getId());
+    response.put("ticketCount", ticketList.size());
+    
+    return ResponseEntity.ok(response);
   } catch (Exception e) {
     e.printStackTrace();
     return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
   }
-  }
+}
 
-//-----------------------BOOK SEAT--------------------------
-  //only locks off seat, no payment yet
+//-----------------------BOOK SEAT (Legacy PUT)--------------------------
+// Kept for backwards compatibility
 @PutMapping("/bookseat/{showroomId}")
-public ResponseEntity<Map<String, String>> bookSeats(
+public ResponseEntity<Map<String, String>> bookSeatsLegacy(
   @PathVariable Long showroomId,
   @RequestBody TicketRequest tix
   ) {
-  /*
-  Optional<Show> s = showRepository.findById(showroomId);
-  if (s.isEmpty()) {
-    return ResponseEntity.status(404).body(Map.of("message", "Show not found"));
-  }
-  Show show = s.get();
-  room = show.getShowroom();
-  */
   Optional<Showroom> sr = showroomRepository.findById(showroomId);
   if (sr.isEmpty()) {
     return ResponseEntity.status(404).body(Map.of("message", "Showroom not found."));
@@ -724,14 +801,84 @@ public ResponseEntity<Map<String, String>> bookSeats(
   for (Ticket ticket : tix.getTickets()) {
     int ticketRow = ticket.getSeatRow();
     int ticketCol = ticket.getSeatCol();
-
-
     roomMap[ticketRow][ticketCol] = true;
   }
   int tixSize = tix.getTickets().size();
 
   return ResponseEntity.ok(Map.of("message", tixSize + " tickets added"));
+}
+
+//-----------------------MY BOOKINGS--------------------------
+// Get all bookings for the authenticated user
+@GetMapping("/my-bookings")
+public ResponseEntity<?> getMyBookings(
+  @CookieValue(value = "jwt_token", required = false) String token
+) {
+  try {
+    // 1. Authenticate user
+    if (token == null || token.isEmpty()) {
+      return ResponseEntity.status(401).body(Map.of("message", "Not authenticated"));
+    }
+    
+    Long userId = jwtTokenProvider.getUserIdFromToken(token);
+    String role = jwtTokenProvider.getRoleFromToken(token);
+    
+    if (!"CUSTOMER".equalsIgnoreCase(role)) {
+      return ResponseEntity.status(403).body(Map.of("message", "Only customers can view bookings"));
+    }
+    
+    // 2. Fetch bookings
+    List<Booking> bookings = bookingRepository.findByCustomerIdOrderByCreatedAtDesc(userId);
+    
+    // 3. Transform to response DTOs with all necessary info
+    List<Map<String, Object>> response = new ArrayList<>();
+    for (Booking booking : bookings) {
+      Map<String, Object> bookingData = new HashMap<>();
+      bookingData.put("id", booking.getId());
+      bookingData.put("createdAt", booking.getCreatedAt());
+      bookingData.put("totalPrice", booking.getTotalPrice());
+      bookingData.put("promoCode", booking.getPromoCode());
+      
+      // Get show/movie info
+      Show show = booking.getShow();
+      if (show == null) {
+        for (Ticket ticket : booking.getTickets()) {
+          if (ticket.getShow() != null) {
+            show = ticket.getShow();
+            break;
+          }
+        }
+      }
+      if (show != null) {
+        bookingData.put("movieTitle", show.getMovie() != null ? show.getMovie().getTitle() : null);
+        bookingData.put("showDate", show.getDate());
+        bookingData.put("showTime", show.getStartTime());
+        bookingData.put("theaterName", show.getTheaterName());
+        bookingData.put("cinemaName", show.getCinemaName());
+        bookingData.put("showroomLabel", show.getShowroomLabel());
+      }
+      
+      // Get seats from tickets
+      List<String> seats = new ArrayList<>();
+      for (Ticket ticket : booking.getTickets()) {
+        int row = ticket.getSeatRow();
+        int col = ticket.getSeatCol();
+        // Convert to letter+number format (e.g., A1, B5)
+        String seatLabel = String.valueOf((char) ('A' + row)) + (col + 1);
+        seats.add(seatLabel);
+      }
+      bookingData.put("seats", seats);
+      bookingData.put("ticketCount", booking.getTickets().size());
+      
+      response.add(bookingData);
+    }
+    
+    return ResponseEntity.ok(response);
+  } catch (Exception e) {
+    e.printStackTrace();
+    return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
   }
+}
 
 // -----------------------------------------------------------
 
@@ -1658,6 +1805,9 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
     private void issueTicket(Booking booking, Show show, TicketCategory category, int seatRow, int seatCol, PaymentMethod paymentMethod) {
         Ticket ticket = new Ticket(seatRow, seatCol, category, show, show.getShowroom(), paymentMethod);
         booking.addTicket(ticket);
+        if (booking.getShow() == null && show != null) {
+            booking.setShow(show);
+        }
         show.getShowroom().occupySeat(seatRow, seatCol);
         ticketRepository.save(ticket);
     }

@@ -97,8 +97,8 @@ function Browse() {
             value={selectedGenre}
             onChange={(e) => setSelectedGenre(e.target.value)}
             style={{
-              minWidth: "160px",
-              padding: "0.75rem 0.9rem",
+              minWidth: "200px",
+              padding: "0.75rem 1.25rem",
               borderRadius: "var(--radius)",
               border: "1px solid var(--border)",
               backgroundColor: "#0f1118",

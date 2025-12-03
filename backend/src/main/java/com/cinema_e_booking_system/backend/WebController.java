@@ -626,9 +626,22 @@ public ResponseEntity<Map<String, String>> addPromo(
       return ResponseEntity.badRequest().body(Map.of("message", "Invalid start or end date format. Use YYYY-MM-DD."));
   }
 
-  Promotion addThisPromo = new Promotion(promoCode, promoDiscountPercentage, startDate, endDate);
-  promotionRepository.save(addThisPromo);
-  return ResponseEntity.ok(Map.of("message", "Promo added successfully."));
+  if (promoCode == null || promoCode.isBlank()) {
+    return ResponseEntity.badRequest().body(Map.of("message", "Promo code is required."));
+  }
+
+  // Avoid duplicate promo codes (unique constraint) and return a clear error
+  if (promotionRepository.findByCode(promoCode).isPresent()) {
+    return ResponseEntity.status(409).body(Map.of("message", "Promo code already exists."));
+  }
+
+  try {
+    Promotion addThisPromo = new Promotion(promoCode, promoDiscountPercentage, startDate, endDate);
+    promotionRepository.save(addThisPromo);
+    return ResponseEntity.ok(Map.of("message", "Promo added successfully."));
+  } catch (org.springframework.dao.DataIntegrityViolationException e) {
+    return ResponseEntity.status(409).body(Map.of("message", "Promo code already exists."));
+  }
   }
 
 

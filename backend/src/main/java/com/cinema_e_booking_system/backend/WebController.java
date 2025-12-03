@@ -27,6 +27,8 @@ import java.util.UUID;
 import java.util.Objects;
 import java.lang.Integer;
 import java.time.Duration;
+import java.time.format.DateTimeParseException;
+import java.util.NoSuchElementException;
 
 
 
@@ -901,8 +903,17 @@ public ResponseEntity<?> addCastMember(@RequestBody Map<String, Object> body) {
 )
 public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
     try {
-        Long movieId = Long.valueOf(body.get("movie_id").toString());
-        Long showroomId = Long.valueOf(body.get("showroom_id").toString());
+        Object movieIdRaw = body.get("movie_id");
+        Object showroomIdRaw = body.get("showroom_id");
+        if (movieIdRaw == null || showroomIdRaw == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Missing movie or showroom id."));
+        }
+
+        Long movieId = Long.valueOf(movieIdRaw.toString());
+        Long showroomId = Long.valueOf(showroomIdRaw.toString());
+        if (movieService.get(movieId).isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("message", "Movie not found."));
+        }
 
         String dateStr = (String) body.get("date");          // "YYYY-MM-DD"
         String startStr = (String) body.get("startTime");   // "HH:mm"
@@ -917,7 +928,7 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
         LocalTime end = LocalTime.parse(endStr);
 
         int duration = (int) Duration.between(start, end).toMinutes();
-        if (duration <= 0) {
+        if (duration <= 0 || !end.isAfter(start)) {
             return ResponseEntity.badRequest().body(Map.of("message", "End time must be after start time."));
         }
 
@@ -929,13 +940,21 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
         );
 
         Showroom showroom = showroomRepository.findById(showroomId)
-                .orElseThrow(() -> new RuntimeException("Showroom not found"));
+                .orElseThrow(() -> new NoSuchElementException("Showroom not found."));
 
         show.setShowroom(showroom);
 
         Show savedShow = movieService.addShow(movieId, show);
         return ResponseEntity.ok(savedShow);
 
+    } catch (SchedulingConflictException conflict) {
+        return ResponseEntity.status(409).body(Map.of("message", conflict.getMessage()));
+    } catch (DateTimeParseException e) {
+        return ResponseEntity.badRequest().body(Map.of("message", "Invalid date or time format. Use YYYY-MM-DD and HH:mm."));
+    } catch (IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+    } catch (NoSuchElementException e) {
+        return ResponseEntity.status(404).body(Map.of("message", e.getMessage()));
     } catch (Exception e) {
         e.printStackTrace();
         return ResponseEntity.status(500).body(Map.of("message", "Failed to add showtime."));
@@ -1422,26 +1441,59 @@ public ResponseEntity<?> addShow(@RequestBody Map<String, Object> body) {
         List<Show> scheduledShows = new ArrayList<>();
         List<Date> dateSlots = List.of(today, tomorrow, weekend, nextWeek);
         List<Time> timeSlots = List.of(brunch, matinee, afternoon, evening, lateShow);
-        int slotGridSize = showrooms.size() * timeSlots.size();
-        for (int movieIdx = 0; movieIdx < savedMovies.size(); movieIdx++) {
-            Movie movie = savedMovies.get(movieIdx);
-            int baseDuration = 105 + (movie.getTitle().length() % 25);
 
-            for (int dateIdx = 0; dateIdx < dateSlots.size(); dateIdx++) {
-                int slot = (movieIdx + dateIdx * savedMovies.size()) % slotGridSize;
-                int roomIndex = slot / timeSlots.size();
-                int timeIndex = slot % timeSlots.size();
+        int moviesWithoutShowsCount = Math.min(2, savedMovies.size());
+        List<Movie> moviesToSchedule = new ArrayList<>(savedMovies.subList(0, savedMovies.size() - moviesWithoutShowsCount));
+        // Intentionally leave the remaining movies without scheduled showings (coming soon).
 
-                Date showDate = dateSlots.get(dateIdx);
-                Time startTime = timeSlots.get(timeIndex);
-                int duration = baseDuration + (dateIdx * 5);
+        class Slot {
+            final Showroom showroom;
+            final Time startTime;
 
-                Showroom assignedRoom = showrooms.get(roomIndex);
-                Show scheduledShow = new Show(duration, showDate, startTime, addMinutes(startTime, duration));
-                scheduledShow.setShowroom(assignedRoom);
-                scheduledShows.add(movieService.addShow(movie.getId(), scheduledShow, true));
+            Slot(Showroom showroom, Time startTime) {
+                this.showroom = showroom;
+                this.startTime = startTime;
             }
+        }
 
+        List<Slot> slots = new ArrayList<>();
+        for (Showroom room : showrooms) {
+            for (Time start : timeSlots) {
+                slots.add(new Slot(room, start));
+            }
+        }
+
+        for (int dateIdx = 0; dateIdx < dateSlots.size(); dateIdx++) {
+            Date showDate = dateSlots.get(dateIdx);
+
+            for (int movieIdx = 0; movieIdx < moviesToSchedule.size(); movieIdx++) {
+                Movie movie = moviesToSchedule.get(movieIdx);
+                int duration = 105 + (movie.getTitle().length() % 25) + (dateIdx * 5);
+
+                int attempt = 0;
+                int slotSeed = (dateIdx * 5 + movieIdx * 3) % slots.size();
+                boolean scheduled = false;
+
+                while (attempt < slots.size() && !scheduled) {
+                    Slot slot = slots.get((slotSeed + attempt) % slots.size());
+                    Show scheduledShow = new Show(duration, showDate, slot.startTime, addMinutes(slot.startTime, duration));
+                    scheduledShow.setShowroom(slot.showroom);
+
+                    try {
+                        scheduledShows.add(movieService.addShow(movie.getId(), scheduledShow));
+                        scheduled = true;
+                    } catch (SchedulingConflictException conflict) {
+                        attempt++;
+                    }
+                }
+
+                if (!scheduled) {
+                    throw new IllegalStateException("Unable to schedule " + movie.getTitle() + " on " + showDate);
+                }
+            }
+        }
+
+        for (Movie movie : savedMovies) {
             movieService.addReview(movie.getId(), new Review(5, movie.getTitle() + " was incredible on the big screen."));
             movieService.addReview(movie.getId(), new Review(4, "Crowd loved the show and sound design."));
         }

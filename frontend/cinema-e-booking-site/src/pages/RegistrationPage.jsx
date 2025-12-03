@@ -1,7 +1,9 @@
-import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import "../css/RegistrationPage.css";
 import Navbar from './Navbar.jsx';
+import AddressFields from '../components/AddressFields.jsx';
+import PaymentCardForm from '../components/PaymentCardForm.jsx';
 
 function RegistrationPage() {
     const [formData, setFormData] = useState({
@@ -20,40 +22,9 @@ function RegistrationPage() {
         paymentMethods: [],
     });
 
-    const [currentCard, setCurrentCard] = useState({
-        cardNumber: "",
-        cardHolderFirstName: "",
-        cardHolderLastName: "",
-        expirationDate: "",
-        securityCode: "",
-        billingAddress: {
-            address: "",
-            city: "",
-            state: "",
-            zipCode: "",
-            country: "",
-        },
-        useDefaultAddress: false,
-    });
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
     const navigate = useNavigate();
-
-    // promotion fetching
-    const [availablePromotions, setAvailablePromotions] = useState([]);
-    useEffect(() => {
-        async function fetchPromotions() {
-            try {
-            const response = await fetch("http://localhost:8080/promotions");
-            if (!response.ok) throw new Error("Failed to fetch promotions");
-            const data = await response.json();
-            setAvailablePromotions(data);
-            } catch (error) {
-                console.error("Error fetching promotions:", error);
-            }
-        }
-        fetchPromotions();
-    }, []);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -63,86 +34,16 @@ function RegistrationPage() {
         });
     };
 
-    const handleCardChange =  (e) => {
-        const { name, value, type, checked } = e.target;
-
-        if ( name === "useDefaultAddress") {
-            setCurrentCard({
-                ...currentCard,
-                useDefaultAddress: checked,
-                billingAddress: checked
-                    ? {
-                        address: formData.address,
-                        city: formData.city,
-                        state: formData.state,
-                        zipCode: formData.zipCode,
-                        country: formData.country,
-                    }
-                    : { address: "", city: "", state: "", zipCode: "", country: "" },
-            });
-            return;
-        }
-        if (name.startsWith("billingAddress.")) {
-            const field = name.split(".")[1];
-            setCurrentCard({
-                ...currentCard,
-                billingAddress: {
-                    ...currentCard.billingAddress,
-                    [field]: value,
-                },
-            });
-        } else {
-            setCurrentCard({...currentCard, [name]: value });
-        }
+    const handleAddressChange = ({ name, value }) => {
+        setFormData({ ...formData, [name]: value });
     };
 
-    const addCard = () => {
-        // if there are already 3 cards
-        if (formData.paymentMethods.length >= 3) {
-            alert("You may only have up to 3 payment cards.");
-            return;
-        }
-        // if missing info
-        if (
-            !currentCard.cardNumber || !currentCard.cardHolderFirstName ||
-            !currentCard.cardHolderLastName || !currentCard.securityCode ||
-            !currentCard.expirationDate
-        ){
-            alert("Missing payment info. Please fill out all required fields.");
-            return;
-        }
-        const newCard = {
-            ...currentCard,
-            billingAddress: currentCard.useDefaultAddress
-                ? {
-                    address: formData.address,
-                    city: formData.city,
-                    state: formData.state,
-                    zipCode: formData.zipCode,
-                    country: formData.country
-                }
-                : currentCard.billingAddress,
-        };
+    const handleAddCard = (card) => {
         setFormData({
             ...formData,
-            paymentMethods: [...formData.paymentMethods, currentCard],
+            paymentMethods: [...formData.paymentMethods, card],
         });
-        setCurrentCard({
-            cardNumber: "",
-            cardHolderFirstName: "",
-            cardHolderLastName: "",
-            expirationDate: "",
-            securityCode: "",
-            billingAddress: {
-                address: "",
-                city: "",
-                state: "",
-                zipCode: "",
-                country: "",
-            },
-            useDefaultAddress: false,
-        });
-    }; // addCard
+    };
 
     const removeCard = (index) => {
         setFormData({
@@ -173,7 +74,7 @@ function RegistrationPage() {
             customerState: "PENDING_VERIFICATION",
         };
         try {
-            const res = await fetch("http://localhost:8080/register", { //replace with whatever our verification process is in backend
+            const res = await fetch("http://localhost:8080/register", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify(newUser),
@@ -194,280 +95,127 @@ function RegistrationPage() {
         }
     };
 
-    // Page Content
+    const defaultAddress = {
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        country: formData.country,
+    };
+
     return(
         <>
             <Navbar />
             <div className="registration-div">
-                <h2>Create an Account!</h2>
                 <form onSubmit={handleSubmit} className="registration-form">
                     <h3>Account Information</h3>
-                    <label>
-                        Email:
-                        <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            required
-                        />
-                        <span className="required-note">* required</span>
-                    </label>
-                    <label>
-                        Username:
-                        <input 
-                            type="text"
-                            name="username"
-                            value={formData.username}
-                            onChange={handleChange}
-                            required
-                        />
-                        <span className="required-note">* required</span>
-                    </label>
-                    <label>
-                        Password:
-                        <input
-                            type="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            required
-                        />
-                        <span className="required-note">* required</span>
-                    </label>
-                    <h3>Personal Information</h3>
-                    <div className="naming-section">
-                        <label>
-                            First Name:
-                            <input
-                                type="text"
-                                name="firstName"
-                                value={formData.firstName}
-                                onChange={handleChange}
-                                required
-                            />
-                            <span className="required-note">* required</span>
-                        </label>
-                        <label>
-                            Last Name:
-                            <input
-                                type="text"
-                                name="lastName"
-                                value={formData.lastName}
-                                onChange={handleChange}
-                                required
-                            />
-                            <span className="required-note">* required</span>
-                        </label>
-                    </div>
-                    <label>
-                        Phone Number:
-                        <input
-                            type="tel"
-                            name="phoneNumber"
-                            value={formData.phoneNumber}
-                            onChange={handleChange}
-                            required
-                        />
-                        <span className="required-note">* required</span>
-                    </label>
-                    <h3>Address</h3>
-                    <label>
-                        Address:
-                        <input
-                            type="text"
-                            name="address"
-                            value={formData.address}
-                            onChange={handleChange}
-                        />
-                    </label>
-                    <div className="address-row">
-                        <label>
-                            City:
-                            <input
-                                type="text"
-                                name="city"
-                                value={formData.city}
-                                onChange={handleChange}
-                            />
-                        </label>
-                        <label>
-                            State/Province:
-                            <input
-                                type="text"
-                                name="state"
-                                value={formData.state}
-                                onChange={handleChange}
-                            />
-                        </label>
-                    </div>
-                    <div className="address-row">
-                        <label>
-                            ZIP Code:
-                            <input
-                                type="text"
-                                name="zipCode"
-                                value={formData.zipCode}
-                                onChange={handleChange}
-                            />
-                        </label>
-                        <label>
-                            Country:
-                            <input
-                                type="text"
-                                name="country"
-                                value={formData.country}
-                                onChange={handleChange}
-                            />
-                        </label>
-                    </div>
-                    <h3>Payment Methods</h3>
-                    <div className="payment-form">
-                        <label>
-                            Card Number:
-                            <input
-                                type="text"
-                                name="cardNumber"
-                                value={currentCard.cardNumber}
-                                onChange={handleCardChange}
-                            />
-                        </label>
-                        <div className="name-fields">
-                            <label>
-                                Cardholder First Name:
-                                <input
-                                    type="text"
-                                    name="cardHolderFirstName"
-                                    value={currentCard.cardHolderFirstName}
-                                    onChange={handleCardChange}
-                                />
-                            </label>
-                            <label>
-                                Cardholder Last Name:
-                                <input
-                                    type="text"
-                                    name="cardHolderLastName"
-                                    value={currentCard.cardHolderLastName}
-                                    onChange={handleCardChange}
-                                />
-                            </label>
-                        </div>
-                        <div className="payment-row">
-                            <label>
-                                Expiration Date:
-                                <input
-                                    type="month"
-                                    name="expirationDate"
-                                    value={currentCard.expirationDate}
-                                    onChange={handleCardChange}
-                                />
-                            </label>
-                            <label>
-                                Security Code (CVV):
-                                <input
-                                    type="text"
-                                    name="securityCode"
-                                    value={currentCard.securityCode}
-                                    onChange={handleCardChange}
-                                />
-                            </label>
-                        </div>
-                        <h4>Billing Address</h4>
-                        <label className="use-main-address">
-                            <input
-                                type="checkbox"
-                                name="useDefaultAddress"
-                                checked={currentCard.useDefaultAddress}
-                                onChange={handleCardChange}
-                            />
-                            Use my main address as billing address
-                        </label>
-                        {!currentCard.useDefaultAddress && (
-                            <>
-                                <label>
-                                    Address:
-                                    <input
-                                        type="text"
-                                        name="billingAddress.address"
-                                        value={currentCard.billingAddress.address}
-                                        onChange={handleCardChange}
-                                    />
-                                </label>
-                                <div className="address-row">
-                                    <label>
-                                        City:
-                                        <input
-                                            type="text"
-                                            name="billingAddress.city"
-                                            value={currentCard.billingAddress.city}
-                                            onChange={handleCardChange}
-                                        />
-                                    </label>
-                                    <label>
-                                        State/Province:
-                                        <input
-                                            type="text"
-                                            name="billingAddress.state"
-                                            value={currentCard.billingAddress.state}
-                                            onChange={handleCardChange}
-                                        />
-                                    </label>
-                                </div>
-                                <div className="address-row">
-                                    <label>
-                                        ZIP Code:
-                                        <input
-                                            type="text"
-                                            name="billingAddress.zipCode"
-                                            value={currentCard.billingAddress.zipCode}
-                                            onChange={handleCardChange}
-                                        />
-                                    </label>
-                                    <label>
-                                        Country:
-                                        <input
-                                            type="text"
-                                            name="billingAddress.country"
-                                            value={currentCard.billingAddress.country}
-                                            onChange={handleCardChange}
-                                        />
-                                    </label>
-                                </div>
-                            </>
-                        )}
-                        <button type="button" onClick={addCard}>Add Card</button>
-                    </div>
-                    {formData.paymentMethods.length > 0 && (
-                        <div className="saved-cards">
-                            <h4>Saved Cards</h4>
-                            <ul>
-                                {formData.paymentMethods.map((card, index) => (
-                                    <li key={index}>
-                                        **** **** **** {card.cardNumber.slice(-4)} — {card.cardHolderFirstName} {card.cardHolderLastName}
-                                        <button type="button" onClick={() => removeCard(index)}>Remove</button>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                    <h3>Promotions</h3>
-                    <label className="promo-checkbox">
+                    <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder="Email *"
+                        required
+                        autoComplete="email"
+                    />
+                    <input 
+                        type="text"
+                        name="username"
+                        value={formData.username}
+                        onChange={handleChange}
+                        placeholder="Username *"
+                        required
+                        autoComplete="username"
+                    />
+                    <input
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="Password *"
+                        required
+                        autoComplete="new-password"
+                    />
+                    <label className="inline-checkbox">
                         <input
                             type="checkbox"
                             name="registeredForPromos"
                             checked={formData.registeredForPromos}
                             onChange={handleChange}
                         />
-                        Check if you would like to receive promotional offers!
+                        Sign up for promotional offers
                     </label>
-                    <button type="submit" disabled={loading}>
-                        {loading ? "Registering..." : "Create Account"}
-                    </button>
+
+                    <h3>Personal Information</h3>
+                    <div className="naming-section">
+                        <input
+                            type="text"
+                            name="firstName"
+                            value={formData.firstName}
+                            onChange={handleChange}
+                            placeholder="First name *"
+                            required
+                            autoComplete="given-name"
+                        />
+                        <input
+                            type="text"
+                            name="lastName"
+                            value={formData.lastName}
+                            onChange={handleChange}
+                            placeholder="Last name *"
+                            required
+                            autoComplete="family-name"
+                        />
+                    </div>
+                    <input
+                        type="tel"
+                        name="phoneNumber"
+                        value={formData.phoneNumber}
+                        onChange={handleChange}
+                        placeholder="Phone number *"
+                        required
+                        pattern="^[\d\s\-\(\)\+]+$"
+                        title="Phone number (digits, spaces, dashes, parentheses)"
+                        autoComplete="tel"
+                    />
+
+                    <h3>Address</h3>
+                    <AddressFields
+                        address={defaultAddress}
+                        onChange={handleAddressChange}
+                    />
+
+                    <h3>Payment Methods (Optional)</h3>
+                    <PaymentCardForm
+                        onAddCard={handleAddCard}
+                        defaultAddress={defaultAddress}
+                        currentCardCount={formData.paymentMethods.length}
+                    />
+
+                    {formData.paymentMethods.length > 0 && (
+                        <div className="saved-cards">
+                            <h4>Saved Cards</h4>
+                            <ul>
+                                {formData.paymentMethods.map((card, index) => (
+                                    <li key={index}>
+                                        •••• {card.cardNumber.slice(-4)} — {card.cardHolderFirstName} {card.cardHolderLastName}
+                                        <button type="button" onClick={() => removeCard(index)}>Remove</button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    <div className="form-actions">
+                        <button type="submit" disabled={loading}>
+                            {loading ? "Registering..." : "Sign Up"}
+                        </button>
+                    </div>
                     {message && <p className="info-message">{message}</p>}
                 </form>
             </div>
         </>
     );
-};
+}
 
 export default RegistrationPage;

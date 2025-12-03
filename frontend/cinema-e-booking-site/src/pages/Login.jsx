@@ -27,11 +27,10 @@ function Login() {
         setMessage("");
 
         try {
-            // Send correct JSON format expected by backend
             const res = await fetch("http://localhost:8080/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                credentials: 'include', // Include cookies
+                credentials: 'include',
                 body: JSON.stringify({
                     emailOrUsername: credentials.emailOrUsername,
                     password: credentials.password,
@@ -41,7 +40,6 @@ function Login() {
             if (res.ok) {
                 const data = await res.json();
 
-                // Token is now in HTTP-only cookie, so we only store user data
                 const userData = {
                     email: data.email,
                     id: data.id,
@@ -54,7 +52,6 @@ function Login() {
                 authService.setAuth(userData);
                 login(userData);
 
-                // Also store for backward compatibility with existing code
                 localStorage.setItem(
                     "cinemaAuth",
                     JSON.stringify({ email: data.email })
@@ -63,7 +60,6 @@ function Login() {
 
                 setMessage("Login successful");
                 
-                // Redirect based on role
                 if (data.role === 'admin') {
                     navigate("/admin-homepage");
                 } else {
@@ -80,8 +76,9 @@ function Login() {
             setLoading(false);
         }
     };
+
     const handleForgotPassword = async() => {
-        const {emailOrUsername } = credentials;
+        const { emailOrUsername } = credentials;
         if(!emailOrUsername){
             setMessage("Please enter your email first.");
             return;
@@ -110,26 +107,24 @@ function Login() {
             <div className="login-div">
                 <h2>Sign In</h2>
                 <form onSubmit={handleSubmit} className="login-form">
-                    <label>
-                        Email or Username:
-                        <input
-                            type="text"
-                            name="emailOrUsername"
-                            value={credentials.emailOrUsername}
-                            onChange={handleChange}
-                            required
-                        />
-                    </label>
-                    <label>
-                        Password:
-                        <input
-                            type="password"
-                            name="password"
-                            value={credentials.password}
-                            onChange={handleChange}
-                            required
-                        />
-                    </label>
+                    <input
+                        type="text"
+                        name="emailOrUsername"
+                        value={credentials.emailOrUsername}
+                        onChange={handleChange}
+                        placeholder="Email or username"
+                        required
+                        autoComplete="username"
+                    />
+                    <input
+                        type="password"
+                        name="password"
+                        value={credentials.password}
+                        onChange={handleChange}
+                        placeholder="Password"
+                        required
+                        autoComplete="current-password"
+                    />
                     <button type="submit" disabled={loading}>
                         {loading ? "Logging in..." : "Login"}
                     </button>
@@ -152,16 +147,11 @@ function Login() {
                         </p>
                     )}
                 </form>
-                <p className="forgotPass-redirect">
-                    Forgot your password? <Link to="/forgot-password">Click Here</Link>
-                </p>
-                <p className="signup-redirect">
-                    Don't have an account? <Link to="/register">Sign Up</Link>
-                </p>
-                <hr/>
-                <p className="admin-redirect">
-                    <Link to="/admin-login">Admin Sign In</Link>
-                </p>
+                <ul className="login-links">
+                    <li><Link to="/forgot-password">Forgot password?</Link></li>
+                    <li><Link to="/register">Sign Up</Link></li>
+                    <li><Link to="/admin-login">Admin Sign In</Link></li>
+                </ul>
             </div>
         </>
     );

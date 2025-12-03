@@ -55,8 +55,8 @@
     text-decoration: none;
     font-size: 1rem;
     font-weight: 500;
-    padding: 0.5rem 0.75rem;
-    border-radius: 4px;
+    padding: 0.5rem 0.85rem;
+    border-radius: var(--radius);
     transition: all 0.2s ease;
     display: block;
     white-space: nowrap;
@@ -69,6 +69,12 @@
 
 .nav-item:active {
     transform: scale(0.98);
+}
+
+.nav-item.active {
+    background-color: rgba(186, 12, 47, 0.18);
+    border: 1px solid rgba(186, 12, 47, 0.4);
+    color: #ffffff;
 }
 
 /* Responsive design for smaller screens */

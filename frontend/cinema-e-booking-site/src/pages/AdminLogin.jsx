@@ -83,6 +83,7 @@ function AdminLogin(){
                             name="emailOrUsername"
                             value={credentials.emailOrUsername}
                             onChange={handleChange}
+                            placeholder="Enter admin email or username"
                             required
                         />
                     </label>
@@ -93,6 +94,7 @@ function AdminLogin(){
                             name="password"
                             value={credentials.password}
                             onChange={handleChange}
+                            placeholder="Enter password"
                             required
                         />
                     </label>

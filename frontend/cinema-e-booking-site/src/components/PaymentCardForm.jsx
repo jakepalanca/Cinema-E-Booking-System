@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import AddressFields from './AddressFields';
 
 /**
@@ -20,6 +20,16 @@ function PaymentCardForm({ onAddCard, defaultAddress = {}, maxCards = 3, current
         useDefaultAddress: true,
     });
     const [errors, setErrors] = useState({});
+
+    // Keep billing address in sync when using the main address
+    useEffect(() => {
+        setCard(prev => {
+            if (!prev.useDefaultAddress) {
+                return prev;
+            }
+            return { ...prev, billingAddress: { ...defaultAddress } };
+        });
+    }, [defaultAddress]);
 
     // Validation patterns
     const patterns = {

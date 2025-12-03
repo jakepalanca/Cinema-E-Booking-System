@@ -6,6 +6,7 @@ import AddressFields from '../components/AddressFields.jsx';
 import PaymentCardForm from '../components/PaymentCardForm.jsx';
 import api from '../services/api.js';
 import { useAuth } from '../contexts/AuthContext';
+import { getCardDisplay } from '../utils/cardDisplay.js';
 
 export default function EditProfile() {
     const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -126,7 +127,17 @@ export default function EditProfile() {
         api.put(`/customers/${customer.id}/payment-methods`, pmPayload)
             .then(r => r.json())
             .then(saved => {
-                setPaymentMethods(prev => [...prev, saved]);
+                const displayCard = {
+                    id: saved.id,
+                    cardHolderFirstName: saved.cardHolderFirstName || card.cardHolderFirstName,
+                    cardHolderLastName: saved.cardHolderLastName || card.cardHolderLastName,
+                    cardNumber: saved.cardNumberLast4
+                        ? `****${saved.cardNumberLast4}`
+                        : card.cardNumber,
+                    cardNumberLast4: saved.cardNumberLast4 || String(card.cardNumber).slice(-4),
+                    expirationDate: saved.expirationDate || pmPayload.expirationDate,
+                };
+                setPaymentMethods(prev => [...prev, displayCard]);
                 setMessage('Card added successfully');
             })
             .catch(() => setMessage('Failed to add card'));
@@ -358,7 +369,7 @@ export default function EditProfile() {
                             <ul>
                                 {paymentMethods.map((card) => (
                                     <li key={card.id}>
-                                        •••• {String(card.cardNumber).slice(-4)} — {card.cardHolderFirstName} {card.cardHolderLastName}
+                                        {getCardDisplay(card).label}
                                         <button type="button" onClick={() => removeCard(card.id)}>Remove</button>
                                     </li>
                                 ))}

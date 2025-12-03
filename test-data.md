@@ -13,3 +13,7 @@ The seeded customer is marked as verified and has 3 saved payment methods:
 3. Amex ending in 0009 (billing: 789 Broadway Ave, New York, NY)
 
 Sample bookings are created against the first shows returned during seeding. Use `GET /clear-db` to wipe the data before reinitializing.
+
+test cases:
+
+trying to add fourth card

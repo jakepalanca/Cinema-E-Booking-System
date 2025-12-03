@@ -8,6 +8,7 @@ import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * JPA Attribute Converter for encrypting and decrypting integer attributes. This
@@ -31,6 +32,8 @@ public class IntegerCryptoConverter implements AttributeConverter<Integer, Integ
 
     // Jasypt StringEncryptor for performing encryption and decryption
     private static final StandardPBEBigIntegerEncryptor encryptor = new StandardPBEBigIntegerEncryptor();
+    private static final AtomicBoolean encryptWarned = new AtomicBoolean(false);
+    private static final AtomicBoolean decryptWarned = new AtomicBoolean(false);
 
     static {
         // Initialize encryptor using system property or environment variable with fallback
@@ -54,7 +57,9 @@ public class IntegerCryptoConverter implements AttributeConverter<Integer, Integ
         try {
             return encryptor.decrypt(BigInteger.valueOf(dbData)).intValue();
         } catch (Exception e) {
-            System.err.println("[IntegerCryptoConverter] Decrypt failed, returning stored value: " + e.getMessage());
+            if (decryptWarned.compareAndSet(false, true)) {
+                System.err.println("[IntegerCryptoConverter] Decrypt failed, returning stored value (subsequent failures suppressed): " + e.getMessage());
+            }
             return dbData;
         }
     }
@@ -68,7 +73,9 @@ public class IntegerCryptoConverter implements AttributeConverter<Integer, Integ
             BigInteger bigIntValue = BigInteger.valueOf(attribute);
             return encryptor.encrypt(bigIntValue).intValue();
         } catch (Exception e) {
-            System.err.println("[IntegerCryptoConverter] Encrypt failed, storing plain value: " + e.getMessage());
+            if (encryptWarned.compareAndSet(false, true)) {
+                System.err.println("[IntegerCryptoConverter] Encrypt failed, storing plain value (subsequent failures suppressed): " + e.getMessage());
+            }
             return attribute;
         }
     }

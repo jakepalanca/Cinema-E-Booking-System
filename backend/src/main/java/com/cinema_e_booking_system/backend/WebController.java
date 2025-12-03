@@ -220,7 +220,7 @@ public ResponseEntity<Map<String, Object>> adminLogin(@RequestBody Map<String, S
     if (username == null || password == null) {
         return ResponseEntity
                 .badRequest()
-                .body(Map.of("message", "Missing username or password"));
+                .body(Map.<String, Object>of("message", "Missing username or password"));
     }
 
     Optional<Admin> adminOpt = adminRepository.findByUsername(username);
@@ -228,7 +228,7 @@ public ResponseEntity<Map<String, Object>> adminLogin(@RequestBody Map<String, S
     if (adminOpt.isEmpty()) {
         return ResponseEntity
                 .status(401)
-                .body(Map.of("message", "Invalid admin credentials"));
+                .body(Map.<String, Object>of("message", "Invalid admin credentials"));
     }
 
     Admin admin = adminOpt.get();
@@ -236,10 +236,10 @@ public ResponseEntity<Map<String, Object>> adminLogin(@RequestBody Map<String, S
     if (!admin.getPassword().equals(password)) {
         return ResponseEntity
                 .status(401)
-                .body(Map.of("message", "Invalid admin credentials"));
+                .body(Map.<String, Object>of("message", "Invalid admin credentials"));
     }
 
-    return ResponseEntity.ok(Map.of(
+    return ResponseEntity.ok(Map.<String, Object>of(
             "message", "Admin login successful",
             "role", "admin",
             "id", admin.getId(),
@@ -383,21 +383,21 @@ public ResponseEntity<Map<String, Object>> updateProfileFlexible(
     consumes = MediaType.APPLICATION_JSON_VALUE,
     produces = MediaType.APPLICATION_JSON_VALUE
 )
-public ResponseEntity<Map<String, String>> updatePayment(
+public ResponseEntity<Map<String, Object>> updatePayment(
         @RequestBody Map<String, Object> newCard,
         @PathVariable Long id
 ) {
     System.out.println("adding payment method to customer " + id);
     Optional<Customer> opt = customerRepository.findById(id);
     if (opt.isEmpty()) {
-        return ResponseEntity.status(404).body(Map.of("message", "User not found."));
+        return ResponseEntity.status(404).body(Map.<String, Object>of("message", "User not found."));
     }
     Customer currentCustomer = opt.get();
 
 
-    // Enforce 3-card limit
+// Enforce 3-card limit
 if (currentCustomer.getPaymentMethods().size() >= 3) {
-    return ResponseEntity.badRequest().body(Map.of(
+    return ResponseEntity.badRequest().body(Map.<String, Object>of(
         "message", "You cannot add more than 3 payment methods."
     ));
 }
@@ -422,7 +422,20 @@ if (currentCustomer.getPaymentMethods().size() >= 3) {
     currentCustomer.addPaymentMethod(card);
     customerRepository.save(currentCustomer);
 
-    return ResponseEntity.ok(Map.of("message", "New card added to user " + currentCustomer.getFirstName()));
+    String cardNum = card.getCardNumber();
+    String last4 = (cardNum != null && cardNum.length() >= 4)
+            ? cardNum.substring(cardNum.length() - 4)
+            : cardNum;
+
+    Map<String, Object> response = new HashMap<>();
+    response.put("id", card.getId());
+    response.put("cardHolderFirstName", card.getCardHolderFirstName());
+    response.put("cardHolderLastName", card.getCardHolderLastName());
+    response.put("cardNumberLast4", last4);
+    response.put("expirationDate", card.getExpirationDate());
+    response.put("message", "New card added to user " + currentCustomer.getFirstName());
+
+    return ResponseEntity.ok(response);
 }
 
 // Remove a payment method
@@ -453,7 +466,7 @@ public ResponseEntity<Map<String, String>> deletePaymentMethod(@PathVariable Lon
 public ResponseEntity<Map<String, Object>> getCustomerByEmail(@RequestParam String email) {
     Optional<Customer> opt = customerRepository.findByEmail(email);
     if (opt.isEmpty()) {
-        return ResponseEntity.status(404).body(Map.of("message", "Customer not found"));
+        return ResponseEntity.status(404).body(Map.<String, Object>of("message", "Customer not found"));
     }
 
     Customer c = opt.get();

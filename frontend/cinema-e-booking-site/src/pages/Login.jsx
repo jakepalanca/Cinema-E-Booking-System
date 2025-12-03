@@ -67,7 +67,15 @@ function Login() {
                 }
             } else {
                 const err = await res.json();
-                setMessage(err.message || "Invalid email or password");
+                const errorMsg = err.message || "Invalid email or password";
+                
+                // Redirect to verification page if account is not verified
+                if (errorMsg === NOT_VERIFIED_MSG) {
+                    navigate("/verify", { state: { email: credentials.emailOrUsername } });
+                    return;
+                }
+                
+                setMessage(errorMsg);
             }
         } catch (error) {
             console.error(error);
@@ -129,22 +137,7 @@ function Login() {
                         {loading ? "Logging in..." : "Login"}
                     </button>
                     {message && (
-                        <p className="info-message">
-                            {message === NOT_VERIFIED_MSG ? (
-                                <>
-                                    Account not verified.{" "}
-                                    <Link
-                                        to="/verify"
-                                        state={{ email: credentials.emailOrUsername }}
-                                        className="verify-link"
-                                    >
-                                        Verify your email
-                                    </Link>
-                                </>
-                            ) : (
-                                message
-                            )}
-                        </p>
+                        <p className="info-message">{message}</p>
                     )}
                 </form>
                 <ul className="login-links">

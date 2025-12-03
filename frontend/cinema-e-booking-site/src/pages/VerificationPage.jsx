@@ -49,24 +49,22 @@ function VerificationPage() {
       <div className="login-div">
         <h2>Email Verification</h2>
         <form onSubmit={handleSubmit} className="login-form">
-          <label>
-            Email:
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </label>
-          <label>
-            Verification Code:
-            <input
-              type="text"
-              value={verificationCode}
-              onChange={(e) => setVerificationCode(e.target.value)}
-              required
-            />
-          </label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            required
+            autoComplete="email"
+          />
+          <input
+            type="text"
+            value={verificationCode}
+            onChange={(e) => setVerificationCode(e.target.value)}
+            placeholder="Verification code"
+            required
+            autoComplete="one-time-code"
+          />
           <button type="submit" disabled={loading}>
             {loading ? "Verifying..." : "Verify"}
           </button>

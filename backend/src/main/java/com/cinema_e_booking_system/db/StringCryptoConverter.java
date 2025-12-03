@@ -4,6 +4,7 @@ import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Optional;
 
 /**
@@ -28,6 +29,8 @@ public class StringCryptoConverter implements AttributeConverter<String, String>
 
     // Jasypt StringEncryptor for performing encryption and decryption
     private static final StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
+    private static final AtomicBoolean encryptWarned = new AtomicBoolean(false);
+    private static final AtomicBoolean decryptWarned = new AtomicBoolean(false);
 
     static {
         // Initialize encryptor using system property or environment variable with fallback
@@ -57,7 +60,9 @@ public class StringCryptoConverter implements AttributeConverter<String, String>
         try {
             return encryptor.encrypt(attribute);
         } catch (Exception e) {
-            System.err.println("[StringCryptoConverter] Encrypt failed, storing plain text value: " + e.getMessage());
+            if (encryptWarned.compareAndSet(false, true)) {
+                System.err.println("[StringCryptoConverter] Encrypt failed, storing plain text value (subsequent failures suppressed): " + e.getMessage());
+            }
             return attribute;
         }
     }
@@ -76,7 +81,9 @@ public class StringCryptoConverter implements AttributeConverter<String, String>
         try {
             return encryptor.decrypt(dbData);
         } catch (Exception e) {
-            System.err.println("[StringCryptoConverter] Decrypt failed, returning stored value as-is: " + e.getMessage());
+            if (decryptWarned.compareAndSet(false, true)) {
+                System.err.println("[StringCryptoConverter] Decrypt failed, returning stored value as-is (subsequent failures suppressed): " + e.getMessage());
+            }
             return dbData;
         }
     }

@@ -4,6 +4,7 @@ import "../css/RegistrationPage.css";
 import Navbar from './Navbar.jsx';
 import AddressFields from '../components/AddressFields.jsx';
 import PaymentCardForm from '../components/PaymentCardForm.jsx';
+import { getCardDisplay } from '../utils/cardDisplay.js';
 
 function RegistrationPage() {
     const [formData, setFormData] = useState({
@@ -35,7 +36,27 @@ function RegistrationPage() {
     };
 
     const handleAddressChange = ({ name, value }) => {
-        setFormData({ ...formData, [name]: value });
+        setFormData((prev) => {
+            const nextAddress = {
+                address: name === "address" ? value : prev.address,
+                city: name === "city" ? value : prev.city,
+                state: name === "state" ? value : prev.state,
+                zipCode: name === "zipCode" ? value : prev.zipCode,
+                country: name === "country" ? value : prev.country,
+            };
+
+            const updatedPayments = prev.paymentMethods.map((card) =>
+                card.useDefaultAddress
+                    ? { ...card, billingAddress: { ...nextAddress } }
+                    : card
+            );
+
+            return {
+                ...prev,
+                ...nextAddress,
+                paymentMethods: updatedPayments,
+            };
+        });
     };
 
     const handleAddCard = (card) => {
@@ -198,7 +219,7 @@ function RegistrationPage() {
                             <ul>
                                 {formData.paymentMethods.map((card, index) => (
                                     <li key={index}>
-                                        •••• {card.cardNumber.slice(-4)} — {card.cardHolderFirstName} {card.cardHolderLastName}
+                                        {getCardDisplay(card).label}
                                         <button type="button" onClick={() => removeCard(index)}>Remove</button>
                                     </li>
                                 ))}

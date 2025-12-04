@@ -6,8 +6,15 @@ spring:
     name: backend
 
   datasource:
-    url: jdbc:sqlite:cinema.db
+    url: jdbc:sqlite:cinema.db?busy_timeout=5000&journal_mode=WAL
     driver-class-name: org.sqlite.JDBC
+    hikari:
+      # SQLite allows only one writer; keep a single connection and wait briefly if locked
+      maximum-pool-size: 1
+      minimum-idle: 1
+      data-source-properties:
+        busy_timeout: 5000
+        journal_mode: WAL
 
   jpa:
     database-platform: org.hibernate.community.dialect.SQLiteDialect
@@ -41,4 +48,3 @@ jasypt:
 jwt:
   secret: 4e30310be5d5d68bc1abf0833a2193dcdf12291863ad66ca6e45bec37a062bbbe6ca9e890e7400cf6297c62396d3758c1981366923e59405491195e3e24874da4b0e037a1f66ef9ee9c8f6c31328bd8f72ee2d9c904a24881283ec5ac493d7317a1acd65f93ea03fc826867f9a21e9582b9b6ee6c386221ee25ae27f2b7aee5389a9782c87c7bc9383830fe04606c2aad0a7d91a8332da858851b25a2c8cfaa5
   expiration: 86400000  # 24 hours in milliseconds
-

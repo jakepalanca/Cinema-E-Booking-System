@@ -2,7 +2,11 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useParams, Link } from "react-router-dom";
 import Navbar from './Navbar.jsx';
+import PaymentCardForm from "../components/PaymentCardForm.jsx";
+import { getCardDisplay } from "../utils/cardDisplay.js";
+import api from "../services/api.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
+import "../css/RegistrationPage.css";
 
 
 export default function BookingPage() {
@@ -25,6 +29,13 @@ export default function BookingPage() {
   const [promoCodeInput, setPromoCodeInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState(null);
   const [promoMessage, setPromoMessage] = useState("");
+  const [checkoutStep, setCheckoutStep] = useState("seats");
+  const [pendingBookingRequest, setPendingBookingRequest] = useState(null);
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState(null);
+  const [paymentMessage, setPaymentMessage] = useState("");
+  const [isPaying, setIsPaying] = useState(false);
+  const [confirmationDetails, setConfirmationDetails] = useState(null);
 
   const title = movie?.title || state?.title || "Movie Title";
   const showtime = state?.showtime || "Showtime";
@@ -129,13 +140,8 @@ export default function BookingPage() {
       .catch(err => console.error("Failed to fetch ticket categories:", err));
   }, []);
 
-  // Fetch active promotions and hydrate saved code
+  // Fetch active promotions
   useEffect(() => {
-    const savedCode = localStorage.getItem("selectedPromoCode");
-    if (savedCode) {
-      setPromoCodeInput(savedCode);
-    }
-
     fetch("http://localhost:8080/promotions")
       .then(res => res.json())
       .then(data => {
@@ -147,17 +153,36 @@ export default function BookingPage() {
           return now >= start && now <= end;
         });
         setPromotions(active);
-
-        if (savedCode) {
-          const match = active.find(p => p.code.toUpperCase() === savedCode.toUpperCase());
-          if (match) {
-            setAppliedPromo(match);
-            setPromoMessage(`Applied ${match.code} from promotions.`);
-          }
-        }
       })
       .catch(err => console.error("Failed to fetch promotions:", err));
   }, []);
+
+  // Hydrate saved payment methods for the signed-in user
+  useEffect(() => {
+    if (!user?.email) return;
+
+    const loadPaymentMethods = async () => {
+      try {
+        const response = await api.get(`/customers/by-email?email=${encodeURIComponent(user.email)}`);
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const cards = (data.paymentMethods || []).map((card, index) => ({
+          ...card,
+          id: card.id ?? card.paymentMethodId ?? `saved-${index}`
+        }));
+
+        setPaymentMethods(cards);
+        if (cards.length > 0) {
+          setSelectedPaymentMethodId(prev => prev || cards[0].id);
+        }
+      } catch (err) {
+        console.warn("Failed to load saved payment methods:", err);
+      }
+    };
+
+    loadPaymentMethods();
+  }, [user?.email]);
 
   // Fetch showroom info and occupied seats for this show
   useEffect(() => {
@@ -319,12 +344,10 @@ export default function BookingPage() {
     if (!match) {
       setPromoMessage("Promo code not valid or expired.");
       setAppliedPromo(null);
-      localStorage.removeItem("selectedPromoCode");
       return;
     }
 
     setAppliedPromo(match);
-    localStorage.setItem("selectedPromoCode", match.code);
     setPromoMessage(`Promo ${match.code} applied. ${Math.round(match.discountPercentage * 100)}% off will be applied to your total.`);
   };
 
@@ -343,33 +366,29 @@ export default function BookingPage() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
+  const buildBookingRequest = () => {
     if (selectedSeats.length !== tickets.length) {
       alert(`Please select ${tickets.length} seat(s)`);
-      return;
+      return null;
     }
 
     const incompleteTickets = tickets.filter(t => !t.category);
     if (incompleteTickets.length > 0) {
       alert("Please select age category for all tickets");
-      return;
+      return null;
     }
 
     if (!show?.id) {
       alert("Show information is missing. Please try again.");
-      return;
+      return null;
     }
 
-    // Use the stored showroomId from state
     if (!showroomId) {
       alert("Showroom information is still loading or unavailable. Please wait and try again.");
       console.error("Missing showroom ID. State showroomId:", showroomId, "showDetails:", showDetails, "show:", show);
-      return;
+      return null;
     }
 
-    // Build ticket list for the API with category info
     const ticketList = selectedSeats.map((seatId, index) => {
       const [row, col] = seatId.split('-');
       const ticketData = tickets[index];
@@ -380,8 +399,7 @@ export default function BookingPage() {
       };
     });
 
-    // Build the full booking request
-    const bookingRequest = {
+    return {
       showId: show?.id || null,
       seats: ticketList,
       totalPrice: Number(discountedTotal.toFixed(2)),
@@ -389,10 +407,86 @@ export default function BookingPage() {
       movieTitle: title,
       showtime: showtime
     };
+  };
+
+  const handleContinueToPayment = (e) => {
+    e.preventDefault();
+    const bookingRequest = buildBookingRequest();
+    if (!bookingRequest) return;
+
+    setPendingBookingRequest(bookingRequest);
+    setCheckoutStep("payment");
+    setConfirmationDetails(null);
+    setPaymentMessage(paymentMethods.length ? "Select a saved card or add a new one for this order." : "Add a payment method to continue.");
+
+    if (paymentMethods.length > 0 && !selectedPaymentMethodId) {
+      setSelectedPaymentMethodId(paymentMethods[0].id);
+    }
+  };
+
+  const handleAddPaymentMethod = (card) => {
+    const displayCard = {
+      ...card,
+      id: card.id || `local-${Date.now()}`,
+      cardNumberLast4: card.cardNumberLast4 || String(card.cardNumber || "").slice(-4),
+    };
+
+    setPaymentMethods(prev => [...prev, displayCard]);
+    setSelectedPaymentMethodId(displayCard.id);
+    setPaymentMessage("Card added for this order (mock payment only).");
+  };
+
+  const handleRemovePaymentMethod = async (cardId) => {
+    const card = paymentMethods.find(c => c.id === cardId);
+    const isLocal = typeof cardId === "string" && cardId.startsWith("local-");
+
+    if (!card) return;
+
+    // If the card exists in backend, call delete endpoint (same as Edit Profile)
+    if (!isLocal && cardId) {
+      try {
+        const res = await api.delete(`/payment-methods/${cardId}`);
+        if (!res.ok) {
+          throw new Error("Failed to remove card from your profile");
+        }
+      } catch (err) {
+        setPaymentMessage("Could not remove card from profile. Try again.");
+        return;
+      }
+    }
+
+    const updatedCards = paymentMethods.filter(c => c.id !== cardId);
+    setPaymentMethods(updatedCards);
+    if (selectedPaymentMethodId === cardId) {
+      setSelectedPaymentMethodId(updatedCards[0]?.id || null);
+    }
+    setPaymentMessage(isLocal ? "Payment method removed for this checkout." : "Card removed from your profile.");
+  };
+
+  const handlePay = async (e) => {
+    if (e) e.preventDefault();
+
+    const bookingRequest = pendingBookingRequest || buildBookingRequest();
+    if (!bookingRequest) {
+      setCheckoutStep("seats");
+      return;
+    }
+
+    if (!selectedPaymentMethodId) {
+      setPaymentMessage("Select or add a payment method first.");
+      return;
+    }
+
+    const chosenCard = paymentMethods.find(card => card.id === selectedPaymentMethodId);
+    if (!chosenCard) {
+      setPaymentMessage("Selected payment method is no longer available. Please select again.");
+      return;
+    }
+
+    setIsPaying(true);
+    setPaymentMessage("");
 
     try {
-      console.log("Sending booking request:", bookingRequest);
-
       // Check authentication before booking
       const authCheck = await fetch('http://localhost:8080/auth/me', {
         method: 'GET',
@@ -401,6 +495,7 @@ export default function BookingPage() {
       console.log("Auth check status:", authCheck.status);
       if (!authCheck.ok) {
         alert("You are not logged in. Please log in and try again.");
+        setIsPaying(false);
         return;
       }
 
@@ -427,7 +522,7 @@ export default function BookingPage() {
             errorText = await response.text();
           }
           console.error("Error response:", errorText);
-        } catch (e) {
+        } catch (err) {
           errorText = `HTTP ${response.status}: ${response.statusText}`;
         }
         throw new Error(errorText || 'Failed to book seats');
@@ -441,14 +536,17 @@ export default function BookingPage() {
         .filter(Boolean)
         .join(" • ");
       const formattedSeats = selectedSeats.map(formatSeatLabel);
+      const paymentLabel = getCardDisplay(chosenCard).label;
+
       persistOrderLocally({
         id: Date.now(),
         movieTitle: title,
         showtime: showtime,
         location: locationText || "Cinema",
         seats: formattedSeats,
-        total: Number(discountedTotal.toFixed(2)),
-        promoCode: appliedPromo?.code || null,
+        total: bookingRequest.totalPrice,
+        promoCode: bookingRequest.promoCode || null,
+        paymentMethod: paymentLabel,
         createdAt: new Date().toISOString(),
       });
       
@@ -485,17 +583,38 @@ export default function BookingPage() {
       // Clear the selected seats and reset the form
       setSelectedSeats([]);
       setTickets([{ category: "", seat: null }]);
+      setPendingBookingRequest(null);
+
+      setConfirmationDetails({
+        bookingId: result.bookingId || result.id || null,
+        message: result.message || "Payment successful",
+        total: bookingRequest.totalPrice,
+        seats: formattedSeats,
+        paymentMethod: paymentLabel,
+        promoCode: bookingRequest.promoCode,
+      });
+      setCheckoutStep("confirmation");
       
     } catch (error) {
       console.error("Booking error:", error);
       alert(`Booking failed: ${error.message}`);
+      setPaymentMessage("Payment failed. Please try again.");
+    } finally {
+      setIsPaying(false);
     }
   };
+
+  const seatLabels = selectedSeats.map(formatSeatLabel);
+  const displayedTotal = pendingBookingRequest?.totalPrice ?? Number(discountedTotal.toFixed(2));
+  const stepSequence = ["seats", "payment", "confirmation"];
+  const currentStepIndex = stepSequence.indexOf(checkoutStep);
+  const selectedPaymentCard = paymentMethods.find(card => card.id === selectedPaymentMethodId);
+  const selectedPaymentLabel = selectedPaymentCard ? getCardDisplay(selectedPaymentCard).label : "";
 
   return (
     <>
       <Navbar />
-      <div style={{ padding: 20, maxWidth: 900, margin: "0 auto", color: "white" }}>
+      <div style={{ padding: 20, maxWidth: 900, margin: "0 auto", color: "white", position: "relative", zIndex: 0, pointerEvents: "auto" }}>
         <h2>Booking Page</h2>
 
         <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, marginBottom: 20 }}>
@@ -503,228 +622,466 @@ export default function BookingPage() {
           <p><strong>Showtime:</strong> {showtime}</p>
         </div>
 
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: 20 }}>
-        {/* Customer Info */}
-        <div style={{ border: "1px solid #555", borderRadius: 8, padding: 16 }}>
-          <h3 style={{ marginTop: 0 }}>Booking For</h3>
-          <p style={{ margin: "0 0 6px 0" }}>
-            <strong>Name:</strong> {user?.firstName || "Signed-in user"}
-          </p>
-          <p style={{ margin: 0 }}>
-            <strong>Email:</strong> {user?.email || "On file with your account"}
-          </p>
+        <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+          {[
+            { key: "seats", label: "1. Seats" },
+            { key: "payment", label: "2. Payment" },
+            { key: "confirmation", label: "3. Confirm" },
+          ].map((step) => {
+            const stepIndex = stepSequence.indexOf(step.key);
+            const isActive = currentStepIndex === stepIndex;
+            const isComplete = stepIndex < currentStepIndex;
+            return (
+              <div
+                key={step.key}
+                style={{
+                  flex: 1,
+                  padding: "10px 12px",
+                  borderRadius: 8,
+                  border: "1px solid #555",
+                  background: isActive ? "#dc3545" : isComplete ? "#28a745" : "#222",
+                  color: isActive || isComplete ? "white" : "#ccc",
+                  textAlign: "center",
+                  fontWeight: 700,
+                  fontSize: 14,
+                  letterSpacing: 0.5
+                }}
+              >
+                {step.label}
+              </div>
+            );
+          })}
         </div>
 
-        {/* Ticket Selection */}
-        <div style={{ border: "1px solid #555", borderRadius: 8, padding: 16 }}>
-          <h3 style={{ marginTop: 0 }}>Tickets</h3>
-          {tickets.map((ticket, index) => (
-            <div key={index} style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
-              <span style={{ minWidth: 80 }}>Ticket {index + 1}:</span>
-              <select
-                value={ticket.category}
-                onChange={(e) => updateTicketCategory(index, e.target.value)}
-                required
-                style={{ flex: 1, padding: 8 }}
-              >
-                <option value="">Select Age Category</option>
-                {ticketCategories.map(cat => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name} - ${cat.price.toFixed(2)}
-                  </option>
-                ))}
-              </select>
-              {tickets.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeTicket(index)}
-                  style={{
-                    padding: "6px 12px",
-                    backgroundColor: "#dc3545",
-                    color: "white",
-                    border: "none",
-                    borderRadius: 4,
-                    cursor: "pointer"
-                  }}
-                >
-                  Remove
-                </button>
-              )}
+        {checkoutStep === "confirmation" ? (
+          <div style={{ border: "1px solid #555", borderRadius: 8, padding: 20, background: "#141414" }}>
+            <h3 style={{ marginTop: 0 }}>Payment Confirmed</h3>
+            <p style={{ color: "#7dd87d", marginTop: 4 }}>
+              {confirmationDetails?.message || "Your order was placed successfully."}
+            </p>
+            <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
+              <div><strong>Booking ID:</strong> {confirmationDetails?.bookingId || "Pending"}</div>
+              <div><strong>Seats:</strong> {confirmationDetails?.seats?.join(", ") || seatLabels.join(", ") || "—"}</div>
+              <div><strong>Total Paid:</strong> ${(confirmationDetails?.total ?? displayedTotal).toFixed(2)}</div>
+              <div><strong>Payment Method:</strong> {confirmationDetails?.paymentMethod || selectedPaymentLabel || "Card on file"}</div>
+              {confirmationDetails?.promoCode && <div><strong>Promo:</strong> {confirmationDetails.promoCode}</div>}
             </div>
-          ))}
-          <button
-            type="button"
-            onClick={addTicket}
-            style={{
-              padding: "8px 16px",
-              backgroundColor: "#28a745",
-              color: "white",
-              border: "none",
-              borderRadius: 4,
-              cursor: "pointer",
-              marginTop: 10
-            }}
-          >
-            + Add Ticket
-          </button>
-          {totalPrice > 0 && (
-            <div style={{ marginTop: 12, display: "grid", gap: 6 }}>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span>Subtotal</span>
-                <strong>${totalPrice.toFixed(2)}</strong>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 16 }}>
+              <Link
+                to="/orders"
+                style={{
+                  padding: "10px 16px",
+                  backgroundColor: "#333",
+                  color: "white",
+                  borderRadius: 6,
+                  textDecoration: "none",
+                  border: "1px solid #555",
+                  fontWeight: 600
+                }}
+              >
+                View My Bookings
+              </Link>
+              <button
+                type="button"
+                onClick={() => { setCheckoutStep("seats"); setConfirmationDetails(null); }}
+                style={{
+                  padding: "10px 16px",
+                  backgroundColor: "#dc3545",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 6,
+                  cursor: "pointer",
+                  fontWeight: 700
+                }}
+              >
+                Book Another Show
+              </button>
+            </div>
+          </div>
+        ) : checkoutStep === "payment" ? (
+          <div style={{ display: "grid", gap: 16 }}>
+            <div style={{ display: "grid", gap: 16, gridTemplateColumns: "2fr 1fr", alignItems: "start" }}>
+              <div style={{ border: "1px solid #555", borderRadius: 8, padding: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <h3 style={{ margin: 0 }}>Payment</h3>
+                  <button
+                    type="button"
+                    onClick={() => { setCheckoutStep("seats"); setPaymentMessage(""); }}
+                    style={{
+                      padding: "8px 12px",
+                      backgroundColor: "#333",
+                      color: "white",
+                      border: "1px solid #666",
+                      borderRadius: 6,
+                      cursor: "pointer",
+                      fontWeight: 600
+                    }}
+                  >
+                    Edit seats
+                  </button>
+                </div>
+
+                {paymentMethods.length > 0 ? (
+                  <div style={{ display: "grid", gap: 10, marginBottom: 14 }}>
+                    {paymentMethods.map((card, idx) => {
+                      const label = getCardDisplay(card).label;
+                      const expirationDisplay = card.expirationDate ? card.expirationDate.slice(0, 7) : "—";
+                      const isSelected = selectedPaymentMethodId === card.id;
+                      const radioId = `payment-${card.id || idx}`;
+                      return (
+                        <div
+                          key={card.id || idx}
+                          style={{
+                            display: "flex",
+                            gap: 10,
+                            alignItems: "center",
+                            padding: 12,
+                            borderRadius: 8,
+                            border: isSelected ? "2px solid #dc3545" : "1px solid #444",
+                            background: "#111",
+                          }}
+                        >
+                          <label
+                            htmlFor={radioId}
+                            style={{ display: "flex", gap: 10, alignItems: "center", flex: 1, cursor: "pointer" }}
+                          >
+                            <input
+                              id={radioId}
+                              type="radio"
+                              name="paymentMethod"
+                              checked={isSelected}
+                              onChange={() => setSelectedPaymentMethodId(card.id)}
+                              style={{ accentColor: "#dc3545" }}
+                            />
+                            <div>
+                              <div style={{ fontWeight: 700 }}>{label}</div>
+                              <div style={{ fontSize: 12, color: "#bbb" }}>Exp {expirationDisplay}</div>
+                            </div>
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => handleRemovePaymentMethod(card.id)}
+                            style={{
+                              padding: "6px 10px",
+                              backgroundColor: "transparent",
+                              color: "#f5f5f5",
+                              border: "1px solid #555",
+                              borderRadius: 6,
+                              cursor: "pointer",
+                              fontSize: 12,
+                              fontWeight: 600
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p style={{ color: "#ccc", marginBottom: 12 }}>
+                    No payment methods yet. Add one below to continue.
+                  </p>
+                )}
+
+                <div style={{ borderTop: "1px solid #444", paddingTop: 12, marginTop: 12 }}>
+                  <h4 style={{ margin: "0 0 8px 0" }}>Add a new card</h4>
+                  <PaymentCardForm
+                    onAddCard={handleAddPaymentMethod}
+                    currentCardCount={paymentMethods.length}
+                  />
+                  {paymentMessage && (
+                    <p style={{ marginTop: 8, color: "#7dd87d" }}>{paymentMessage}</p>
+                  )}
+                </div>
               </div>
-              {appliedPromo && (
-                <div style={{ display: "flex", justifyContent: "space-between", color: "#7dd87d" }}>
-                  <span>Promo ({appliedPromo.code})</span>
-                  <strong>-{Math.round(appliedPromo.discountPercentage * 100)}%</strong>
+
+              <div style={{ border: "1px solid #555", borderRadius: 8, padding: 16, background: "#111" }}>
+                <h3 style={{ marginTop: 0 }}>Order Summary</h3>
+                <div style={{ display: "grid", gap: 8, fontSize: 14 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span>Movie</span>
+                    <strong>{title}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span>Showtime</span>
+                    <strong>{showtime}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span>Seats</span>
+                    <strong>{seatLabels.length > 0 ? seatLabels.join(", ") : "Not set"}</strong>
+                  </div>
+                  {appliedPromo && (
+                    <div style={{ display: "flex", justifyContent: "space-between", color: "#7dd87d" }}>
+                      <span>Promo ({appliedPromo.code})</span>
+                      <strong>-{Math.round(appliedPromo.discountPercentage * 100)}%</strong>
+                    </div>
+                  )}
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span>Payment</span>
+                    <strong>{selectedPaymentLabel || "Select a card"}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 18, marginTop: 4 }}>
+                    <span>Total</span>
+                    <strong>${displayedTotal.toFixed(2)}</strong>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={() => setCheckoutStep("seats")}
+                    style={{
+                      padding: "10px 14px",
+                      backgroundColor: "#333",
+                      color: "white",
+                      border: "1px solid #666",
+                      borderRadius: 6,
+                      cursor: "pointer",
+                      fontWeight: 600
+                    }}
+                  >
+                    Back to seats
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handlePay}
+                    disabled={isPaying || !selectedPaymentMethodId}
+                    style={{
+                      padding: "10px 14px",
+                      backgroundColor: isPaying ? "#888" : "#dc3545",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 6,
+                      cursor: isPaying || !selectedPaymentMethodId ? "not-allowed" : "pointer",
+                      fontWeight: 700
+                    }}
+                  >
+                    {isPaying ? "Processing..." : `Pay $${displayedTotal.toFixed(2)}`}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleContinueToPayment} style={{ display: "grid", gap: 20 }}>
+            {/* Customer Info */}
+            <div style={{ border: "1px solid #555", borderRadius: 8, padding: 16 }}>
+              <h3 style={{ marginTop: 0 }}>Booking For</h3>
+              <p style={{ margin: "0 0 6px 0" }}>
+                <strong>Name:</strong> {user?.firstName || "Signed-in user"}
+              </p>
+              <p style={{ margin: 0 }}>
+                <strong>Email:</strong> {user?.email || "On file with your account"}
+              </p>
+            </div>
+
+            {/* Ticket Selection */}
+            <div style={{ border: "1px solid #555", borderRadius: 8, padding: 16 }}>
+              <h3 style={{ marginTop: 0 }}>Tickets</h3>
+              {tickets.map((ticket, index) => (
+                <div key={index} style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
+                  <span style={{ minWidth: 80 }}>Ticket {index + 1}:</span>
+                  <select
+                    value={ticket.category}
+                    onChange={(e) => updateTicketCategory(index, e.target.value)}
+                    required
+                    style={{ flex: 1, padding: 8 }}
+                  >
+                    <option value="">Select Age Category</option>
+                    {ticketCategories.map(cat => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name} - ${cat.price.toFixed(2)}
+                      </option>
+                    ))}
+                  </select>
+                  {tickets.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeTicket(index)}
+                      style={{
+                        padding: "6px 12px",
+                        backgroundColor: "#dc3545",
+                        color: "white",
+                        border: "none",
+                        borderRadius: 4,
+                        cursor: "pointer"
+                      }}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addTicket}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: "#28a745",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 4,
+                  cursor: "pointer",
+                  marginTop: 10
+                }}
+              >
+                + Add Ticket
+              </button>
+              {totalPrice > 0 && (
+                <div style={{ marginTop: 12, display: "grid", gap: 6 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span>Subtotal</span>
+                    <strong>${totalPrice.toFixed(2)}</strong>
+                  </div>
+                  {appliedPromo && (
+                    <div style={{ display: "flex", justifyContent: "space-between", color: "#7dd87d" }}>
+                      <span>Promo ({appliedPromo.code})</span>
+                      <strong>-{Math.round(appliedPromo.discountPercentage * 100)}%</strong>
+                    </div>
+                  )}
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 18 }}>
+                    <span>Total</span>
+                    <strong>${discountedTotal.toFixed(2)}</strong>
+                  </div>
                 </div>
               )}
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 18 }}>
-                <span>Total</span>
-                <strong>${discountedTotal.toFixed(2)}</strong>
-              </div>
             </div>
-          )}
-        </div>
 
-        {/* Promotions */}
-        <div style={{ border: "1px solid #555", borderRadius: 8, padding: 16 }}>
-          <h3 style={{ marginTop: 0 }}>Promotions</h3>
-          <p style={{ marginTop: 0, color: "#ccc", fontSize: 14 }}>
-            Apply a promo code before you place the order.
-          </p>
-          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-            <input
-              type="text"
-              value={promoCodeInput}
-              placeholder="Enter promo code"
-              onChange={(e) => setPromoCodeInput(e.target.value)}
-              style={{ flex: 1, minWidth: 220, padding: 8, borderRadius: 6, border: "1px solid #666" }}
-            />
-            <button
-              type="button"
-              onClick={applyPromoCode}
-              style={{
-                padding: "10px 16px",
-                backgroundColor: "#007bff",
-                color: "white",
-                border: "none",
-                borderRadius: 6,
-                cursor: "pointer",
-                fontWeight: 600
-              }}
-            >
-              Apply
-            </button>
+            {/* Promotions */}
+            <div style={{ border: "1px solid #555", borderRadius: 8, padding: 16 }}>
+              <h3 style={{ marginTop: 0 }}>Promotions</h3>
+              <p style={{ marginTop: 0, color: "#ccc", fontSize: 14 }}>
+                Apply a promo code before you place the order.
+              </p>
+              <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                <input
+                  type="text"
+                  value={promoCodeInput}
+                  placeholder="Enter promo code"
+                  onChange={(e) => setPromoCodeInput(e.target.value)}
+                  style={{ flex: 1, minWidth: 220, padding: 8, borderRadius: 6, border: "1px solid #666" }}
+                />
+                <button
+                  type="button"
+                  onClick={applyPromoCode}
+                  style={{
+                    padding: "10px 16px",
+                    backgroundColor: "#007bff",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 6,
+                    cursor: "pointer",
+                    fontWeight: 600
+                  }}
+                >
+                  Apply
+                </button>
             {appliedPromo && (
               <button
                 type="button"
-                onClick={() => { setAppliedPromo(null); setPromoMessage("Promo removed."); localStorage.removeItem("selectedPromoCode"); }}
+                onClick={() => { setAppliedPromo(null); setPromoMessage("Promo removed."); }}
                 style={{
                   padding: "10px 12px",
                   backgroundColor: "#444",
                   color: "white",
-                  border: "1px solid #666",
-                  borderRadius: 6,
-                  cursor: "pointer",
-                  fontWeight: 600
-                }}
-              >
-                Remove
-              </button>
-            )}
-          </div>
-          {promoMessage && (
-            <p style={{ marginTop: 8, color: "#7dd87d" }}>{promoMessage}</p>
-          )}
-          {!appliedPromo && promotions.length > 0 && (
-            <div style={{ marginTop: 8, color: "#ccc", fontSize: 13 }}>
-              Tip: select a promotion on the Promotions page to auto-fill here.
-            </div>
-          )}
-        </div>
-
-        {/* Seat Selection */}
-        <div style={{ border: "1px solid #555", borderRadius: 8, padding: 16 }}>
-          <h3 style={{ marginTop: 0 }}>Select {tickets.length} Seat(s)</h3>
-          <div style={{ marginBottom: 15, display: "flex", gap: 20, fontSize: 14 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <div style={{ width: 20, height: 20, backgroundColor: "#28a745", border: "1px solid #ddd" }}></div>
-              <span>Available</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <div style={{ width: 20, height: 20, backgroundColor: "#ffc107", border: "1px solid #ddd" }}></div>
-              <span>Selected</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <div style={{ width: 20, height: 20, backgroundColor: "#666", border: "1px solid #ddd" }}></div>
-              <span>Occupied</span>
-            </div>
-          </div>
-          
-          <div style={{ textAlign: "center", marginBottom: 10, padding: 10, backgroundColor: "#333", borderRadius: 4 }}>
-            SCREEN
-          </div>
-
-          <div style={{ display: "grid", gap: 5, justifyContent: "center" }}>
-            {Array.from({ length: showroomSeats.rows }, (_, row) => (
-              <div key={row} style={{ display: "flex", gap: 5 }}>
-                <span style={{ width: 30, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {String.fromCharCode(65 + row)}
-                </span>
-                {Array.from({ length: showroomSeats.cols }, (_, col) => {
-                  const status = getSeatStatus(row, col);
-                  return (
-                    <button
-                      key={`${row}-${col}`}
-                      type="button"
-                      onClick={() => toggleSeat(row, col)}
-                      disabled={status === "occupied"}
-                      style={{
-                        width: 35,
-                        height: 35,
-                        backgroundColor:
-                          status === "occupied" ? "#666" :
-                          status === "selected" ? "#ffc107" :
-                          "#28a745",
-                        border: "1px solid #ddd",
-                        borderRadius: 4,
-                        cursor: status === "occupied" ? "not-allowed" : "pointer",
-                        color: "white",
-                        fontSize: 12
-                      }}
-                    >
-                      {col + 1}
-                    </button>
-                  );
-                })}
+                      border: "1px solid #666",
+                      borderRadius: 6,
+                      cursor: "pointer",
+                      fontWeight: 600
+                    }}
+                  >
+                    Remove
+                  </button>
+                )}
               </div>
-            ))}
-          </div>
-          <p style={{ marginTop: 10, fontSize: 14 }}>
-            Selected seats: {selectedSeats.length > 0 ? selectedSeats.map(s => {
-              const [row, col] = s.split('-');
-              return `${String.fromCharCode(65 + parseInt(row))}${parseInt(col) + 1}`;
-            }).join(', ') : 'None'}
-          </p>
-        </div>
+              {promoMessage && (
+                <p style={{ marginTop: 8, color: "#7dd87d" }}>{promoMessage}</p>
+              )}
+            </div>
 
-        <button
-          type="submit"
-          style={{
-            padding: "12px 24px",
-            backgroundColor: "#dc3545",
-            color: "white",
-            border: "none",
-            borderRadius: 6,
-            cursor: "pointer",
-            fontSize: 16,
-            fontWeight: "bold"
-          }}
-        >
-          Continue to Payment
-        </button>
-      </form>
+            {/* Seat Selection */}
+            <div style={{ border: "1px solid #555", borderRadius: 8, padding: 16 }}>
+              <h3 style={{ marginTop: 0 }}>Select {tickets.length} Seat(s)</h3>
+              <div style={{ marginBottom: 15, display: "flex", gap: 20, fontSize: 14 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <div style={{ width: 20, height: 20, backgroundColor: "#28a745", border: "1px solid #ddd" }}></div>
+                  <span>Available</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <div style={{ width: 20, height: 20, backgroundColor: "#ffc107", border: "1px solid #ddd" }}></div>
+                  <span>Selected</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <div style={{ width: 20, height: 20, backgroundColor: "#666", border: "1px solid #ddd" }}></div>
+                  <span>Occupied</span>
+                </div>
+              </div>
+              
+              <div style={{ textAlign: "center", marginBottom: 10, padding: 10, backgroundColor: "#333", borderRadius: 4 }}>
+                SCREEN
+              </div>
+
+              <div style={{ display: "grid", gap: 5, justifyContent: "center" }}>
+                {Array.from({ length: showroomSeats.rows }, (_, row) => (
+                  <div key={row} style={{ display: "flex", gap: 5 }}>
+                    <span style={{ width: 30, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {String.fromCharCode(65 + row)}
+                    </span>
+                    {Array.from({ length: showroomSeats.cols }, (_, col) => {
+                      const status = getSeatStatus(row, col);
+                      return (
+                        <button
+                          key={`${row}-${col}`}
+                          type="button"
+                          onClick={() => toggleSeat(row, col)}
+                          disabled={status === "occupied"}
+                          style={{
+                            width: 35,
+                            height: 35,
+                            backgroundColor:
+                              status === "occupied" ? "#666" :
+                              status === "selected" ? "#ffc107" :
+                              "#28a745",
+                            border: "1px solid #ddd",
+                            borderRadius: 4,
+                            cursor: status === "occupied" ? "not-allowed" : "pointer",
+                            color: "white",
+                            fontSize: 12
+                          }}
+                        >
+                          {col + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+              <p style={{ marginTop: 10, fontSize: 14 }}>
+                Selected seats: {selectedSeats.length > 0 ? selectedSeats.map(s => {
+                  const [row, col] = s.split('-');
+                  return `${String.fromCharCode(65 + parseInt(row, 10))}${parseInt(col, 10) + 1}`;
+                }).join(', ') : 'None'}
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              style={{
+                padding: "12px 24px",
+                backgroundColor: "#dc3545",
+                color: "white",
+                border: "none",
+                borderRadius: 6,
+                cursor: "pointer",
+                fontSize: 16,
+                fontWeight: "bold"
+              }}
+            >
+              Continue to Payment
+            </button>
+          </form>
+        )}
       </div>
     </>
   );

@@ -47,15 +47,12 @@ function Promotions() {
         });
     };
 
-    const handleUsePromo = async (promo) => {
-        localStorage.setItem("selectedPromoCode", promo.code);
-        setFeedback(`Promo ${promo.code} saved. It will auto-fill on the booking page.`);
-
+    const handleCopyPromo = async (promo) => {
         try {
             await navigator.clipboard.writeText(promo.code);
-            setFeedback(`Promo ${promo.code} copied and saved for checkout.`);
+            setFeedback(`Promo ${promo.code} copied. Paste it at checkout to apply.`);
         } catch {
-            // Clipboard may fail in some browsers; ignore
+            setFeedback(`Promo ${promo.code} ready. Copy it manually if clipboard is blocked.`);
         }
     };
 
@@ -150,7 +147,7 @@ function Promotions() {
                                 </div>
 
                                 <button
-                                    onClick={() => handleUsePromo(promo)}
+                                    onClick={() => handleCopyPromo(promo)}
                                     style={{
                                         width: "100%",
                                         padding: "0.75rem",
@@ -162,7 +159,7 @@ function Promotions() {
                                         cursor: "pointer"
                                     }}
                                 >
-                                    Use this code
+                                    Copy code
                                 </button>
                             </div>
                         ))}

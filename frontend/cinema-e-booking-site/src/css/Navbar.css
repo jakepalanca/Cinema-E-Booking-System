@@ -18,7 +18,8 @@
     border-bottom: 3px solid var(--uga-red-dark);
     position: sticky;
     top: 0;
-    z-index: 1000;
+    z-index: 3000;
+    pointer-events: auto;
 }
 
 .navbar {
